@@ -1,0 +1,418 @@
+---
+title: "Personality"
+author: "Hamza"
+date: "12/02/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### Load packages
+
+```{r setup, include=FALSE}
+#install.packages("pacman")
+#install.packages("ggThemeAssist")
+#install.packages("ggbeeswarm")
+#install.packages("rptR")
+#install.packages("lme4")
+#install.packages("lmerTest")
+#install.packages("wesanderson")
+library(lmerTest)
+library(ggThemeAssist)
+library(rptR)
+library(lme4)
+library(readxl)
+library(dplyr)
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+library(sjPlot)
+library(ggplot2)
+library(lubridate)
+library(wesanderson)
+library(stargazer)
+library(ggbeeswarm)
+library(emmeans)
+#sessionInfo()
+#Install miktex and then run this to knit a pdf file
+#install.packages('tinytex')
+#tinytex::install_tinytex()
+```
+
+### Import and subset data
+
+First, we select a stimulus, which we want all the data for. Then with the function, we filter which videos have that stimulus in the first, second, third and fourth phase (via the time). Then we join all to create one dataset of that stimulus.
+```{r}
+Personality <- read.csv("ALL.csv")
+
+filter_etho <- function(Personality, x, y){
+
+  
+Personality %>% 
+    filter(Video %in% c(x)) %>%
+    filter(Time == y)
+}
+
+#Example of the function
+#Personality %>% filter(Video %in% c("A","C","D","E","G","M")) -> Personality_Social1
+
+#Personality_Social1 %>% filter(Time == "6-9") -> Personality_Social1_OnlyPhase1Data
+
+#Personality_Social1_OnlyPhase1Data
+
+#Function for mixed models for zone_05_dur (NEEDS WORK)
+
+#mixed_model_zone05dur <- function(df, x = "", y = "", z = "", a = "") {
+#lmer(zone_05_dur ~ Group + Sex  + (1 | Fish_ID), data = df) -> model 
+    #assign(x, model, envir = .GlobalEnv)
+# <- plot(model)
+    #assign(y, resid, envir = .GlobalEnv)
+#qq <- qqnorm(resid(model))
+#assign(z, qq, envir = .GlobalEnv)
+#tabmodel <- tab_model(model)
+#assign(a, tabmodel, envir = .GlobalEnv)
+#}
+
+
+#Attempting to create a function creates a mixed model, resid plot, qqplot, and tabbed model (summary of results)
+
+
+
+```
+
+
+#Gathering all Social Data 
+```{r}
+filter_etho(Personality, c("A","C","D","E","G","M"), ("6-9")) -> Social_Phase_1
+filter_etho(Personality, c("J","K","L","P","U","X"), ("13-16")) -> Social_Phase_2
+filter_etho(Personality, c("H","I","R","S","T","W"), ("20-23")) -> Social_Phase_3
+filter_etho(Personality, c("B","F","N","O","Q","V"), ("27-30")) -> Social_Phase_4
+
+Social_ALL <- bind_rows(Social_Phase_1,Social_Phase_2, Social_Phase_3, Social_Phase_4)
+write.csv(Social_ALL, file = "social.csv")
+
+
+```
+
+
+
+
+# Social Analysis
+```{r}
+# Total Distance
+
+Social_ALL %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_density(alpha=.3)
+ #facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = Group, y = tot_dist, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model1 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Social_ALL)
+plot(model1)
+qqnorm(resid(model1))
+summary(model1)
+tab_model(model1)
+
+#Zone_05_dur
+
+
+Social_ALL %>% 
+  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  labs(title = "Social Data")+
+  facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_density(alpha=.3)
+ #facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = Group, y = zone_05_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model2 <- lmer(zone_05_dur ~ Group + Sex  + (1 | Fish_ID), data = Social_ALL)
+model2_inter <- lmer(zone_05_dur ~ Group*Sex  + (1 | Fish_ID), data = Social_ALL)
+plot(model2)
+qqnorm(resid(model2))
+summary(model2)
+tab_model(model2)
+
+#Contrasts
+social_contrast <- emmeans(model2, ~Group & Sex)
+pairs(social_contrast)
+
+
+```
+
+
+#Gathering all Predator Data
+```{r}
+filter_etho(Personality, c("F","K","O","T","W","X"), ("6-9")) -> Predator_Phase_1
+filter_etho(Personality, c("E","G","N","Q","R","S"), ("13-16")) -> Predator_Phase_2
+filter_etho(Personality, c("B","C","M","P","U","V"), ("20-23")) -> Predator_Phase_3
+filter_etho(Personality, c("A","D","H","I","J","L"), ("27-30")) -> Predator_Phase_4
+
+Predator_ALL <- bind_rows(Predator_Phase_1,Predator_Phase_2, Predator_Phase_3, Predator_Phase_4)
+
+
+```
+
+#Predator Analysis
+```{r}
+# Total Distance
+
+Predator_ALL %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = Group, y = tot_dist, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model3 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Predator_ALL)
+plot(model3)
+qqnorm(resid(model3))
+summary(model3)
+tab_model(model3)
+
+#Zone_05_dur
+Predator_ALL %>% 
+  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  labs(title = "Predator Data")+
+  facet_grid(~Sex)
+  #facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = Group, y = zone_05_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Predator_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model4 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Predator_ALL) #Removed sex as no difference between sexes
+plot(model4)
+qqnorm(resid(model4))
+summary(model4)
+tab_model(model4)
+
+model_freeze <- lmer(freeze_dur ~ Group + Sex  + (1 | Fish_ID), data = Predator_ALL)
+plot(model_freeze)
+qqnorm(resid(model_freeze))
+summary(model_freeze)
+tab_model(model_freeze)
+
+#Total distance 0-5cm zone
+model_tot_dist_05_predator <- lmer(tot_dist_05 ~ Group + Sex  + (1 | Fish_ID), data = Predator_ALL)
+plot(model_tot_dist_05_predator)
+qqnorm(resid(model_tot_dist_05_predator))
+summary(model_tot_dist_05_predator)
+tab_model(model_tot_dist_05_predator)
+
+#Mean speed zone
+model_speed_predator <- lmer(mean_speed ~ Group + Sex  + (1 | Fish_ID), data = Predator_ALL)
+plot(model_speed_predator)
+qqnorm(resid(model_speed_predator))
+summary(model_speed_predator)
+tab_model(model_speed_predator)
+
+
+```
+
+#Gathering all Novel Data
+
+```{r}
+filter_etho(Personality, c("B","H","J","N","P","R"), ("6-9")) -> Novel_Phase_1
+filter_etho(Personality, c("A","I","M","O","V","W"), ("13-16")) -> Novel_Phase_2
+filter_etho(Personality, c("D","F","G","L","Q","X"), ("20-23")) -> Novel_Phase_3
+filter_etho(Personality, c("C","E","K","S","T","U"), ("27-30")) -> Novel_Phase_4
+
+Novel_ALL <- bind_rows(Novel_Phase_1,Novel_Phase_2, Novel_Phase_3, Novel_Phase_4)
+
+```
+
+#Novel Analysis
+```{r}
+# Total Distance
+
+Novel_ALL %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+
+ggplot(data = Novel_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Novel_ALL, mapping = aes(x = Group, y = tot_dist, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Novel_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model5 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Novel_ALL)
+plot(model5)
+qqnorm(resid(model5))
+summary(model5)
+tab_model(model5)
+
+#Zone_05_dur
+Novel_ALL %>% 
+  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Novel Data")
+
+ggplot(data = Novel_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Novel_ALL, mapping = aes(x = Group, y = zone_05_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Novel_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model6 <- lmer(zone_05_dur ~ Group*Sex  + (1 | Fish_ID), data = Novel_ALL)
+plot(model6)
+qqnorm(resid(model6))
+summary(model6)
+tab_model(model6)
+
+#Mean speed zone
+model_speed_novel <- lmer(mean_speed ~ Group + Sex  + (1 | Fish_ID), data = Novel_ALL)
+plot(model_speed_novel)
+qqnorm(resid(model_speed_novel))
+summary(model_speed_novel)
+tab_model(model_speed_novel)
+
+```
+
+#Gathering all Aggression Data
+
+```{r}
+filter_etho(Personality, c("I","L","Q","S","U","V"), ("6-9")) -> Aggression_Phase_1
+filter_etho(Personality, c("B","C","D","F","H","T"), ("13-16")) -> Aggression_Phase_2
+filter_etho(Personality, c("A","E","J","K","N","O"), ("20-23")) -> Aggression_Phase_3
+filter_etho(Personality, c("G","M","P","R","W","X"), ("27-30")) -> Aggression_Phase_4
+
+Aggression_ALL <- bind_rows(Aggression_Phase_2,Aggression_Phase_2, Aggression_Phase_3, Aggression_Phase_4)
+
+```
+
+
+#Aggression Analysis
+```{r}
+# Total Distance
+
+Aggression_ALL %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = Group, y = tot_dist, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model6 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Aggression_ALL)
+plot(model6)
+qqnorm(resid(model6))
+summary(model6)
+tab_model(model6)
+
+#Zone_05_dur
+Aggression_ALL %>% 
+  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  labs(title = "Aggression Data")+
+  facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = Group, y = zone_05_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Aggression_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model7 <- lmer(zone_05_dur ~ Group + Sex  + (1 | Fish_ID), data = Aggression_ALL)
+plot(model7)
+qqnorm(resid(model7))
+summary(model7)
+tab_model(model7)
+
+
+```
+
+
+#Stargazer tests
+```{r}
+
+
+
+```
+
+
+
+
+
+

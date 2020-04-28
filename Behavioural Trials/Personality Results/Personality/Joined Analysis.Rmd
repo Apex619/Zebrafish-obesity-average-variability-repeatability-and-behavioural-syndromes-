@@ -1,0 +1,77 @@
+---
+title: "Joined Analysis"
+author: "Hamza"
+date: "24/02/2020"
+output: html_document
+---
+
+
+### Load packages
+
+```{r setup, include=FALSE}
+#install.packages("pacman")
+#install.packages("ggThemeAssist")
+#install.packages("ggbeeswarm")
+#install.packages("rptR")
+#install.packages("lme4")
+#install.packages("lmerTest")
+#install.packages("wesanderson")
+library(lmerTest)
+library(ggThemeAssist)
+library(rptR)
+library(lme4)
+library(readxl)
+library(dplyr)
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+library(sjPlot)
+library(ggplot2)
+library(lubridate)
+library(wesanderson)
+library(ggbeeswarm)
+library(emmeans)
+#sessionInfo()
+#Install miktex and then run this to knit a pdf file
+#install.packages('tinytex')
+#tinytex::install_tinytex()
+```
+
+```{r}
+Joined <- read.csv("Joined_ALL.csv")
+```
+
+```{r}
+#Zone_05_dur
+
+
+Joined %>% 
+  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()
+  #facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_density(alpha=.3)
+ #facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = Group, y = zone_05_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Social_ALL, mapping = aes(x = zone_05_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+model_joined <- lmer(zone_05_dur ~ Group + Sex  + Stim + (1 | Fish_ID), data = Joined)
+plot(model_joined)
+qqnorm(resid(model_joined))
+summary(model_joined)
+tab_model(model_joined)
+
+#Contrasts
+all_contrast <- emmeans(model_joined, ~Group & Stim)
+pairs(all_contrast)
+
+```
+
+

@@ -1,0 +1,268 @@
+---
+title: "Anxiety"
+author: "Hamza"
+date: "11/02/2020"
+output: html_document
+---
+
+### Loading packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#install.packages("pacman")
+#install.packages("ggThemeAssist")
+#install.packages("ggbeeswarm")
+#install.packages("rptR")
+#install.packages("lme4")
+#install.packages("lmerTest")
+#install.packages("wesanderson")
+library(lmerTest)
+library(ggThemeAssist)
+library(rptR)
+library(lme4)
+library(readxl)
+library(dplyr)
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+library(sjPlot)
+library(ggplot2)
+library(lubridate)
+library(wesanderson)
+library(ggbeeswarm)
+library(emmeans)
+#sessionInfo()
+```
+
+
+### Import Data
+```{r}
+Anxiety <- read.csv("Joined.csv")
+```
+
+### Examine Data
+
+```{r}
+str(Anxiety)
+
+#Convert characters into factors
+
+Anxiety$Sex <- as.factor(Anxiety$Sex)
+Anxiety$Group <- as.factor(Anxiety$Group)
+Anxiety$Fish_ID <- as.factor(Anxiety$Fish_ID)
+Anxiety$Day <- as.factor(Anxiety$Day)
+Anxiety$Tank <- as.factor(Anxiety$Tank)
+```
+
+### Exploratory Data Analysis 
+
+# Total Distance
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Total Distance")
+
+ggplot(data = Anxiety, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = Group, y = tot_dist, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = tot_dist, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+#Weight
+
+Anxiety %>% 
+  ggplot(aes(x = Group, y = Weight.g., colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Weight")
+```
+
+# Zone Frequency
+
+```{r}
+#High Zone
+ggplot(data = Anxiety) +
+  geom_bar(mapping = aes(x = Group, y = high_freq), stat = "identity")+
+  facet_grid(~Sex)+
+  labs(title="High Zone Frequency")
+
+#Low Zone
+ggplot(data = Anxiety) +
+  geom_bar(mapping = aes(x = Group, y = low_freq), stat = "identity")+
+  facet_grid(~Sex)+
+  labs(title="Low Zone Frequency")
+```
+
+# Low Zone Duration
+
+```{r}
+Anxiety %<>% mutate(log10_low_dur = log10(low_duration))
+
+Anxiety %>% 
+  ggplot(aes(x = Group, y = low_duration, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Low Zone Duration")
+
+ggplot(data = Anxiety, mapping = aes(x = low_duration, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = Group, y = low_duration, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = low_duration, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+```
+
+# High Zone Duration
+
+```{r}
+#log transforming data and mutating into data frame
+
+Anxiety %<>% mutate(log10_high_dur = log10(high_duration))
+
+Anxiety %>% 
+  ggplot(aes(x = Group, y = log10_high_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = log10_high_dur, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = Group, y = log10_high_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = log10_high_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+```
+
+# Freezing Duration
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = freezing_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Freezing Duration")
+
+ggplot(data = Anxiety, mapping = aes(x = freezing_dur, fill = Group )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = Group, y = freezing_dur, fill = Group )) + 
+    geom_boxplot()+
+  facet_grid(~Sex)
+
+ggplot(data = Anxiety, mapping = aes(x = freezing_dur, fill = Group )) + 
+  geom_histogram()+
+  facet_grid(~Sex)
+
+```
+
+### Mixed Models
+
+#Total Distance
+```{r}
+model1 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Anxiety)
+plot(model1)
+qqnorm(resid(model1))
+summary(model1)
+tab_model(model1)
+```
+
+
+## Zone Fequency
+
+#High Zone
+```{r}
+model2 <- lmer(high_freq ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+plot(model2)
+qqnorm(resid(model2))
+summary(model2)
+tab_model(model2)
+```
+
+#Low Zone
+```{r}
+model3 <- lmer(low_freq ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+plot(model3)
+qqnorm(resid(model3))
+summary(model3)
+tab_model(model3)
+```
+
+## Durations
+
+# High Zone
+```{r}
+
+boxcox_high <- boxcoxtype(high_duration ~ Group, random = (~1|Fish_ID), data = Anxiety)
+model4 <- lmer(high_duration ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+plot(model4)
+qqnorm(resid(model4))
+summary(model4)
+tab_model(model4)
+```
+
+# Low Zone
+
+```{r}
+model5 <- lmer(low_duration ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+model5_inter <- lmer(low_duration ~ Group*Sex + (1 | Fish_ID), data = Anxiety)
+plot(model5)
+qqnorm(resid(model5))
+summary(model5)
+tab_model(model5)
+library(sjmisc)
+theme_set(theme_sjplot())
+plot_model(model5_inter, type = "int", terms = c("Group", "Sex"))
+tab_model(model5, model5_inter)
+```
+
+# Freezing
+```{r}
+model6 <- lmer(freezing_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+plot(model6)
+qqnorm(resid(model6))
+summary(model6)
+tab_model(model6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
