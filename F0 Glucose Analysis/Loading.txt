@@ -1,0 +1,36 @@
+#Log transformed analysis on glucose data
+
+library(ggplot2)
+library(lme4)
+library(lmerTest)
+library(sjPlot)
+library(tidyverse)
+library(effects)
+library(Rmisc)
+library(easyGgplot2)
+library(rptR)
+
+library(readr)
+Glucose_Weight <- read_csv("Glucose_Weight.csv")
+
+sqrtGlucose <- sqrt(Glucose_Weight$Glucose)
+hist(sqrtGlucose)
+
+
+log10Glucose <- log10(Glucose_Weight$Glucose)
+hist(log10Glucose)
+
+logGlucose <- log(Glucose_Weight$Glucose)
+hist(logGlucose)
+
+Glucose_Weight$log_Glucose <- log(Glucose_Weight$Glucose)
+
+
+
+
+Glucose_Weight$Sex <- as.factor(Glucose_Weight$Sex)
+Glucose_Weight$Group <- as.factor(Glucose_Weight$Group)
+Glucose_Weight$Meter <- as.factor(Glucose_Weight$Meter)
+
+hist(Glucose_Weight$Glucose)
+#Very high reading confirmed to be correct
