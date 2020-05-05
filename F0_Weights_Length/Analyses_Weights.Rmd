@@ -115,9 +115,9 @@ tab_model(lm_week0)
 ```
 The results indicate the treatment is working, and as expected, females are significantly heavier. It's interesting that the control group is still gaining weight. I assume this will even out soon enough while the treatment group continues to gain weight. Every week we are seeing significant changes in weight.
 
-#Body Length Analysis
 
-# Individual growth
+
+# Individual growth (body weight)
 
 ```{r, echo = FALSE} 
 ggplot(Data, aes(x=Week, y=Weight.g., group = Fish_ID, colour = Treatment_Tank)) +
@@ -328,25 +328,7 @@ Treatment_Growth_Curves <- growth(intype=1,unit=2,size=Treatment$Weight.g.,age=T
 
 ```
 
-#Glucose
-```{r}
-Glucose_Data$Sex <- as.factor(Glucose_Data$Sex)
-Glucose_Data$Group <- as.factor(Glucose_Data$Group)
-Glucose_Data$Meter <- as.factor(Glucose_Data$Meter)
-Glucose_Model <- lmer(Glucose ~ Group + Sex + (1|Fish_ID), data=Glucose_Data)
-summary(Glucose_Model)
-tab_model(Glucose_Model)
 
-
-
-Summary_Glucose <- summarySE(Glucose_Data, measurevar="Glucose", groupvars=c("Group","Sex"))
-knitr::kable(
-  Summary_Glucose[1:16, ], 
-  caption = "Summary_Glucose"
-)
-
-
-```
 
 
 
