@@ -221,7 +221,7 @@ tab_model(model3)
 # High Zone
 ```{r}
 
-boxcox_high <- boxcoxtype(high_duration ~ Group, random = (~1|Fish_ID), data = Anxiety)
+
 model4 <- lmer(high_duration ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
 plot(model4)
 qqnorm(resid(model4))
