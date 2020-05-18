@@ -25,6 +25,7 @@ Data_subset = filter(Data_Raw, Tank %in% c("HA_C1","HA_C2","HA_C3", "HA_C4", "HA
 Data = filter(Data_subset, !Fish_ID %in% c("a6834","a6923","a7226","a7070","a7250","a7336","a7600","a7573","a7660","a6929","a6990","a7407","a7090","a7286","a7539","a6884","a7206","a7488","a6846","a7560","a7495","a7649","a7604","a7015","a7253","a7610","a7566","a7719","a7682","a7266","a7494","a7548","a7207"))
 
 Week_0 <- subset(Data, Data$Week == "0")
+Week_22 <- subset(Data, Data$Week == "22")
 ```
 
 
@@ -243,9 +244,6 @@ Scatterplot <- ggplot(Data, aes(x=Fish_Length_cm, y=Weight.g., shape = Treatment
 Scatterplot
 ```
 
-```{r}
-Week_0 <- subset(Data, Data$Week == "0")
-```
 
 ```{r}
 #Making scatterplot
@@ -328,7 +326,49 @@ Treatment_Growth_Curves <- growth(intype=1,unit=2,size=Treatment$Weight.g.,age=T
 
 ```
 
+Final week analysis
+```{r}
+#BMI
+Summary_BMI_Treatment_22 <- summarySE(Week_22, measurevar="BMI", groupvars=c("Week","Treatment_Tank", "Sex"))
+knitr::kable(
+  Summary_BMI_Treatment_22[1:6, ], 
+  caption = "Summary_BMI_Treatment"
+)
 
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+plot_bmi_22 <- ggplot(Summary_BMI_Treatment_22, aes(x=Treatment_Tank, y=BMI, fill=Treatment_Tank)) + 
+  geom_errorbar(aes(ymin=BMI-se, ymax=BMI+se), width=.1, position=pd) +
+  geom_col(position=pd) +
+  labs(title = "Obesogenic vs. Control Diet",
+              subtitle = "Fish BMI after 22 weeks (g/cm2)")+
+  facet_grid(~Sex)
+
+          
+
+plot_bmi_22
+
+#K Index
+
+Summary_K_Treatment_22 <- summarySE(Week_22, measurevar="K.Index", groupvars=c("Week","Treatment_Tank", "Sex"))
+knitr::kable(
+  Summary_K_Treatment_22[1:6, ], 
+  caption = "Summary_BMI_Treatment"
+)
+
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+plot_K_22 <- ggplot(Summary_K_Treatment_22, aes(x=Treatment_Tank, y=K.Index, fill=Treatment_Tank)) + 
+  geom_errorbar(aes(ymin=K.Index-se, ymax=K.Index+se), width=.1, position=pd) +
+  geom_col(position=pd) +
+  labs(title = "Obesogenic vs. Control Diet",
+              subtitle = "Fish K Index after 22 weeks")+
+  facet_grid(~Sex)
+
+          
+
+plot_K_22
+```
 
 
 
