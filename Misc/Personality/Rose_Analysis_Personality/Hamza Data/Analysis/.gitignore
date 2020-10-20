@@ -1,0 +1,21 @@
+# Folder view configuration files
+.DS_Store
+Desktop.ini
+
+# Thumbnail cache files
+._*
+Thumbs.db
+
+# R history files
+.Rhistory
+*/.Rapp.history
+.Rproj.user
+
+# Old archive files
+archive/*
+*/archive/*
+
+# Other folders
+Research/*
+*/Photos/*
+Raw/*

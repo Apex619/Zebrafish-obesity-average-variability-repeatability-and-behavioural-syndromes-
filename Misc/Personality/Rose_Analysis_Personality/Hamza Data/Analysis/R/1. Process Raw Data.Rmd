@@ -1,0 +1,235 @@
+---
+title: "Step 1. Process Raw Data"
+author: "Rose O’Dea"
+date: "23 July 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(stringr, dplyr, ggplot2, readxl, lme4, cowplot)
+
+# Plot Themes ----    
+background.colour = "white"
+line.colour = "black"
+
+tm <- theme(panel.background = element_rect(fill = background.colour),
+            plot.background = element_rect(fill = background.colour),
+            panel.grid = element_blank(),
+            axis.line.x = element_line(size = 0.6, colour = line.colour),
+            axis.line.y = element_line(size = 0.6, colour = line.colour),
+            axis.ticks = element_line(size = 0.6, colour = line.colour),
+            axis.ticks.length = unit(0.2,"cm"),
+            axis.text = element_text(size = 15, colour = line.colour),
+            axis.text.x = element_text(margin = margin(t=10,r=0,b=0,l=0)),
+            axis.text.y = element_text(margin = margin(t=0,r=10,b=0,l=0)),
+            axis.title = element_text(size = 18, colour = line.colour),
+            axis.title.y = element_text(margin = margin(t=0,r=10,b=0,l=0)),
+            axis.title.x = element_text(margin = margin(t=10,r=0,b=0,l=0), hjust = 0.5),
+            plot.title = element_text(size = 21, colour = line.colour, hjust = 0.5),
+            text =  element_text(family = "Times New Roman", colour = line.colour, face = "plain"),
+            plot.margin = unit(c(0.2,0.2,0.2,0.2), "cm"),
+            legend.title = element_text(size = 18, colour = line.colour),
+            legend.text = element_text(size = 15, colour = line.colour))
+
+# Function for importing raw data    
+func_import <- function(folder){
+  
+  # get vector of files in a folder
+  file_names <- list.files(folder)
+  files <- paste0(folder, "/", file_names)
+  
+  # import data into a list
+  data_list <- lapply(files, function(x) read_excel(x, sheet = 1))
+  
+  # rawdata = data_list[[2]]
+  
+  # function to rename data
+  reduce <- function(rawdata){
+    # import split dataframe into just info and data
+    # finding position of column where data starts and ends
+    start.data <- which(str_detect(names(rawdata), "dist") == T)[1]
+    end.data <- ncol(rawdata)
+    info <- rawdata[,1:(start.data-1)]
+    rawdata <- rawdata[,start.data:end.data]
+    
+    names(info)[1:3] <- c("Phase", "Ethovision_Trial", "Ethovision_Arena")
+  
+    # loading column names
+    cols <- read.csv("C:\\Users\\Hamza\\Dropbox\\Zebrafish Experiment\\BIG EXPERIMENT\\Behavioural Trials\\Personality Results\\R\\Hamza Data\\Analysis\\Processed Data\\Definitions\\col_names.csv") #Original: "./Processed Data/Definitions/col_names.csv"
+    
+    # replacing names
+    names(rawdata) <- as.character(cols$new_name)
+    
+    # removing redundant columns
+    data <- rawdata[,cols$take == "yes"]
+    
+    # making dataframe numeric and then converting back to dataframe
+    data <- suppressWarnings(data.frame(lapply(data, as.numeric)))
+    data$stim.dist_0_10cm_dur <- data$stim.dist_0_5cm_dur + data$stim.dist_5_10cm_dur
+    
+    # combining data back together
+    x <- cbind(info, data)
+    
+    return(x)
+    
+  }
+  
+  # applying the reduce function to the lists of dataframes
+  df <- lapply(1:length(file_names), function(x) reduce(data_list[[x]]) %>% mutate(file = file_names[x])) %>% bind_rows()
+  
+  # returning dataframe
+  return(df)
+  
+}
+
+```
+
+### Import Block Data
+```{r}
+# importing block data
+block <- func_import(folder = "C:\\Users\\Hamza\\Dropbox\\Zebrafish Experiment\\BIG EXPERIMENT\\Behavioural Trials\\Personality Results\\R\\Hamza Data\\Analysis\\Raw Data\\blocks")
+
+# adding column to identify which of five behaviours the data relates to, and removing acclimation data which we won't use
+block %<>% filter(Phase != "Acclimation") %>% droplevels %>% mutate(behav_type = as.factor(Phase))
+levels(block$behav_type) <- c("Aggression", 
+                              "Novel",
+                              "Activity",
+                              "Activity",
+                              "Activity",
+                              "Activity",
+                              "Activity",
+                              "Predator",
+                              "Social")
+```
+
+## Stimulus variable selection    
+We want:     
+- Interpretable behaviour    
+- Response to stimulus    
+- Repeatable (i.e. consistent individual differences)     
+
+
+```{r, eval = F}
+#unique(block$Phase)
+periods <- c("Aggression", "Novel", "Predator", "Social")
+vars <- names(block)[19:53]
+func_dif <- function(x = "Aggression"){
+    pre <- block[block$Phase == paste0("Pre-", str_to_lower(x)),] %>% mutate(unique_ID = paste0(ID,Day,Session))
+    stim <- block[block$Phase == x,] %>% mutate(unique_ID = paste0(ID,Day,Session))
+    # matching dataframes
+    pos <- match(pre$unique_ID, stim$unique_ID)
+    #summary(pre$unique_ID == stim$unique_ID[pos])
+    stim <- stim[pos, ]
+    dif <- stim[,c(vars)] - pre[,c(vars)]
+      df <- cbind(difference = x, dif) %>% mutate(ID = pre$ID)
+      return(df)
+}
+
+df <- bind_rows(lapply(periods, function(x) func_dif(x)))
+    
+func_plot <- function(pos = 2){
+  x <- df[,c(1,pos)]
+  var <- names(x)[2]
+  ggplot(x) + tm +
+    geom_density(aes_string(var, fill = "difference"), alpha = 0.5) +
+    geom_vline(xintercept = 0) +
+    labs(title = var) -> p
+ggsave(filename = paste0("C:\\Users\\Hamza\\Dropbox\\Zebrafish Experiment\\BIG EXPERIMENT\\Behavioural Trials\\Personality Results\\R\\Hamza Data\\Analysis\\Plots\\Pre-Stim Difference\\", var, ".pdf"),
+       plot = p,
+       height = 4, width = 6,
+       device = cairo_pdf)
+}
+
+sapply(2:(ncol(df)-1), function(x) func_plot(x))
+
+dif_means <- df %>% group_by(difference) %>% summarise_all(mean, na.rm = T)
+
+# possible vars
+vars <- c("move_dur", "stim.dist_0_5cm_dur", "stim.dist_0_10cm_dur", "near_dur", "far_dur", "risk3_dur")
+func_mod <- function(var = vars[1]){
+  func <- function(stim = "Aggression"){
+    
+    xdif <- df[df$difference == stim, c(var, "ID")]
+    xdif <- xdif[!is.na(xdif[,1]),]
+    mod_dif <- lmer(xdif[,1] ~ (1|ID), data = xdif)
+    
+    xstim <-  block[block$Phase == stim, c(var, "ID")]
+    xstim <- xstim[!is.na(xstim[,1]),]
+    mod_stim <- lmer(xstim[,1] ~ (1|ID), data = xstim)   
+    
+    p_func <- function(mod = mod_dif, type = "Difference"){
+      r <- resid(mod)
+      vc <- data.frame(VarCorr(mod))
+      rpt <- round(vc$vcov[1]/sum(vc$vcov),2)
+      R2 <- round(MuMIn::r.squaredGLMM(mod)[2],2)
+      ggplot() + tm +
+        geom_histogram(aes(r), bins = 40, colour = "black", fill = "white") +
+        labs(x = "residual",
+             title = paste0(stim, " ", type, ": ", var, "\n", "Repeatability = ", rpt, "\n", "R2 = ", R2)) -> p
+      return(p)
+    }
+    plot <- plot_grid(p_func(mod = mod_dif, type = "Difference"), p_func(mod = mod_stim, type = "Stimulus"))
+    return(plot)
+  }
+  p_list <- lapply(c("Aggression", "Novel", "Predator", "Social"), function(x) func(x))
+  plot <- plot_grid(p_list[[1]], p_list[[2]], p_list[[3]], p_list[[4]], ncol = 1)
+  ggsave(filename = paste0("C:\\Users\\Hamza\\Dropbox\\Zebrafish Experiment\\BIG EXPERIMENT\\Behavioural Trials\\Personality Results\\R\\Hamza Data\\Analysis\\Plots\\Residuals\\", var, ".pdf"),
+       plot = plot,
+       height = 14, width = 12,
+       device = cairo_pdf)
+}
+
+sapply(vars, function(x) func_mod(x))
+```
+
+
+## Converting to wide format        
+```{r}
+# activity data: taking average of 5 measurements
+block$unique_ID = paste0(block$ID, "_", block$Day,"_",block$Session)
+act <- block %>% filter(behav_type == "Activity") %>% group_by(unique_ID) %>% summarise(dist_m_Activity = mean(dist_m, na.rm = T))
+
+# Stimulus converting long to wide
+vars <- c("stim.dist_0_5cm_dur", "stim.dist_0_10cm_dur")
+stim1 <- block[block$Phase == "Aggression", c("unique_ID", vars)]
+stim2 <- block[block$Phase == "Novel", c("unique_ID", vars)]
+stim3 <- block[block$Phase == "Predator", c("unique_ID", vars)]
+stim4 <- block[block$Phase == "Social", c("unique_ID", vars)]
+
+names(stim1)[2:3] <- paste0(names(stim1)[2:3], "_Aggression")
+names(stim2)[2:3] <- paste0(names(stim2)[2:3], "_Novel")
+names(stim3)[2:3] <- paste0(names(stim3)[2:3], "_Predator")
+names(stim4)[2:3] <- paste0(names(stim4)[2:3], "_Social")
+
+# matching up
+pos1 <- match(act$unique_ID, stim1$unique_ID)
+stim1 <- stim1[pos1,]
+pos2 <- match(act$unique_ID, stim2$unique_ID)
+stim2 <- stim2[pos2,]
+pos3 <- match(act$unique_ID, stim3$unique_ID)
+stim3 <- stim3[pos3,]
+pos4 <- match(act$unique_ID, stim4$unique_ID)
+stim4 <- stim4[pos4,]
+
+#summary(stim4$unique_ID == act$unique_ID)
+
+wide_data <- cbind(act, stim1[,-1], stim2[,-1], stim3[,-1], stim4[,-1])
+
+# adding trial information
+info <- block[,c(1:18, 56)] %>% select(-Phase)
+pos <- match(wide_data$unique_ID, info$unique_ID)
+#summary(wide_data$unique_ID == info$unique_ID[pos] )
+
+dat_behav <- cbind(info[pos,], wide_data[,c("dist_m_Activity",
+                                            "stim.dist_0_5cm_dur_Aggression",
+                                            "stim.dist_0_10cm_dur_Aggression",
+                                            "stim.dist_0_5cm_dur_Novel",
+                                            "stim.dist_0_10cm_dur_Novel",
+                                            "stim.dist_0_5cm_dur_Predator",
+                                            "stim.dist_0_10cm_dur_Predator",
+                                            "stim.dist_0_5cm_dur_Social",
+                                            "stim.dist_0_10cm_dur_Social")])
+
+write.csv(dat_behav, file = "C:\\Users\\Hamza\\Dropbox\\Zebrafish Experiment\\BIG EXPERIMENT\\Behavioural Trials\\Personality Results\\R\\Hamza Data\\Analysis\\Processed Data\\block_data.csv", row.names = F)
+```
