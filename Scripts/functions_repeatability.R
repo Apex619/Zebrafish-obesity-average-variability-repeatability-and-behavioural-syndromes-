@@ -1,5 +1,15 @@
 #### Custom functions
 
+#Calculating repeatability for body weight
+rpt_weight <- function(df) {
+  x <- rpt(Weight.g. ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
+}
+
+#Obtaining within and between-individual variances (body weight)
+rpt_within_weight <- function(df) {
+  rpt(scale(Weight.g.) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+}
+
 #Obtaining within and between-individual variances (total distance)
 rpt_within_between_tot_dist <- function(df) {
   rpt(scale(tot_dist) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
