@@ -48,9 +48,10 @@ Week_22 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "22")
 #Check Normality with mixed model and then histogram of residuals
 
 Model_Body_Weight <- lmer(Weight.g. ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
+tab_model(Model_Body_Weight)
 hist(residuals(Model_Body_Weight))#histogram of residuals to check for normal distribution 
 
-Model_Body_Weight2 <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID), data = Weight_Length_Data) 
+Model_Body_Weight2 <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
 summary(Model_Body_Weight2)
 tab_model(Model_Body_Weight2)
 hist(residuals(Model_Body_Weight2))
@@ -74,7 +75,38 @@ summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
 
+# Body Length
+```{r, echo=FALSE}
 
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Body_Length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
+tab_model(Model_Body_Length)
+hist(residuals(Model_Body_Length))#histogram of residuals to check for normal distribution 
+
+Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
+summary(Model_Body_Length2)
+tab_model(Model_Body_Length2)
+hist(residuals(Model_Body_Length2))
+
+
+
+#Calculating repeatabilities using custom made functions
+rpt_length(Weight_Length_Data) -> rpt_length
+rpt_length
+
+#Obtaining within-individual and between-individual variance for body weight
+
+rpt_within_length(Weight_Length_Data) -> within_between_body_length
+within_between_body_length
+
+# Calculating difference in variance between control and treatment group 
+Model_Length_1 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
+summary(Model_Length_1)
+Model_Length_2 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
+summary(Model_Length_2)
+anova(Model_Length_1, Model_Length_2) #calculating difference between two models to find difference in variance
+```
 
 
 # Visualizations
