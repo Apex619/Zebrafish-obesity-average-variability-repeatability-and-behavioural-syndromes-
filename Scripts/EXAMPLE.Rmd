@@ -1,0 +1,323 @@
+---
+title: "Anxiety_F1"
+author: "Hamza"
+date: "14/04/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("Scripts/functions.R") #load custom functions
+
+```
+
+
+### Import Data
+```{r, include=FALSE}
+#Master file with all raw data
+Anxiety_Joined <- read.csv("./Data/F1_Anxiety_Repeatability_Exp.csv") 
+
+#Subseting data by tank; NOTE: short tanks are usually referred to as "Old" tanks throughout the analysis
+Old_Tanks <- subset(Anxiety_Joined, Anxiety_Joined$Tank == "Old") 
+Tall_Tanks <- subset(Anxiety_Joined, Anxiety_Joined$Tank == "Tall") 
+
+
+#Inspecting imported data 
+str(Anxiety_Joined)
+str(Old_Tanks)
+str(Tall_Tanks)
+```
+
+### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH TANK SEPARATELY (USING SUBSETS) AND THEN WITH BOTH DATA COMBINED AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN TALL AND SHORT TANKS
+
+THESE STEPS ARE REPEATED FOR ALL BEHAVIORAL PARAMETERS, REFER TO THE FIRST BEHAVIORAL PARAMETER FOR COMMENTS AND REFERENCE 
+
+# Total distance travelled
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Tot_Dist <- lmer(tot_dist ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
+
+
+#Calculating repeatabilities using custom made functions
+rpt_tot_dist(Old_Tanks) -> Old_Tot_Dist #repeatability for short tanks
+rpt_tot_dist(Tall_Tanks) -> Tall_Tot_Dist #repeatability for tall tanks
+rpt_tot_dist(Anxiety_Joined) -> Joined_Tot_Dist #repeatability overall (both tanks)
+
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_tot_dist(Old_Tanks) -> within_between_tot_dist_old #Short tanks
+rpt_within_between_tot_dist(Tall_Tanks)-> within_between_tot_dist_tall #Tall tanks
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Old_tot_dist_boot <- unlist_rptr(Old_Tot_Dist) #unlisting from the short tanks
+Tall_tot_dist_boot <- unlist_rptr(Tall_Tot_Dist) #unlisting from the tall tanks
+Tot_dist_diff <- difference_boot(Tall_tot_dist_boot,Old_tot_dist_boot) #calculating the difference
+q1 <- quantiles_diff_boot(Tot_dist_diff) #obtaining 95% CI
+m1 <- mean(Tot_dist_diff) #Obtaining mean
+
+q1
+m1
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_Tot_Dist1 <- lme(tot_dist ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined) #mixed model without variance structure
+summary(Model_Tot_Dist1)
+Model_Tot_Dist2 <- lme(tot_dist ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined) #mixed model with variance structure varIdent
+summary(Model_Tot_Dist2)
+anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two models to find difference in variance
+```
+
+
+
+
+### Time spent in low zone ('low duration')
+```{r, echo=FALSE}
+#Checking normality assumptions
+Model_Low_Dur <- lmer(low_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)  
+hist(residuals(Model_Low_Dur)) 
+qqnorm(residuals(Model_Low_Dur)) 
+scatter.smooth(residuals(Model_Low_Dur)~fitted(Model_Low_Dur)) 
+
+
+
+
+#Calculating repeatabilities 
+rpt_low_dur(Old_Tanks) -> Old_low_dur 
+rpt_low_dur(Tall_Tanks) -> Tall_low_dur 
+rpt_low_dur(Anxiety_Joined) -> Joined_low_dur 
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_low_dur(Old_Tanks) -> within_between_low_dur_old #Short tanks
+rpt_within_between_low_dur(Tall_Tanks)-> within_between_low_dur_tall #Tall tanks
+
+#Obtaining differences between repeatabilities 
+Old_low_dur_boot <- unlist_rptr(Old_low_dur) 
+Tall_low_dur_boot <- unlist_rptr(Tall_low_dur) 
+low_dur_diff <- difference_boot(Tall_low_dur_boot,Old_low_dur_boot) 
+q2 <- quantiles_diff_boot(low_dur_diff) 
+m2 <- mean(low_dur_diff) 
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_low_dur1 <- lme(low_dur ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined)
+summary(Model_low_dur1)
+Model_low_dur2 <- lme(low_dur ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined)
+summary(Model_low_dur2)
+anova(Model_low_dur1, Model_low_dur2)
+
+```
+
+
+
+### Time spent in the mid zone ('mid duration')
+```{r, echo=FALSE}
+
+#Checking normality assumptions
+Model_Mid_Dur <- lmer(mid_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)  
+hist(residuals(Model_Mid_Dur)) 
+
+
+#Calculating repeatabilities 
+rpt_mid_dur(Old_Tanks) -> Old_mid_dur 
+rpt_mid_dur(Tall_Tanks) -> Tall_mid_dur 
+rpt_mid_dur(Anxiety_Joined) -> Joined_mid_dur 
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_mid_dur(Old_Tanks) -> within_between_mid_dur_old #Short tanks
+rpt_within_between_mid_dur(Tall_Tanks)-> within_between_mid_dur_tall #Tall tanks
+
+#Obtaining differences between repeatabilities 
+Old_mid_dur_boot <- unlist_rptr(Old_mid_dur) 
+Tall_mid_dur_boot <- unlist_rptr(Tall_mid_dur) 
+Diff_boot_mid_dur <- difference_boot(Old_mid_dur_boot,Tall_mid_dur_boot) 
+q3 <- quantiles_diff_boot(Diff_boot_mid_dur) 
+m3 <- mean(Diff_boot_mid_dur) 
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_mid_dur1 <- lme(mid_dur ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined)
+summary(Model_mid_dur1)
+Model_mid_dur2 <- lme(mid_dur ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined)
+summary(Model_mid_dur2)
+anova(Model_mid_dur1, Model_mid_dur2)
+```
+
+
+
+
+###Time spent in the high zone ('high duration')
+```{r, echo=FALSE}
+
+Model_high_dur <- lmer(high_dur ~ Tank + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_high_dur)) #Our normality assumption is not met, distribution skewed
+
+Model_high_dur2 <- lmer(sqrt(high_dur) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)#attempting a square root transformation
+hist(residuals(Model_high_dur2))#square root transformation is considered sufficient to meet normal distribution assumption, will be used for this parameter
+
+
+#Calculating repeatabilities 
+rpt_high_dur(Old_Tanks) -> Old_high_dur2 
+rpt_high_dur(Tall_Tanks) -> Tall_high_dur2 
+rpt_high_dur(Anxiety_Joined) -> Joined_high_dur2 
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_high_dur(Old_Tanks) -> within_between_high_dur_old #Short tanks
+rpt_within_between_high_dur(Tall_Tanks)-> within_between_high_dur_tall #Tall tanks
+
+#Obtaining differences between repeatabilities 
+Old_high_dur_boot <- unlist_rptr(Old_high_dur2) 
+Tall_high_dur_boot <- unlist_rptr(Tall_high_dur2) 
+Diff_boot_high_dur <- difference_boot(Tall_high_dur_boot,Old_high_dur_boot) 
+q4 <- quantiles_diff_boot(Diff_boot_high_dur) 
+m4 <- mean(Diff_boot_high_dur) 
+
+
+# Calculating difference in variance between short tanks and tall tanks 
+
+Model_high_dur1a <- lme(sqrt(high_dur) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined)
+summary(Model_high_dur1a)
+Model_high_dur2a <- lme(sqrt(high_dur) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined)
+summary(Model_high_dur2a)
+anova(Model_high_dur1a, Model_high_dur2a)
+```
+
+
+
+### Time spent freezing
+```{r, echo=FALSE}
+Model_freezing_dur <- lmer(freezing_dur ~ Tank + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_freezing_dur))#Our normality assumption is not met
+
+Model_freezing_dur2 <- lmer(sqrt(freezing_dur) ~ Tank + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_freezing_dur2))#Our normality assumption is still not satisfied
+
+Model_freezing_dur3 <- lmer(log(freezing_dur+1) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_freezing_dur3))#Our normality assumption is deemed adequate
+
+
+
+#Calculating repeatabilities 
+rpt_freezing_dur(Old_Tanks) -> Old_freezing_dur3 
+rpt_freezing_dur(Tall_Tanks) -> Tall_freezing_dur3 
+rpt_freezing_dur(Anxiety_Joined) -> Joined_freezing_dur 
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_freezing_dur(Old_Tanks) -> within_between_freezing_dur_old #Short tanks
+rpt_within_between_freezing_dur(Tall_Tanks)-> within_between_freezing_dur_tall #Tall tanks
+
+#Obtaining differences between repeatabilities 
+Old_freezing_dur_boot <- unlist_rptr(Old_freezing_dur3) 
+Tall_freezing_dur_boot <- unlist_rptr(Tall_freezing_dur3) 
+Diff_boot_freezing_dur <- difference_boot(Tall_freezing_dur_boot,Old_freezing_dur_boot) 
+q5 <- quantiles_diff_boot(Diff_boot_freezing_dur) 
+m5 <- mean(Diff_boot_freezing_dur) 
+
+
+#Variance models
+Model_freezing_dur1a <- lme(log(freezing_dur+1) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined)
+summary(Model_freezing_dur1a)
+Model_freezing_dur2a <- lme(log(freezing_dur+1) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined)
+summary(Model_freezing_dur2a)
+anova(Model_freezing_dur1a, Model_freezing_dur2a)
+```
+
+#latency to high
+```{r}
+Model_latency <- lmer(latency_high ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_latency)) 
+
+
+
+#Calculating repeatabilities 
+rpt_latency(Old_Tanks) -> Old_latency
+rpt_latency(Tall_Tanks) -> Tall_latency
+rpt_latency(Anxiety_Joined) -> Joined_latency
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_latency(Old_Tanks) -> within_between_latency_old #Short tanks
+rpt_within_between_latency(Tall_Tanks)-> within_between_latency_tall #Tall tanks
+
+#Obtaining differences between repeatabilities 
+Old_latency_boot <- unlist_rptr(Old_latency) 
+Tall_latency_boot <- unlist_rptr(Tall_latency) 
+Diff_boot_latency <- difference_boot(Tall_latency_boot,Old_latency_boot) 
+q6 <- quantiles_diff_boot(Diff_boot_latency) 
+m6 <- mean(Diff_boot_latency) 
+
+# Variance models
+Model_latency_high1a <- lme(latency_high ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.omit)
+summary(Model_latency_high1a)
+Model_latency_high2a <- lme(latency_high ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined, na.action=na.omit)
+summary(Model_latency_high2a)
+anova(Model_latency_high1a, Model_latency_high2a)
+```
+
+#entries into high
+```{r}
+Model_freq_high <- lmer(freq_high ~ Tank + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_freq_high)) #assumptions of normality not met
+
+Model_freq_high2 <- lmer(sqrt(freq_high) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+hist(residuals(Model_freq_high2))#square root transformation deemed adequate
+
+
+#Calculating repeatabilities 
+rpt_freq(Old_Tanks) -> Old_freq_high
+rpt_freq(Tall_Tanks) -> Tall_freq_high
+rpt_freq(Anxiety_Joined) -> Joined_freq_high
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_between_freq_high(Old_Tanks) -> within_between_freq_high_old #Short tanks
+rpt_within_between_freq_high(Tall_Tanks)-> within_between_freq_high_tall #Tall tanks
+
+
+#Obtaining differences between repeatabilities 
+Old_freq_boot <- unlist_rptr(Old_freq_high) 
+Tall_freq_boot <- unlist_rptr(Tall_freq_high) 
+Diff_boot_freq <- difference_boot(Old_freq_boot,Tall_freq_boot) 
+q7 <- quantiles_diff_boot(Diff_boot_freq) 
+m7 <- mean(Diff_boot_freq) 
+
+
+#Variance models
+Model_freq_high1a <- lme(sqrt(freq_high) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined)
+summary(Model_freq_high1a)
+Model_freq_high2a <- lme(sqrt(freq_high) ~ Tank-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Tank), data = Anxiety_Joined)
+summary(Model_freq_high2a)
+anova(Model_freq_high1a, Model_freq_high2a)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

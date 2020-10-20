@@ -1,0 +1,229 @@
+---
+title: "Body Weight and Length - F0"
+author: "Hamza"
+date: "1 June 2019"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
+
+```
+
+#Import and filter data
+```{r, include = FALSE}
+#Master file with raw data
+Data <- read.csv("../Data/Weight_Length/Analysis.csv")
+
+#Filtered to ensure no spare tanks or fish are included in the analysis
+Data_subset = filter(Data, Tank %in% c("HA_C1","HA_C2","HA_C3", "HA_C4", "HA_T1","HA_T2","HA_T3","HA_T4"))
+Weight_Length_Data = filter(Data_subset, !Fish_ID %in% c("a6834","a6923","a7226","a7070","a7250","a7336","a7600","a7573","a7660","a6929","a6990","a7407","a7090","a7286","a7539","a6884","a7206","a7488","a6846","a7560","a7495","a7649","a7604","a7015","a7253","a7610","a7566","a7719","a7682","a7266","a7494","a7548","a7207"))
+
+#Subsetted data for later comparison of week 0 and final week
+Week_0 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "0")
+Week_22 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "22")
+```
+
+### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH (body length in progress as last measurements are finalized)
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) FINAL MIXED MODEL USING LME FUNCTION
+4) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT GROUPS
+
+# Body Weight
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Body_Weight <- lmer(Weight.g. ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
+hist(residuals(Model_Body_Weight)) #histogram of residuals to check for normal distribution 
+
+
+#Calculating repeatabilities using custom made functions
+rpt_weight(Weight_Length_Data) -> rpt_body_weight
+
+#Obtaining within-individual and between-individual variance for body weight
+
+rpt_within_weight(Weight_Length_Data) -> within_between_body_weight
+
+
+# Calculating difference in variance between control and treatment group 
+Model_Weight_1 <- lme(Weight.g. ~ Treatment_Tank-1 + Sex + Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
+summary(Model_Weight_1)
+Model_Weight_2 <- lme(Weight.g. ~ Treatment_Tank-1 + Sex + Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
+summary(Model_Weight_2)
+anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
+```
+
+
+
+
+# Visualizations
+Boxplot to show distribution at beginning of the experiment and at the end of the experiment
+```{r, echo = FALSE}
+boxplot_0 <- ggplot(data = Week_0) +
+  geom_boxplot(mapping = aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank)) +
+  facet_grid(~Sex)
+  
+boxplot_0
+
+boxplot_22 <- ggplot(data = Week_22) +
+  geom_boxplot(mapping = aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank)) +
+  facet_grid(~Sex)
+  
+boxplot_22
+
+```  
+
+# Mixed Models to account for week 0
+```{r, echo = FALSE}
+Weight_Model <- lmer(Weight.g. ~ Treatment_Tank + Week + Sex + (1|Fish_ID), data=Data)
+tab_model(Weight_Model)
+
+Weight_Model <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex + (1|Fish_ID), data=Data)
+tab_model(Weight_Model)
+
+Weight_Model <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
+tab_model(Weight_Model)
+
+#A significant interaction exists between treatment and week as well as sex and week. What this means is that the treatment and control tanks have a different slope and this is also dependent on the week. This is also the case for the sexes, with the females having a steeper slope, also significantly different by the week. 
+
+
+Weight_Model <- lmer(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
+tab_model(Weight_Model)
+
+model_week0_weight <- lmer(Weight.g. ~ Treatment_Tank + Sex + Fish_Length_cm + (1|Tank), data = Week_0 )
+tab_model(model_week0_weight)
+
+model_week0_length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + (1|Tank), data = Week_0 )
+tab_model(model_week0_length)
+
+
+model_week0_bmi <- lmer(scale(BMI) ~ Treatment_Tank + Sex + (1|Tank), data = Week_0 )
+tab_model(model_week0_bmi)
+
+lm_week0 <- glm(scale(BMI) ~ Treatment_Tank + Sex , data = Week_0 )
+tab_model(lm_week0)
+
+
+lm_week0 <- glm(Weight.g. ~ Treatment_Tank + Sex , data = Week_0 )
+tab_model(lm_week0)
+
+lm_week0 <- glm(Fish_Length_cm ~ Treatment_Tank + Sex , data = Week_0 )
+tab_model(lm_week0)
+
+```
+
+
+# Line plot (body weight)
+
+```{r, echo = FALSE}
+Summary_Weight <- summarySE(Weight_Length_Data, measurevar="Weight.g.", groupvars=c("Week","Treatment_Tank", "Sex"))
+
+# So error bars aren't overlapping, we can use this:
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+
+line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treatment_Tank)) + 
+    geom_errorbar(aes(ymin=Weight.g.-se, ymax=Weight.g.+se), colour="black", width=.1, position=pd) +
+    geom_line(position=pd) +
+    geom_point(position=pd, size=3) +
+  labs(title = "Obesogenic vs. Control Diet",
+              subtitle = "Weight change after 22 weeks") +
+  facet_grid(~Sex)
+
+line_plot_weight
+
+
+```
+
+
+
+
+
+
+
+#Summary (Body Length)
+
+```{r, echo = FALSE}
+
+Summary_Length_All <- summarySE(Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex"))
+
+```
+
+# Line plot (fish length) for tanks
+
+```{r, echo = FALSE}
+Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex"))
+
+# So error bars aren't overlapping, we can use this:
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, colour=Treatment_Tank)) + 
+  geom_errorbar(aes(ymin=Fish_Length_cm-se, ymax=Fish_Length_cm+se),colour="black", width=.1, position=pd) +
+  geom_line(position=pd) +
+  geom_point(position=pd)+
+  labs(title = "Obesogenic vs. Control Diet",
+              subtitle = "Fish lengths after 22 weeks") +
+  facet_grid(~Sex)
+          
+
+plot_fish_length_tanks
+
+
+```
+
+#Summary (BMI)
+
+```{r, echo = FALSE}
+
+Summary_BMI <- summarySE(Weight_Length_Data, measurevar="BMI", groupvars=c("Week","Treatment_Tank", "Sex"))
+
+# Column (BMI)
+
+# So error bars aren't overlapping, we can use this:
+pd <- position_dodge(0.1) # move them .05 to the left and right
+
+plot_bmi <- ggplot(Summary_BMI, aes(x=Week, y=BMI, colour=Treatment_Tank)) + 
+  geom_errorbar(aes(ymin=BMI-se, ymax=BMI+se), width=.1,colour="black", position=pd) +
+  geom_line(position=pd) +
+  labs(title = "Obesogenic vs. Control Diet",
+              subtitle = "Fish BMI after 22 weeks (g/cm2)")+
+  facet_grid(~Sex)
+
+          
+
+plot_bmi
+
+#Breeding !!! SUMMARIZE WHERE BREEDING TOOK PLACE!
+```
+
+
+
+
+```{r}
+#Making scatterplot
+
+Scatterplot <- ggplot(Weight_Length_Data, aes(Week, Weight.g., colour = Treatment_Tank)) +
+  geom_jitter() +
+  theme_bw() +
+  facet_grid(~Sex) +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), aes(fill = Treatment_Tank)) #try different formulas and compare against each other
+Scatterplot
+
+
+
+```
+

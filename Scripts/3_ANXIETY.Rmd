@@ -1,0 +1,231 @@
+---
+title: "Anxiety"
+author: "Hamza"
+date: "11/02/2020"
+output: html_document
+---
+
+### Loading packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#install.packages("pacman")
+#install.packages("ggThemeAssist")
+#install.packages("ggbeeswarm")
+#install.packages("rptR")
+#install.packages("lme4")
+#install.packages("lmerTest")
+#install.packages("wesanderson")
+library(lmerTest)
+library(ggThemeAssist)
+library(rptR)
+library(lme4)
+library(readxl)
+library(dplyr)
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+library(sjPlot)
+library(ggplot2)
+library(lubridate)
+library(wesanderson)
+library(ggbeeswarm)
+library(emmeans)
+#sessionInfo()
+```
+
+
+### Import Data
+```{r, include=FALSE}
+Anxiety <- read.csv("Joined.csv")
+
+#Import new file updated with new params !!!!
+```
+
+### Examine Data
+
+```{r, include=FALSE}
+str(Anxiety)
+
+#Convert characters into factors
+
+Anxiety$Sex <- as.factor(Anxiety$Sex)
+Anxiety$Group <- as.factor(Anxiety$Group)
+Anxiety$Fish_ID <- as.factor(Anxiety$Fish_ID)
+Anxiety$Day <- as.factor(Anxiety$Day)
+Anxiety$Tank <- as.factor(Anxiety$Tank)
+```
+
+### Mixed Models
+
+#Total Distance
+```{r}
+model1 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Anxiety)
+hist(resid(model1))
+tab_model(model1)
+contrast_totdist <- emmeans(model1, ~Group + Sex)
+pairs(contrast_totdist)
+
+```
+
+## Durations
+
+# High Zone
+```{r}
+
+model4 <- lmer(log(high_dur+1) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+hist(resid(model4))
+tab_model(model4)
+
+
+```
+
+# Low Zone
+
+```{r}
+model5 <- lmer(low_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+hist(resid(model5))
+tab_model(model5)
+
+
+```
+
+#mid zone
+
+```{r}
+model_mid <- lmer(mid_dur ~ Group + Sex + (1|Fish_ID), data = Anxiety)
+hist(resid(model_mid))
+tab_model(model_mid)
+```
+
+
+# Freezing
+```{r}
+model6 <- lmer(sqrt(freezing_dur) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+hist(resid(model6))
+tab_model(model6)
+
+```
+
+#latency
+```{r}
+latency_model <- lmer(latency_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+hist(resid(latency_model))
+tab_model(latency_model)
+```
+
+#entries to high zone
+```{r}
+entries_model <- lmer(sqrt(freq_high) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
+hist(resid(entries_model))
+tab_model(entries_model)
+```
+
+
+
+
+
+### Exploratory Data Analysis 
+
+# Total Distance
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Total Distance")
+
+
+```
+
+#Entries to high zone
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = freq_high, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Entries to high zone")
+```
+
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = latency_high, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Latency")
+```
+
+
+# Low Zone Duration
+
+```{r}
+
+Anxiety %>% 
+  ggplot(aes(x = Group, y = low_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Low Zone Duration")
+
+```
+
+#Mid zone
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = mid_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Mid Zone Duration")
+```
+
+
+# High Zone Duration
+
+```{r}
+
+
+Anxiety %>% 
+  ggplot(aes(x = Group, y = high_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)
+```
+
+# Freezing Duration
+
+```{r}
+Anxiety %>% 
+  ggplot(aes(x = Group, y = freezing_dur, colour = Group)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()+
+  facet_grid(~Sex)+
+  labs(title = "Freezing Duration")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
