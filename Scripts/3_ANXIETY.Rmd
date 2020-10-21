@@ -9,34 +9,20 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
 
-#install.packages("pacman")
-#install.packages("ggThemeAssist")
-#install.packages("ggbeeswarm")
-#install.packages("rptR")
-#install.packages("lme4")
-#install.packages("lmerTest")
-#install.packages("wesanderson")
-library(lmerTest)
-library(ggThemeAssist)
-library(rptR)
-library(lme4)
-library(readxl)
-library(dplyr)
-pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
-library(sjPlot)
-library(ggplot2)
-library(lubridate)
-library(wesanderson)
-library(ggbeeswarm)
-library(emmeans)
-#sessionInfo()
+# Load custom functions
+source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
 ```
 
 
 ### Import Data
 ```{r, include=FALSE}
-Anxiety <- read.csv("Joined.csv")
+Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data.xlsx")
 
 #Import new file updated with new params !!!!
 ```
@@ -48,184 +34,292 @@ str(Anxiety)
 
 #Convert characters into factors
 
-Anxiety$Sex <- as.factor(Anxiety$Sex)
-Anxiety$Group <- as.factor(Anxiety$Group)
-Anxiety$Fish_ID <- as.factor(Anxiety$Fish_ID)
-Anxiety$Day <- as.factor(Anxiety$Day)
-Anxiety$Tank <- as.factor(Anxiety$Tank)
-```
-
-### Mixed Models
-
-#Total Distance
-```{r}
-model1 <- lmer(tot_dist ~ Group + Sex  + (1 | Fish_ID), data = Anxiety)
-hist(resid(model1))
-tab_model(model1)
-contrast_totdist <- emmeans(model1, ~Group + Sex)
-pairs(contrast_totdist)
-
-```
-
-## Durations
-
-# High Zone
-```{r}
-
-model4 <- lmer(log(high_dur+1) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
-hist(resid(model4))
-tab_model(model4)
-
-
-```
-
-# Low Zone
-
-```{r}
-model5 <- lmer(low_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
-hist(resid(model5))
-tab_model(model5)
-
-
-```
-
-#mid zone
-
-```{r}
-model_mid <- lmer(mid_dur ~ Group + Sex + (1|Fish_ID), data = Anxiety)
-hist(resid(model_mid))
-tab_model(model_mid)
+Anxiety_Joined$Sex <- as.factor(Anxiety_Joined$Sex)
+Anxiety_Joined$Group <- as.factor(Anxiety_Joined$Group)
+Anxiety_Joined$Fish_ID <- as.factor(Anxiety_Joined$Fish_ID)
+Anxiety_Joined$Day <- as.factor(Anxiety_Joined$Day)
+Anxiety_Joined$Tank <- as.factor(Anxiety_Joined$Tank)
 ```
 
 
-# Freezing
-```{r}
-model6 <- lmer(sqrt(freezing_dur) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
-hist(resid(model6))
-tab_model(model6)
+### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITY OF CONTROL AND TREATMENT GROUP
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT GROUPS
 
-```
+THESE STEPS ARE REPEATED FOR ALL BEHAVIORAL PARAMETERS, REFER TO THE FIRST BEHAVIORAL PARAMETER FOR COMMENTS AND REFERENCE 
 
-#latency
-```{r}
-latency_model <- lmer(latency_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
-hist(resid(latency_model))
-tab_model(latency_model)
-```
-
-#entries to high zone
-```{r}
-entries_model <- lmer(sqrt(freq_high) ~ Group + Sex + (1 | Fish_ID), data = Anxiety)
-hist(resid(entries_model))
-tab_model(entries_model)
-```
+NEED TO EDIT COMMENTS !
 
 
+# Total distance travelled
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 
-
-### Exploratory Data Analysis 
-
-# Total Distance
-
-```{r}
-Anxiety %>% 
-  ggplot(aes(x = Group, y = tot_dist, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Total Distance")
+#Calculating repeatabilities using custom made functions
+rpt_tot_dist(Weight_Length_Control) -> Control_Tot_Dist #repeatability for short tanks
+rpt_tot_dist(Weight_Length_Treatment) -> Treatment_Tot_Dist #repeatability for tall tanks
 
 
-```
+#Obtaining within-individual and between-individual variance for total distace 
 
-#Entries to high zone
-```{r}
-Anxiety %>% 
-  ggplot(aes(x = Group, y = freq_high, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Entries to high zone")
+rpt_within_between_tot_dist(Weight_Length_Control) -> within_between_tot_dist_control #Short tanks
+rpt_within_between_tot_dist(Weight_Length_Treatment)-> within_between_tot_dist_treatment #Tall tanks
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_tot_dist_boot <- unlist_rptr(Control_Tot_Dist) #unlisting from the short tanks
+Treatment_tot_dist_boot <- unlist_rptr(Treatment_Tot_Dist) #unlisting from the tall tanks
+Tot_dist_diff <- difference_boot(Control_tot_dist_boot,Treatment_tot_dist_boot) #calculating the difference
+q1 <- quantiles_diff_boot(Tot_dist_diff) #obtaining 95% CI
+m1 <- mean(Tot_dist_diff) #Obtaining mean
+
+q1
+m1
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_Tot_Dist1 <- lme(tot_dist ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Tot_Dist1)
+Model_Tot_Dist2 <- lme(tot_dist ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Tot_Dist2)
+anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two models to find difference in variance
 ```
 
 
-```{r}
-Anxiety %>% 
-  ggplot(aes(x = Group, y = latency_high, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Latency")
+# Time spent in low zone
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_low_dur <- lmer(low_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_low_dur)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
+
+
+#Calculating repeatabilities using custom made functions
+rpt_low_dur(Weight_Length_Control) -> Control_low_dur #repeatability for short tanks
+rpt_low_dur(Weight_Length_Treatment) -> Treatment_low_dur #repeatability for tall tanks
+
+
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_low_dur(Weight_Length_Control) -> within_between_low_dur_control #Short tanks
+rpt_within_between_low_dur(Weight_Length_Treatment)-> within_between_low_dur_treatment #Tall tanks
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_low_dur_boot <- unlist_rptr(Control_low_dur) #unlisting from the short tanks
+Treatment_low_dur_boot <- unlist_rptr(Treatment_low_dur) #unlisting from the tall tanks
+low_dur_diff <- difference_boot(Control_low_dur_boot,Treatment_low_dur_boot) #calculating the difference
+q2 <- quantiles_diff_boot(low_dur_diff) #obtaining 95% CI
+m2 <- mean(low_dur_diff) #Obtaining mean
+
+q2
+m2
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_low_dur1 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_low_dur1)
+Model_low_dur2 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_low_dur2)
+anova(Model_low_dur1, Model_low_dur2) #calculating difference between two models to find difference in variance
 ```
 
 
-# Low Zone Duration
+# Time spent in mid zone
+```{r, echo=FALSE}
 
-```{r}
+#Check Normality with mixed model and then histogram of residuals
 
-Anxiety %>% 
-  ggplot(aes(x = Group, y = low_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Low Zone Duration")
-
-```
-
-#Mid zone
-
-```{r}
-Anxiety %>% 
-  ggplot(aes(x = Group, y = mid_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Mid Zone Duration")
-```
+Model_mid_dur <- lmer(mid_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_mid_dur)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 
-# High Zone Duration
+#Calculating repeatabilities using custom made functions
+rpt_mid_dur(Weight_Length_Control) -> Control_mid_dur #repeatability for short tanks
+rpt_mid_dur(Weight_Length_Treatment) -> Treatment_mid_dur #repeatability for tall tanks
 
-```{r}
+
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_mid_dur(Weight_Length_Control) -> within_between_mid_dur_control #Short tanks
+rpt_within_between_mid_dur(Weight_Length_Treatment)-> within_between_mid_dur_treatment #Tall tanks
 
 
-Anxiety %>% 
-  ggplot(aes(x = Group, y = high_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)
-```
+#Obtaining differences between repeatabilities using custom made functions
+Control_mid_dur_boot <- unlist_rptr(Control_mid_dur) #unlisting from the short tanks
+Treatment_mid_dur_boot <- unlist_rptr(Treatment_mid_dur) #unlisting from the tall tanks
+mid_dur_diff <- difference_boot(Control_mid_dur_boot,Treatment_mid_dur_boot) #calculating the difference
+q3 <- quantiles_diff_boot(mid_dur_diff) #obtaining 95% CI
+m3 <- mean(mid_dur_diff) #Obtaining mean
 
-# Freezing Duration
+q3
+m3
 
-```{r}
-Anxiety %>% 
-  ggplot(aes(x = Group, y = freezing_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  facet_grid(~Sex)+
-  labs(title = "Freezing Duration")
-
+# Calculating difference in variance between short tanks and tall tanks 
+Model_mid_dur1 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_mid_dur1)
+Model_mid_dur2 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_mid_dur2)
+anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models to find difference in variance
 ```
 
 
+# Time spent in high zone
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_high_dur <- lmer(high_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_high_dur)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 
+#Calculating repeatabilities using custom made functions
+rpt_high_dur(Weight_Length_Control) -> Control_high_dur #repeatability for short tanks
+rpt_high_dur(Weight_Length_Treatment) -> Treatment_high_dur #repeatability for tall tanks
 
 
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_high_dur(Weight_Length_Control) -> within_between_high_dur_control #Short tanks
+rpt_within_between_high_dur(Weight_Length_Treatment)-> within_between_high_dur_treatment #Tall tanks
 
 
+#Obtaining differences between repeatabilities using custom made functions
+Control_high_dur_boot <- unlist_rptr(Control_high_dur) #unlisting from the short tanks
+Treatment_high_dur_boot <- unlist_rptr(Treatment_high_dur) #unlisting from the tall tanks
+high_dur_diff <- difference_boot(Control_high_dur_boot,Treatment_high_dur_boot) #calculating the difference
+q4 <- quantiles_diff_boot(high_dur_diff) #obtaining 95% CI
+m4 <- mean(high_dur_diff) #Obtaining mean
+
+q4
+m4
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_high_dur1 <- lme(high_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_high_dur1)
+Model_high_dur2 <- lme(high_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_high_dur2)
+anova(Model_high_dur1, Model_high_dur2) #calculating difference between two models to find difference in variance
+```
+
+# Time spent freezing
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_freezing_dur <- lmer(freezing_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_freezing_dur)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 
+#Calculating repeatabilities using custom made functions
+rpt_freezing_dur(Weight_Length_Control) -> Control_freezing_dur #repeatability for short tanks
+rpt_freezing_dur(Weight_Length_Treatment) -> Treatment_freezing_dur #repeatability for tall tanks
 
 
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_freezing_dur(Weight_Length_Control) -> within_between_freezing_dur_control 
+rpt_within_between_freezing_dur(Weight_Length_Treatment)-> within_between_freezing_dur_treatment #
 
 
+#Obtaining differences between repeatabilities using custom made functions
+Control_freezing_dur_boot <- unlist_rptr(Control_freezing_dur) #unlisting from the short tanks
+Treatment_freezing_dur_boot <- unlist_rptr(Treatment_freezing_dur) #unlisting from the tall tanks
+freezing_dur_diff <- difference_boot(Control_freezing_dur_boot,Treatment_freezing_dur_boot) #calculating the difference
+q5 <- quantiles_diff_boot(freezing_dur_diff) #obtaining 95% CI
+m5 <- mean(freezing_dur_diff) #Obtaining mean
+
+q5
+m5
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_freezing_dur1 <- lme(freezing_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_freezing_dur1)
+Model_freezing_dur2 <- lme(freezing_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_freezing_dur2)
+anova(Model_freezing_dur1, Model_freezing_dur2) #calculating difference between two models to find difference in variance
+```
+
+# Latency to high
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_latency_high <- lmer(latency_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_latency_high)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
+
+
+#Calculating repeatabilities using custom made functions
+rpt_latency_high(Weight_Length_Control) -> Control_latency_high #repeatability for short tanks
+rpt_latency_high(Weight_Length_Treatment) -> Treatment_latency_high #repeatability for tall tanks
+
+
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_latency_high(Weight_Length_Control) -> within_between_latency_high_control #Short tanks
+rpt_within_between_latency_high(Weight_Length_Treatment)-> within_between_latency_high_treatment #Tall tanks
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_latency_high_boot <- unlist_rptr(Control_latency_high) #unlisting from the short tanks
+Treatment_latency_high_boot <- unlist_rptr(Treatment_latency_high) #unlisting from the tall tanks
+latency_high_diff <- difference_boot(Control_latency_high_boot,Treatment_latency_high_boot) #calculating the difference
+q6 <- quantiles_diff_boot(latency_high_diff) #obtaining 95% CI
+m6 <- mean(latency_high_diff) #Obtaining mean
+
+q6
+m6
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_latency_high1 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_latency_high1)
+Model_latency_high2 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_latency_high2)
+anova(Model_latency_high1, Model_latency_high2) #calculating difference between two models to find difference in variance
+```
+
+
+# Entries to high zone
+```{r, echo=FALSE}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_freq_high <- lmer(freq_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+hist(residuals(Model_freq_high)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
+
+
+#Calculating repeatabilities using custom made functions
+rpt_freq_high(Weight_Length_Control) -> Control_freq_high #repeatability for short tanks
+rpt_freq_high(Weight_Length_Treatment) -> Treatment_freq_high #repeatability for tall tanks
+
+
+#Obtaining within-individual and between-individual variance for total distace 
+
+rpt_within_between_freq_high(Weight_Length_Control) -> within_between_freq_high_control #Short tanks
+rpt_within_between_freq_high(Weight_Length_Treatment)-> within_between_freq_high_treatment #Tall tanks
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_freq_high_boot <- unlist_rptr(Control_freq_high) #unlisting from the short tanks
+Treatment_freq_high_boot <- unlist_rptr(Treatment_freq_high) #unlisting from the tall tanks
+freq_high_diff <- difference_boot(Control_freq_high_boot,Treatment_freq_high_boot) #calculating the difference
+q7 <- quantiles_diff_boot(freq_high_diff) #obtaining 95% CI
+m7 <- mean(freq_high_diff) #Obtaining mean
+
+q7
+m7
+
+# Calculating difference in variance between short tanks and tall tanks 
+Model_freq_high1 <- lme(freq_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_freq_high1)
+Model_freq_high2 <- lme(freq_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_freq_high2)
+anova(Model_freq_high1, Model_freq_high2) #calculating difference between two models to find difference in variance
+```

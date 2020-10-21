@@ -34,13 +34,18 @@ Weight_Length_Data = filter(Data_subset, !Fish_ID %in% c("a6834","a6923","a7226"
 #Subsetted data for later comparison of week 0 and final week
 Week_0 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "0")
 Week_22 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "22")
+
+#Subseting data by control and treatment
+Weight_Length_Control <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Control") 
+Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Treatment") 
 ```
 
 ### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH (body length in progress as last measurements are finalized)
 1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
-2) PERFORMING REPEATABILITY ANALYSIS AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
-3) FINAL MIXED MODEL USING LME FUNCTION
-4) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT GROUPS
+2) PERFORMING REPEATABILITY ANALYSIS AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION (FOR BOTH CONTROL AND TREATMENT)
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT GROUPS
 
 # Body Weight
 ```{r, echo=FALSE}
@@ -59,13 +64,26 @@ hist(residuals(Model_Body_Weight2))
 
 
 #Calculating repeatabilities using custom made functions
-rpt_weight(Weight_Length_Data) -> rpt_body_weight
-rpt_body_weight
+rpt_weight(Weight_Length_Control) -> rpt_body_weight_control
+rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment
+rpt_body_weight_control
+rpt_body_weight_treatment
 
 #Obtaining within-individual and between-individual variance for body weight
 
-rpt_within_weight(Weight_Length_Data) -> within_between_body_weight
-within_between_body_weight
+rpt_within_weight(Weight_Length_Control) -> within_between_body_weight_control
+rpt_within_weight(Weight_Length_Treatment) -> within_between_body_weight_treatment
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_weight_boot <- unlist_rptr(rpt_body_weight_control) 
+Treatment_weight_boot <- unlist_rptr(rpt_body_weight_treatment) 
+body_weight_diff <- difference_boot(Control_weight_boot,Treatment_weight_boot) #calculating the difference
+q_body_weight <- quantiles_diff_boot(body_weight_diff) #obtaining 95% CI
+m_mody_weight <- mean(body_weight_diff) #Obtaining mean
+
+q_body_weight
+m_mody_weight
 
 # Calculating difference in variance between control and treatment group 
 Model_Weight_1 <- lme(Weight.g. ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
@@ -75,7 +93,7 @@ summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
 
-# Body Length
+# Body Length (need to run code)
 ```{r, echo=FALSE}
 
 #Check Normality with mixed model and then histogram of residuals
@@ -92,13 +110,23 @@ hist(residuals(Model_Body_Length2))
 
 
 #Calculating repeatabilities using custom made functions
-rpt_length(Weight_Length_Data) -> rpt_length
-rpt_length
+rpt_length(Weight_Length_Control) -> rpt_length_control
+rpt_length(Weight_Length_Treatment) -> rpt_length_treatment
 
 #Obtaining within-individual and between-individual variance for body weight
 
-rpt_within_length(Weight_Length_Data) -> within_between_body_length
-within_between_body_length
+rpt_within_length(Weight_Length_Control) -> within_between_body_length_control
+rpt_within_length(Weight_Length_Treatment) -> within_between_body_length_treatment
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_length_boot <- unlist_rptr(rpt_body_weight_control) 
+Treatment_length_boot <- unlist_rptr(rpt_body_weight_treatment) 
+body_length_diff <- difference_boot(Control_length_boot,Treatment_length_boot) #calculating the difference
+q_body_length <- quantiles_diff_boot(body_length_diff) #obtaining 95% CI
+m_mody_length <- mean(body_length_diff) #Obtaining mean
+
+q_body_length
+m_mody_length
 
 # Calculating difference in variance between control and treatment group 
 Model_Length_1 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure

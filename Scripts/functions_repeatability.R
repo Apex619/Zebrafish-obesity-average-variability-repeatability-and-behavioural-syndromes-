@@ -5,6 +5,11 @@ rpt_length <- function(df) {
   x <- rpt(Fish_Length_cm ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
 
+#Obtaining within and between-individual variances (body length)
+rpt_within_length <- function(df) {
+  rpt(scale(Fish_Length_cm) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+}
+
 #Calculating repeatability for body weight
 rpt_weight <- function(df) {
   x <- rpt(Weight.g. ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
