@@ -70,14 +70,16 @@ hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal dist
 
 #Calculating repeatabilities using custom made functions
 rpt_tot_dist(Anxiety_Control) -> Control_Tot_Dist 
+Control_Tot_Dist
 rpt_tot_dist(Anxiety_Treatment) -> Treatment_Tot_Dist 
-
+Treatment_Tot_Dist
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_tot_dist(Anxiety_Control) -> within_between_tot_dist_control #Short tanks
-rpt_within_between_tot_dist(Anxiety_Treatment)-> within_between_tot_dist_treatment #Tall tanks
-
+rpt_within_between_tot_dist(Anxiety_Control) -> within_between_tot_dist_control 
+within_between_tot_dist_control
+rpt_within_between_tot_dist(Anxiety_Treatment)-> within_between_tot_dist_treatment 
+within_between_tot_dist_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_tot_dist_boot <- unlist_rptr(Control_Tot_Dist) #unlisting from the short tanks
@@ -107,15 +109,17 @@ Model_low_dur <- lmer(low_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Join
 hist(residuals(Model_low_dur)) #histogram of residuals reveals a transformation is needed ?
 
 #Calculating repeatabilities using custom made functions
-rpt_low_dur(Anxiety_Control) -> Control_low_dur #repeatability for short tanks
-rpt_low_dur(Anxiety_Treatment) -> Treatment_low_dur #repeatability for tall tanks
-
+rpt_low_dur(Anxiety_Control) -> Control_low_dur 
+Control_low_dur 
+rpt_low_dur(Anxiety_Treatment) -> Treatment_low_dur 
+Treatment_low_dur
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_low_dur(Anxiety_Control) -> within_between_low_dur_control #Short tanks
-rpt_within_between_low_dur(Anxiety_Treatment)-> within_between_low_dur_treatment #Tall tanks
-
+rpt_within_between_low_dur(Anxiety_Control) -> within_between_low_dur_control
+within_between_low_dur_control
+rpt_within_between_low_dur(Anxiety_Treatment)-> within_between_low_dur_treatment 
+within_between_low_dur_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_low_dur_boot <- unlist_rptr(Control_low_dur) #unlisting from the short tanks
@@ -146,14 +150,18 @@ hist(residuals(Model_mid_dur)) #histogram of residuals - transformation ?
 
 
 #Calculating repeatabilities using custom made functions
-rpt_mid_dur(Anxiety_Control) -> Control_mid_dur #repeatability for short tanks
-rpt_mid_dur(Anxiety_Treatment) -> Treatment_mid_dur #repeatability for tall tanks
+rpt_mid_dur(Anxiety_Control) -> Control_mid_dur 
+Control_mid_dur
+rpt_mid_dur(Anxiety_Treatment) -> Treatment_mid_dur 
+Treatment_mid_dur
 
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_mid_dur(Anxiety_Control) -> within_between_mid_dur_control #Short tanks
-rpt_within_between_mid_dur(Anxiety_Treatment)-> within_between_mid_dur_treatment #Tall tanks
+rpt_within_between_mid_dur(Anxiety_Control) -> within_between_mid_dur_control
+within_between_mid_dur_control
+rpt_within_between_mid_dur(Anxiety_Treatment)-> within_between_mid_dur_treatment
+within_between_mid_dur_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
@@ -187,15 +195,18 @@ Model_high_dur0 <- lmer(log(high_dur+1) ~ Group + Sex + (1 | Fish_ID), data = An
 hist(residuals(Model_high_dur0)) #better normal distribution
 
 #Calculating repeatabilities using custom made functions
-rpt_high_dur2(Anxiety_Control) -> Control_high_dur #repeatability for short tanks
-rpt_high_dur2(Anxiety_Treatment) -> Treatment_high_dur #repeatability for tall tanks
+rpt_high_dur2(Anxiety_Control) -> Control_high_dur 
+Control_high_dur
+rpt_high_dur2(Anxiety_Treatment) -> Treatment_high_dur 
+Treatment_high_dur
 
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_high_dur2(Anxiety_Control) -> within_between_high_dur_control #Short tanks
-rpt_within_between_high_dur2(Anxiety_Treatment)-> within_between_high_dur_treatment #Tall tanks
-
+rpt_within_between_high_dur2(Anxiety_Control) -> within_between_high_dur_control 
+within_between_high_dur_control
+rpt_within_between_high_dur2(Anxiety_Treatment)-> within_between_high_dur_treatment 
+within_between_high_dur_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_high_dur_boot <- unlist_rptr(Control_high_dur) #unlisting from the short tanks
@@ -228,14 +239,18 @@ hist(residuals(Model_freezing_dur0))
 
 
 #Calculating repeatabilities using custom made functions
-rpt_freezing_dur(Anxiety_Control) -> Control_freezing_dur #repeatability for short tanks
-rpt_freezing_dur(Anxiety_Treatment) -> Treatment_freezing_dur #repeatability for tall tanks
+rpt_freezing_dur(Anxiety_Control) -> Control_freezing_dur 
+Control_freezing_dur
+rpt_freezing_dur(Anxiety_Treatment) -> Treatment_freezing_dur 
+Treatment_freezing_dur
 
 
 #Obtaining within-individual and between-individual variance for total distace 
 
 rpt_within_between_freezing_dur(Anxiety_Control) -> within_between_freezing_dur_control 
-rpt_within_between_freezing_dur(Anxiety_Treatment)-> within_between_freezing_dur_treatment #
+within_between_freezing_dur_control
+rpt_within_between_freezing_dur(Anxiety_Treatment)-> within_between_freezing_dur_treatment 
+within_between_freezing_dur_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
@@ -266,14 +281,18 @@ hist(residuals(Model_latency_high)) #histogram of residuals to check for normal 
 
 
 #Calculating repeatabilities using custom made functions
-rpt_latency(Anxiety_Control) -> Control_latency_high #repeatability for short tanks
-rpt_latency(Anxiety_Treatment) -> Treatment_latency_high #repeatability for tall tanks
+rpt_latency(Anxiety_Control) -> Control_latency_high
+Control_latency_high
+rpt_latency(Anxiety_Treatment) -> Treatment_latency_high 
+Treatment_latency_high
 
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_latency(Anxiety_Control) -> within_between_latency_high_control #Short tanks
-rpt_within_between_latency(Anxiety_Treatment)-> within_between_latency_high_treatment #Tall tanks
+rpt_within_between_latency(Anxiety_Control) -> within_between_latency_high_control
+within_between_latency_high_control
+rpt_within_between_latency(Anxiety_Treatment)-> within_between_latency_high_treatment 
+within_between_latency_high_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
@@ -307,15 +326,18 @@ Model_freq_high0 <- lmer(sqrt(freq_high) ~ Group + Sex + (1 | Fish_ID), data = A
 hist(residuals(Model_freq_high0))
 
 #Calculating repeatabilities using custom made functions
-rpt_freq(Anxiety_Control) -> Control_freq_high #repeatability for short tanks
-rpt_freq(Anxiety_Treatment) -> Treatment_freq_high #repeatability for tall tanks
+rpt_freq(Anxiety_Control) -> Control_freq_high 
+Control_freq_high
+rpt_freq(Anxiety_Treatment) -> Treatment_freq_high 
+Treatment_freq_high
 
 
 #Obtaining within-individual and between-individual variance for total distace 
 
-rpt_within_between_freq_high(Anxiety_Control) -> within_between_freq_high_control #Short tanks
-rpt_within_between_freq_high(Anxiety_Treatment)-> within_between_freq_high_treatment #Tall tanks
-
+rpt_within_between_freq_high(Anxiety_Control) -> within_between_freq_high_control 
+within_between_freq_high_control
+rpt_within_between_freq_high(Anxiety_Treatment)-> within_between_freq_high_treatment 
+within_between_freq_high_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_freq_high_boot <- unlist_rptr(Control_freq_high) #unlisting from the short tanks
