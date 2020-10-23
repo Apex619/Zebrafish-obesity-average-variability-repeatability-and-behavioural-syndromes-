@@ -1,0 +1,35 @@
+---
+title: "F0 Anxiety Plots"
+author: "Hamza"
+date: "23/10/2020"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+# Load custom functions
+source("../Scripts/functions_repeatability.R") #load custom functions
+```
+
+
+#Creating tibbles to use in plotting repeatabilities : one for overall plots, and one for sex plots
+
+Total distance F0
+```{r, echo=FALSE}
+Tot_Dist_rptr_F0 <- tibble(
+  Condition = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control)", "Within-Individual Variance (Control)","Between-Individual Variance (Treatment)", "Within-Individual Variance (Treatment)"),
+  r = c(Control_Tot_Dist$R$Fish_ID,Treatment_Tot_Dist$R$Fish_ID, m1, within_between_tot_dist_control$R[1], within_between_tot_dist_control$R[2],within_between_tot_dist_treatment$R[1], within_between_tot_dist_treatment$R[2]),
+  ci.lb = c(Control_Tot_Dist$CI_emp$`2.5%`,Treatment_Tot_Dist$CI_emp$`2.5%`,-0.10, within_between_tot_dist_control$CI_emp[1,1], within_between_tot_dist_control$CI_emp[2,1],within_between_tot_dist_treatment$CI_emp[1,1], within_between_tot_dist_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_Tot_Dist$CI_emp$`97.5%`,Treatment_Tot_Dist$CI_emp$`97.5%`, 0.24, within_between_tot_dist_control$CI_emp[1,2], within_between_tot_dist_control$CI_emp[2,2],within_between_tot_dist_treatment$CI_emp[1,2], within_between_tot_dist_treatment$CI_emp[2,2]),
+Endpoint = c("Total distance", "Total distance", "Total distance", "Total distance", "Total distance","Total distance","Total distance"))
+  
+Tot_Dist_rptr_F0
+
+
+```

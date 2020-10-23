@@ -1,0 +1,87 @@
+---
+title: "Anxiety Sex Analysis F0"
+author: "Hamza"
+date: "23/10/2020"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions_repeatability.R") #load custom functions
+```
+
+#Subset data by sex
+```{r}
+#Subset by sex
+Anxiety_Control_Male <- subset(Anxiety_Control, Anxiety_Control$Sex == "male")
+Anxiety_Control_Female <- subset(Anxiety_Control, Anxiety_Control$Sex == "female")
+Anxiety_Treatment_Male <- subset(Anxiety_Treatment, Anxiety_Treatment$Sex == "male")
+Anxiety_Treatment_Female <- subset(Anxiety_Treatment, Anxiety_Treatment$Sex == "female")
+```
+
+### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS BY SEX AND TANK
+1) cHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH SEX IN EACH TANK SEPARATELY (USING SUBSETS) AND THEN WITH BOTH DATA COMBINED FOR EACH TANK
+3) CALCULATING DIFFERENCES BETWEEN MALE AND FEMALE REPEATABILITIES IN EACH TANK
+
+THESE STEPS ARE REPEATED FOR ALL BEHAVIORAL PARAMETERS, REFER TO THE FIRST BEHAVIORAL PARAMETER FOR COMMENTS AND REFERENCE 
+
+### Total distance travelled
+```{r}
+#Checking normality assumption
+Model_Tot_Dist_sex <- lmer(tot_dist ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_Tot_Dist)
+hist(residuals(Model_Tot_Dist_sex))
+
+#Repeatability analysis males
+rpt_tot_dist(Anxiety_Control_Male) -> Control_Tot_Dist_Male 
+Control_Tot_Dist_Male
+rpt_tot_dist(Anxiety_Treatment_Male) -> Treatment_Tot_Dist_Male 
+Treatment_Tot_Dist_Male
+
+#Repeatability analysis females
+rpt_tot_dist(Anxiety_Control_Female) -> Control_Tot_Dist_Female 
+Control_Tot_Dist_Female
+rpt_tot_dist(Anxiety_Treatment_Female) -> Treatment_Tot_Dist_Female
+Treatment_Tot_Dist_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_Tot_Dist_Female_boot<-unlist(Control_Tot_Dist_Female$R_boot) #unlisting boots from repeatability analysis
+Control_Tot_Dist_Male_boot<-unlist(Control_Tot_Dist_Male$R_boot)
+
+Diff_boot_Tot_Dist_Control <- Control_Tot_Dist_Female_boot - Control_Tot_Dist_Male_boot #getting difference from boots
+
+
+q_tot_control <- quantile(Diff_boot_Tot_Dist_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_tot_control <- mean(Diff_boot_Tot_Dist_Control) #Obtaining mean
+
+mean_tot_control
+q_tot_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_Tot_Dist_Female_boot<-unlist(Treatment_Tot_Dist_Female$R_boot)
+Treatment_Tot_Dist_Male_boot<-unlist(Treatment_Tot_Dist_Male$R_boot)
+
+Diff_boot_Tot_Dist_Treatment <- Treatment_Tot_Dist_Male_boot - Treatment_Tot_Dist_Female_boot
+
+q_tot_Treatment <- quantile(Diff_boot_Tot_Dist_Treatment, c(0.025, 0.975)) 
+mean_tot_Treatment <- mean(Diff_boot_Tot_Dist_Treatment)
+
+mean_tot_Treatment
+q_tot_Treatment
+```
+
+
+

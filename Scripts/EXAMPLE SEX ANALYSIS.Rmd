@@ -1,0 +1,377 @@
+---
+title: "Sex_Analysis"
+author: "Hamza"
+date: "29/05/2020"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions.R") #load custom functions
+```
+
+```{r}
+
+#Subset by sex
+Old_Tanks_Male <- subset(Old_Tanks, Old_Tanks$Sex == "male")
+Old_Tanks_Female <- subset(Old_Tanks, Old_Tanks$Sex == "female")
+Tall_Tanks_Male <- subset(Tall_Tanks, Tall_Tanks$Sex == "male")
+Tall_Tanks_Female <- subset(Tall_Tanks, Tall_Tanks$Sex == "female")
+Both_Tanks_Male <- subset(Anxiety_Joined, Anxiety_Joined$Sex == "male")
+Both_Tanks_Female <- subset(Anxiety_Joined, Anxiety_Joined$Sex == "female")
+```
+
+### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS BY SEX AND TANK
+1) cHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH SEX IN EACH TANK SEPARATELY (USING SUBSETS) AND THEN WITH BOTH DATA COMBINED FOR EACH TANK
+3) CALCULATING DIFFERENCES BETWEEN MALE AND FEMALE REPEATABILITIES IN EACH TANK
+
+THESE STEPS ARE REPEATED FOR ALL BEHAVIORAL PARAMETERS, REFER TO THE FIRST BEHAVIORAL PARAMETER FOR COMMENTS AND REFERENCE 
+
+
+### Total distance travelled
+```{r}
+#Checking normality assumption
+Model_Tot_Dist_sex <- lmer(tot_dist ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_Tot_Dist)
+hist(residuals(Model_Tot_Dist_sex))
+
+#Repeatability analysis males
+rpt_tot_dist(Old_Tanks_Male) -> Old_Tot_Dist_Male #repeatability for short tanks (males)
+rpt_tot_dist(Tall_Tanks_Male) -> Tall_Tot_Dist_Male #repeatability for tall tanks (males)
+rpt_tot_dist(Both_Tanks_Male) -> Joined_Tot_Dist_Male #repeatability overall for males (both tanks)
+
+#Repeatability analysis females
+rpt_tot_dist(Old_Tanks_Female) -> Old_Tot_Dist_Female #repeatability for short tanks (females)
+rpt_tot_dist(Tall_Tanks_Female) -> Tall_Tot_Dist_Female #repeatability for tall tanks (females)
+rpt_tot_dist(Both_Tanks_Female) -> Joined_Tot_Dist_Female #repeatability overall for females (both tanks)
+
+
+
+#Contrast analysis to calculate differences between males and females in the short tank
+
+Old_Tot_Dist_Female_boot<-unlist(Old_Tot_Dist_Female$R_boot) #unlisting boots from repeatability analysis
+Old_Tot_Dist_Male_boot<-unlist(Old_Tot_Dist_Male$R_boot)
+
+Diff_boot_Tot_Dist_old <- Old_Tot_Dist_Male_boot - Old_Tot_Dist_Female_boot #getting difference from boots
+
+
+q_tot_old <- quantile(Diff_boot_Tot_Dist_old, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_tot_old <- mean(Diff_boot_Tot_Dist_old) #Obtaining mean
+
+
+#Contrast analysis to calculate differences between males and females in the tall tank 
+
+Tall_Tot_Dist_Female_boot<-unlist(Tall_Tot_Dist_Female$R_boot)
+Tall_Tot_Dist_Male_boot<-unlist(Tall_Tot_Dist_Male$R_boot)
+
+Diff_boot_Tot_Dist_tall <- Tall_Tot_Dist_Male_boot - Tall_Tot_Dist_Female_boot
+
+q_tot_tall <- quantile(Diff_boot_Tot_Dist_tall, c(0.025, 0.975)) 
+mean_tot_tall <- mean(Diff_boot_Tot_Dist_tall)
+
+
+
+```
+
+
+### Time spent in the low zone ('low duration')
+```{r}
+
+Model_low_dur_male <- lmer(low_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_low_dur_male)) #Normality assumption met
+
+Model_low_dur_female <- lmer(low_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_low_dur_female)) #Normality assumption met
+
+#Repeatability analysis males
+rpt_low_dur(Old_Tanks_Male) -> Old_low_dur_Male 
+rpt_low_dur(Tall_Tanks_Male) -> Tall_low_dur_Male 
+rpt_low_dur(Both_Tanks_Male) -> Joined_low_dur_Male 
+
+#Repeatability analysis females
+rpt_low_dur(Old_Tanks_Female) -> Old_low_dur_Female 
+rpt_low_dur(Tall_Tanks_Female) -> Tall_low_dur_Female 
+rpt_low_dur(Both_Tanks_Female) -> Joined_low_dur_Female 
+
+
+
+#Contrast analysis short tank
+
+Old_low_dur_Female_boot<-unlist(Old_low_dur_Female$R_boot)
+Old_low_dur_Male_boot<-unlist(Old_low_dur_Male$R_boot)
+
+Diff_boot_low_dur_old <- Old_low_dur_Female_boot - Old_low_dur_Male_boot
+
+q8 <- quantile(Diff_boot_low_dur_old, c(0.025, 0.975)) 
+m8 <- mean(Diff_boot_low_dur_old)
+
+
+#Contrast analysis tall tank
+
+Tall_low_dur_Female_boot<-unlist(Tall_low_dur_Female$R_boot)
+Tall_low_dur_Male_boot<-unlist(Tall_low_dur_Male$R_boot)
+
+
+Diff_boot_low_dur_tall <- Tall_low_dur_Male_boot - Tall_low_dur_Female_boot
+
+
+q9 <- quantile(Diff_boot_low_dur_tall, c(0.025, 0.975)) 
+m9 <- mean(Diff_boot_low_dur_tall)
+
+
+```
+
+###Time spent in the mid zone ('mid duration')
+```{r}
+
+#Checking normality assumptions
+
+Model_mid_dur_male <- lmer(mid_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_mid_dur_male)) #Normality assumption met
+
+Model_mid_dur_female <- lmer(mid_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_mid_dur_female)) #Normality assumption met
+
+
+#Repeatability analysis males
+rpt_mid_dur(Old_Tanks_Male) -> Old_mid_dur_Male 
+rpt_mid_dur(Tall_Tanks_Male) -> Tall_mid_dur_Male 
+rpt_mid_dur(Both_Tanks_Male) -> Joined_mid_dur_Male 
+
+#Repeatability analysis females
+rpt_mid_dur(Old_Tanks_Female) -> Old_mid_dur_Female 
+rpt_mid_dur(Tall_Tanks_Female) -> Tall_mid_dur_Female 
+rpt_mid_dur(Both_Tanks_Female) -> Joined_mid_dur_Female 
+
+
+#Contrast analysis old tank
+
+Old_mid_dur_Female_boot<-unlist(Old_mid_dur_Female$R_boot)
+Old_mid_dur_Male_boot<-unlist(Old_mid_dur_Male$R_boot)
+
+Diff_boot_mid_dur_old <- Old_mid_dur_Male_boot - Old_mid_dur_Female_boot
+
+
+q10 <- quantile(Diff_boot_mid_dur_old, c(0.025, 0.975)) 
+m10 <- mean(Diff_boot_mid_dur_old)
+
+#Contrast analysis tall tank
+
+Tall_mid_dur_Female_boot<-unlist(Tall_mid_dur_Female$R_boot)
+Tall_mid_dur_Male_boot<-unlist(Tall_mid_dur_Male$R_boot)
+
+Diff_boot_mid_dur_tall <- Tall_mid_dur_Male_boot - Tall_mid_dur_Female_boot
+
+q11 <- quantile(Diff_boot_mid_dur_tall, c(0.025, 0.975)) 
+m11 <- mean(Diff_boot_mid_dur_tall)
+```
+
+###Time spent in the high zone ('high duration')
+```{r}
+#Checking normality assumptions
+Model_high_dur_male <- lmer(high_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_high_dur_male))#Normality assumption for males not met
+
+Model_high_dur2_male <- lmer(sqrt(high_dur) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_high_dur2_male))#Normality assumption for males satisfied with a square root transformation
+
+Model_high_dur_Female <- lmer(high_dur ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_high_dur_Female))#Normality assumption for males not satisfying
+
+Model_high_dur_Female2 <- lmer(sqrt(high_dur) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_high_dur_Female2))#Normality assumption for females satisfied with a square root transformation
+
+
+
+
+#Repeatability analysis males
+rpt_high_dur(Old_Tanks_Male) -> Old_high_dur_Male2 
+rpt_high_dur(Tall_Tanks_Male) -> Tall_high_dur_Male2 
+rpt_high_dur(Both_Tanks_Male) -> Joined_high_dur_Male2 
+
+#Repeatability analysis females
+rpt_high_dur(Old_Tanks_Female) -> Old_high_dur_Female2 
+rpt_high_dur(Tall_Tanks_Female) -> Tall_high_dur_Female2 
+rpt_high_dur(Both_Tanks_Female) -> Joined_high_dur_Female2 
+
+
+#Contrast analysis old tank
+
+Old_high_dur_Female_boot<-unlist(Old_high_dur_Female$R_boot)
+Old_high_dur_Male_boot<-unlist(Old_high_dur_Male$R_boot)
+
+Diff_boot_high_dur_old <- Old_high_dur_Female_boot - Old_high_dur_Male_boot
+
+q12 <- quantile(Diff_boot_high_dur_old, c(0.025, 0.975))
+m12 <- mean(Diff_boot_high_dur_old)
+
+#Contrast analysis tall tank
+
+Tall_high_dur_Female_boot<-unlist(Tall_high_dur_Female$R_boot)
+Tall_high_dur_Male_boot<-unlist(Tall_high_dur_Male$R_boot)
+
+Diff_boot_high_dur_tall <- Tall_high_dur_Male_boot - Tall_high_dur_Female_boot
+
+q13 <- quantile(Diff_boot_high_dur_tall, c(0.025, 0.975)) 
+m13 <- mean(Diff_boot_high_dur_tall)
+```
+
+###Time spent freezing ('freezing duration')
+```{r}
+#Checking normality assumptions
+
+Model_freezing_dur_male3 <- lmer(log(freezing_dur+1) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_freezing_dur_male3)) #Log transformation was deemed appropriate to meet normality
+
+Model_freezing_dur_female3 <- lmer(log(freezing_dur+1) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_freezing_dur_female3))#Log transformation was deemed appropriate to meet normality
+
+
+
+#Repeatability analysis males
+rpt_freezing_dur(Old_Tanks_Male) -> Old_freezing_dur_Male3 
+rpt_freezing_dur(Tall_Tanks_Male) -> Tall_freezing_dur_Male3 
+rpt_freezing_dur(Both_Tanks_Male) -> Joined_freezing_dur_Male3 
+
+#Repeatability analysis females
+rpt_freezing_dur(Old_Tanks_Female) -> Old_freezing_dur_Female3 
+rpt_freezing_dur(Tall_Tanks_Female) -> Tall_freezing_dur_Female3 
+rpt_freezing_dur(Both_Tanks_Female) -> Joined_freezing_dur_Female3 
+
+
+#Contrast analysis old tank
+
+Old_freezing_dur_Female_boot<-unlist(Old_freezing_dur_Female3$R_boot)
+Old_freezing_dur_Male_boot<-unlist(Old_freezing_dur_Male3$R_boot)
+
+Diff_boot_freezing_dur_old <- Old_freezing_dur_Male_boot - Old_freezing_dur_Female_boot
+
+q14 <- quantile(Diff_boot_freezing_dur_old, c(0.025, 0.975)) 
+m14 <- mean(Diff_boot_freezing_dur_old)
+
+#Contrast analysis tall tank
+
+Tall_freezing_dur_Female_boot<-unlist(Tall_freezing_dur_Female3$R_boot)
+Tall_freezing_dur_Male_boot<-unlist(Tall_freezing_dur_Male3$R_boot)
+
+Diff_boot_freezing_dur_tall <- Tall_freezing_dur_Male_boot - Tall_freezing_dur_Female_boot
+
+q15 <- quantile(Diff_boot_freezing_dur_tall, c(0.025, 0.975))
+m15 <- mean(Diff_boot_freezing_dur_tall)
+
+
+```
+
+#Latency to high zone
+```{r}
+Model_latency_male <- lmer(latency_high ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_latency_male))#Normality assumption met
+
+Model_latency_female <- lmer(latency_high ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_latency_female))#Normality assumption met
+
+#Repeatability analysis males
+rpt_latency(Old_Tanks_Male) -> Old_latency_high_Male 
+rpt_latency(Tall_Tanks_Male) -> Tall_latency_high_Male
+rpt_latency(Both_Tanks_Male) -> Joined_latency_high_Male 
+
+
+#Repeatability analysis females
+rpt_latency(Old_Tanks_Female) -> Old_latency_high_Female 
+rpt_latency(Tall_Tanks_Female) -> Tall_latency_high_Female 
+rpt_latency(Both_Tanks_Female) -> Joined_latency_high_Female 
+
+#Contrast analysis old tank
+
+Old_latency_high_Female_boot<-unlist(Old_latency_high_Female$R_boot)
+Old_latency_high_Male_boot<-unlist(Old_latency_high_Male$R_boot)
+
+
+Diff_boot_latency_high_old <- Old_latency_high_Male_boot - Old_latency_high_Female_boot
+
+
+q16 <- quantile(Diff_boot_latency_high_old, c(0.025, 0.975)) 
+m16 <- mean(Diff_boot_latency_high_old)
+
+#Contrast analysis tall tank
+
+Tall_latency_high_Female_boot<-unlist(Tall_latency_high_Female$R_boot)
+Tall_latency_high_Male_boot<-unlist(Tall_latency_high_Male$R_boot)
+
+Diff_boot_latency_high_tall <- Tall_latency_high_Male_boot - Tall_latency_high_Female_boot
+
+q17 <- quantile(Diff_boot_latency_high_tall, c(0.025, 0.975)) 
+m17<- mean(Diff_boot_latency_high_tall)
+```
+
+#Entries into high zone
+
+```{r}
+#Checking normality assumption
+Model_freq_high_male <- lmer(freq_high ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_freq_high_male))#Normality assumption not met
+
+Model_freq_high_male2 <- lmer(sqrt(freq_high) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Male)
+hist(residuals(Model_freq_high_male2))#Normality assumptions met with square root transformation
+
+Model_freq_high_female <- lmer(freq_high ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_freq_high_female))#Normality assumption not met
+
+Model_freq_high_female2 <- lmer(sqrt(freq_high) ~ Tank + (1 | Fish_ID), data = Both_Tanks_Female)
+hist(residuals(Model_freq_high_female2))#Normality assumptions met with square root transformation
+
+
+#Repeatability analysis males
+rpt_freq(Old_Tanks_Male) -> Old_freq_high_Male 
+rpt_freq(Tall_Tanks_Male) -> Tall_freq_high_Male
+rpt_freq(Both_Tanks_Male) -> Joined_freqlatency_high_Male 
+
+
+#Repeatability analysis females
+rpt_freq(Old_Tanks_Female) -> Old_freq_high_Female 
+rpt_freq(Tall_Tanks_Female) -> Tall_freq_high_Female 
+rpt_freq(Both_Tanks_Female) -> Joined_freq_high_Female 
+
+
+#Contrast analysis old tank
+
+Old_freq_high_Female_boot<-unlist(Old_freq_high_Female$R_boot)
+Old_freq_high_Male_boot<-unlist(Old_freq_high_Male$R_boot)
+
+Diff_boot_freq_high_old <- Old_freq_high_Female_boot - Old_freq_high_Male_boot
+
+q18 <- quantile(Diff_boot_freq_high_old, c(0.025, 0.975)) 
+m18 <- mean(Diff_boot_freq_high_old)
+
+#Contrast analysis tall tank
+
+Tall_freq_high_Female_boot<-unlist(Tall_freq_high_Female$R_boot)
+Tall_freq_high_Male_boot<-unlist(Tall_freq_high_Male$R_boot)
+
+Diff_boot_freq_high_tall <- Tall_freq_high_Male_boot - Tall_freq_high_Female_boot
+
+q19 <- quantile(Diff_boot_freq_high_tall, c(0.025, 0.975)) 
+m19 <- mean(Diff_boot_freq_high_tall)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
