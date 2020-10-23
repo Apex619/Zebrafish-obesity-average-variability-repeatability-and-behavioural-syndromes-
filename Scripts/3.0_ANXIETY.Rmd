@@ -22,7 +22,7 @@ source("../Scripts/functions_repeatability.R")
 
 ### Import Data
 ```{r, include=FALSE}
-Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data.xlsx")
+Anxiety_Joined <- read_xlsx("./Data/Anxiety/Anxiety_Data.xlsx")
 
 #Import new file updated with new params !!!!
 ```
@@ -30,7 +30,6 @@ Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data.xlsx")
 ### Examine Data
 
 ```{r, include=FALSE}
-str(Anxiety)
 
 #Convert characters into factors
 

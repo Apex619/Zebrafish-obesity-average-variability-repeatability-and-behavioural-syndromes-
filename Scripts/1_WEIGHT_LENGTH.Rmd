@@ -25,7 +25,7 @@ source("../Scripts/functions_repeatability.R")
 #Import and filter data
 ```{r, include = FALSE}
 #Master file with raw data
-Data <- read.csv("../Data/Weight_Length/Analysis.csv")
+Data <- read.csv("./Data/Weight_Length/Analysis.csv")
 
 #Filtered to ensure no spare tanks or fish are included in the analysis
 Data_subset = filter(Data, Tank %in% c("HA_C1","HA_C2","HA_C3", "HA_C4", "HA_T1","HA_T2","HA_T3","HA_T4"))
@@ -86,9 +86,9 @@ q_body_weight
 m_mody_weight
 
 # Calculating difference in variance between control and treatment group 
-Model_Weight_1 <- lme(Weight.g. ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
+Model_Weight_1 <- lme(Weight.g. ~ (Treatment_Tank + Sex + Week)^2, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
 summary(Model_Weight_1)
-Model_Weight_2 <- lme(Weight.g. ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
+Model_Weight_2 <- lme(Weight.g. ~ (Treatment_Tank + Sex + Week)^2, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
 summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
@@ -102,7 +102,7 @@ Model_Body_Length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fi
 tab_model(Model_Body_Length)
 hist(residuals(Model_Body_Length))#histogram of residuals to check for normal distribution 
 
-Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
+Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
 summary(Model_Body_Length2)
 tab_model(Model_Body_Length2)
 hist(residuals(Model_Body_Length2))
@@ -111,7 +111,9 @@ hist(residuals(Model_Body_Length2))
 
 #Calculating repeatabilities using custom made functions
 rpt_length(Weight_Length_Control) -> rpt_length_control
+rpt_length_control
 rpt_length(Weight_Length_Treatment) -> rpt_length_treatment
+rpt_length_treatment
 
 #Obtaining within-individual and between-individual variance for body weight
 
