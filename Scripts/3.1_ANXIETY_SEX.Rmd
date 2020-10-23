@@ -28,7 +28,7 @@ Anxiety_Treatment_Female <- subset(Anxiety_Treatment, Anxiety_Treatment$Sex == "
 ```
 
 ### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS BY SEX AND TANK
-1) cHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
 2) PERFORMING REPEATABILITY ANALYSIS FOR EACH SEX IN EACH TANK SEPARATELY (USING SUBSETS) AND THEN WITH BOTH DATA COMBINED FOR EACH TANK
 3) CALCULATING DIFFERENCES BETWEEN MALE AND FEMALE REPEATABILITIES IN EACH TANK
 
@@ -84,4 +84,299 @@ q_tot_Treatment
 ```
 
 
+### Time spent in low zone
+```{r}
+#Checking normality assumption
+Model_low_dur_sex <- lmer(low_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_low_dur)
+hist(residuals(Model_low_dur_sex))
+
+#Repeatability analysis males
+rpt_low_dur(Anxiety_Control_Male) -> Control_low_dur_Male 
+Control_low_dur_Male
+rpt_low_dur(Anxiety_Treatment_Male) -> Treatment_low_dur_Male 
+Treatment_low_dur_Male
+
+#Repeatability analysis females
+rpt_low_dur(Anxiety_Control_Female) -> Control_low_dur_Female 
+Control_low_dur_Female
+rpt_low_dur(Anxiety_Treatment_Female) -> Treatment_low_dur_Female
+Treatment_low_dur_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_low_dur_Female_boot<-unlist(Control_low_dur_Female$R_boot) #unlisting boots from repeatability analysis
+Control_low_dur_Male_boot<-unlist(Control_low_dur_Male$R_boot)
+
+Diff_boot_low_dur_Control <- Control_low_dur_Female_boot - Control_low_dur_Male_boot #getting difference from boots
+
+
+q_low_dur_control <- quantile(Diff_boot_low_dur_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_low_dur_control <- mean(Diff_boot_low_dur_Control) #Obtaining mean
+
+mean_low_dur_control
+q_low_dur_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_low_dur_Female_boot<-unlist(Treatment_low_dur_Female$R_boot)
+Treatment_low_dur_Male_boot<-unlist(Treatment_low_dur_Male$R_boot)
+
+Diff_boot_low_dur_Treatment <- Treatment_low_dur_Female_boot - Treatment_low_dur_Male_boot
+
+q_low_dur_Treatment <- quantile(Diff_boot_low_dur_Treatment, c(0.025, 0.975)) 
+mean_low_dur_Treatment <- mean(Diff_boot_low_dur_Treatment)
+
+mean_low_dur_Treatment
+q_low_dur_Treatment
+```
+
+### Time spent in mid zone
+```{r}
+#Checking normality assumption
+Model_mid_dur_sex <- lmer(mid_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_mid_dur)
+hist(residuals(Model_mid_dur_sex))
+
+#Repeatability analysis males
+rpt_mid_dur(Anxiety_Control_Male) -> Control_mid_dur_Male 
+Control_mid_dur_Male
+rpt_mid_dur(Anxiety_Treatment_Male) -> Treatment_mid_dur_Male 
+Treatment_mid_dur_Male
+
+#Repeatability analysis females
+rpt_mid_dur(Anxiety_Control_Female) -> Control_mid_dur_Female 
+Control_mid_dur_Female
+rpt_mid_dur(Anxiety_Treatment_Female) -> Treatment_mid_dur_Female
+Treatment_mid_dur_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_mid_dur_Female_boot<-unlist(Control_mid_dur_Female$R_boot) #unlisting boots from repeatability analysis
+Control_mid_dur_Male_boot<-unlist(Control_mid_dur_Male$R_boot)
+
+Diff_boot_mid_dur_Control <- Control_mid_dur_Female_boot - Control_mid_dur_Male_boot #getting difference from boots
+
+
+q_mid_dur_control <- quantile(Diff_boot_mid_dur_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_mid_dur_control <- mean(Diff_boot_mid_dur_Control) #Obtaining mean
+
+mean_mid_dur_control
+q_mid_dur_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_mid_dur_Female_boot<-unlist(Treatment_mid_dur_Female$R_boot)
+Treatment_mid_dur_Male_boot<-unlist(Treatment_mid_dur_Male$R_boot)
+
+Diff_boot_mid_dur_Treatment <- Treatment_mid_dur_Female_boot - Treatment_mid_dur_Male_boot
+
+q_mid_dur_Treatment <- quantile(Diff_boot_mid_dur_Treatment, c(0.025, 0.975)) 
+mean_mid_dur_Treatment <- mean(Diff_boot_mid_dur_Treatment)
+
+mean_mid_dur_Treatment
+q_mid_dur_Treatment
+```
+
+### Time spent in high zone
+```{r}
+#Checking normality assumption
+Model_high_dur_sex <- lmer(sqrt(high_dur) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_high_dur)
+hist(residuals(Model_high_dur_sex))
+
+#Repeatability analysis males
+rpt_high_dur(Anxiety_Control_Male) -> Control_high_dur_Male 
+Control_high_dur_Male
+rpt_high_dur(Anxiety_Treatment_Male) -> Treatment_high_dur_Male 
+Treatment_high_dur_Male
+
+#Repeatability analysis females
+rpt_high_dur(Anxiety_Control_Female) -> Control_high_dur_Female 
+Control_high_dur_Female
+rpt_high_dur(Anxiety_Treatment_Female) -> Treatment_high_dur_Female
+Treatment_high_dur_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_high_dur_Female_boot<-unlist(Control_high_dur_Female$R_boot) #unlisting boots from repeatability analysis
+Control_high_dur_Male_boot<-unlist(Control_high_dur_Male$R_boot)
+
+Diff_boot_high_dur_Control <- Control_high_dur_Male_boot - Control_high_dur_Female_boot #getting difference from boots
+
+
+q_high_dur_control <- quantile(Diff_boot_high_dur_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_high_dur_control <- mean(Diff_boot_high_dur_Control) #Obtaining mean
+
+mean_high_dur_control
+q_high_dur_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_high_dur_Female_boot<-unlist(Treatment_high_dur_Female$R_boot)
+Treatment_high_dur_Male_boot<-unlist(Treatment_high_dur_Male$R_boot)
+
+Diff_boot_high_dur_Treatment <- Treatment_high_dur_Female_boot - Treatment_high_dur_Male_boot
+
+q_high_dur_Treatment <- quantile(Diff_boot_high_dur_Treatment, c(0.025, 0.975)) 
+mean_high_dur_Treatment <- mean(Diff_boot_high_dur_Treatment)
+
+mean_high_dur_Treatment
+q_high_dur_Treatment
+```
+
+
+### Time spent freezing
+```{r}
+#Checking normality assumption
+Model_freezing_dur_sex <- lmer(log(freezing_dur+1) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_freezing_dur)
+hist(residuals(Model_freezing_dur_sex))
+
+#Repeatability analysis males
+rpt_freezing_dur(Anxiety_Control_Male) -> Control_freezing_dur_Male 
+Control_freezing_dur_Male
+rpt_freezing_dur(Anxiety_Treatment_Male) -> Treatment_freezing_dur_Male 
+Treatment_freezing_dur_Male
+
+#Repeatability analysis females
+rpt_freezing_dur(Anxiety_Control_Female) -> Control_freezing_dur_Female 
+Control_freezing_dur_Female
+rpt_freezing_dur(Anxiety_Treatment_Female) -> Treatment_freezing_dur_Female
+Treatment_freezing_dur_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_freezing_dur_Female_boot<-unlist(Control_freezing_dur_Female$R_boot) #unlisting boots from repeatability analysis
+Control_freezing_dur_Male_boot<-unlist(Control_freezing_dur_Male$R_boot)
+
+Diff_boot_freezing_dur_Control <- Control_freezing_dur_Female_boot - Control_freezing_dur_Male_boot #getting difference from boots
+
+
+q_freezing_dur_control <- quantile(Diff_boot_freezing_dur_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_freezing_dur_control <- mean(Diff_boot_freezing_dur_Control) #Obtaining mean
+
+mean_freezing_dur_control
+q_freezing_dur_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_freezing_dur_Female_boot<-unlist(Treatment_freezing_dur_Female$R_boot)
+Treatment_freezing_dur_Male_boot<-unlist(Treatment_freezing_dur_Male$R_boot)
+
+Diff_boot_freezing_dur_Treatment <- Treatment_freezing_dur_Male_boot - Treatment_freezing_dur_Female_boot
+
+q_freezing_dur_Treatment <- quantile(Diff_boot_freezing_dur_Treatment, c(0.025, 0.975)) 
+mean_freezing_dur_Treatment <- mean(Diff_boot_freezing_dur_Treatment)
+
+mean_freezing_dur_Treatment
+q_freezing_dur_Treatment
+```
+
+
+### Latency to high
+```{r}
+#Checking normality assumption
+Model_latency_high_sex <- lmer(latency_high ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_latency_high)
+hist(residuals(Model_latency_high_sex))
+
+#Repeatability analysis males
+rpt_latency(Anxiety_Control_Male) -> Control_latency_high_Male 
+Control_latency_high_Male
+rpt_latency(Anxiety_Treatment_Male) -> Treatment_latency_high_Male 
+Treatment_latency_high_Male
+
+#Repeatability analysis females
+rpt_latency(Anxiety_Control_Female) -> Control_latency_high_Female 
+Control_latency_high_Female
+rpt_latency(Anxiety_Treatment_Female) -> Treatment_latency_high_Female
+Treatment_latency_high_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_latency_high_Female_boot<-unlist(Control_latency_high_Female$R_boot) #unlisting boots from repeatability analysis
+Control_latency_high_Male_boot<-unlist(Control_latency_high_Male$R_boot)
+
+Diff_boot_latency_high_Control <- Control_latency_high_Female_boot - Control_latency_high_Male_boot #getting difference from boots
+
+
+q_latency_high_control <- quantile(Diff_boot_latency_high_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_latency_high_control <- mean(Diff_boot_latency_high_Control) #Obtaining mean
+
+mean_latency_high_control
+q_latency_high_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_latency_high_Female_boot<-unlist(Treatment_latency_high_Female$R_boot)
+Treatment_latency_high_Male_boot<-unlist(Treatment_latency_high_Male$R_boot)
+
+Diff_boot_latency_high_Treatment <- Treatment_latency_high_Female_boot - Treatment_latency_high_Male_boot
+
+q_latency_high_Treatment <- quantile(Diff_boot_latency_high_Treatment, c(0.025, 0.975)) 
+mean_latency_high_Treatment <- mean(Diff_boot_latency_high_Treatment)
+
+mean_latency_high_Treatment
+q_latency_high_Treatment
+```
+
+### Entries to high zone
+```{r}
+#Checking normality assumption
+Model_freq_high_sex <- lmer(sqrt(freq_high) ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_freq_high)
+hist(residuals(Model_freq_high_sex))
+
+#Repeatability analysis males
+rpt_freq(Anxiety_Control_Male) -> Control_freq_high_Male 
+Control_freq_high_Male
+rpt_freq(Anxiety_Treatment_Male) -> Treatment_freq_high_Male 
+Treatment_freq_high_Male
+
+#Repeatability analysis females
+rpt_freq(Anxiety_Control_Female) -> Control_freq_high_Female 
+Control_freq_high_Female
+rpt_freq(Anxiety_Treatment_Female) -> Treatment_freq_high_Female
+Treatment_freq_high_Female
+
+
+
+#Contrast analysis to calculate differences between males and females in the control group
+
+Control_freq_high_Female_boot<-unlist(Control_freq_high_Female$R_boot) #unlisting boots from repeatability analysis
+Control_freq_high_Male_boot<-unlist(Control_freq_high_Male$R_boot)
+
+Diff_boot_freq_high_Control <- Control_freq_high_Female_boot - Control_freq_high_Male_boot #getting difference from boots
+
+
+q_freq_high_control <- quantile(Diff_boot_freq_high_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
+mean_freq_high_control <- mean(Diff_boot_freq_high_Control) #Obtaining mean
+
+mean_freq_high_control
+q_freq_high_control
+
+#Contrast analysis to calculate differences between males and females in the treatment group
+
+Treatment_freq_high_Female_boot<-unlist(Treatment_freq_high_Female$R_boot)
+Treatment_freq_high_Male_boot<-unlist(Treatment_freq_high_Male$R_boot)
+
+Diff_boot_freq_high_Treatment <- Treatment_freq_high_Female_boot - Treatment_freq_high_Male_boot
+
+q_freq_high_Treatment <- quantile(Diff_boot_freq_high_Treatment, c(0.025, 0.975)) 
+mean_freq_high_Treatment <- mean(Diff_boot_freq_high_Treatment)
+
+mean_freq_high_Treatment
+q_freq_high_Treatment
+```
 
