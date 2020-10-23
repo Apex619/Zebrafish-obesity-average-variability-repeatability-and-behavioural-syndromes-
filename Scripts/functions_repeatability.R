@@ -60,12 +60,22 @@ rpt_high_dur <- function(df) {
   x <- rpt(sqrt(high_dur) ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
 
+#Obtaining within and between-individual variances (time spent in high zone) F0 ONLY
+rpt_within_between_high_dur2 <- function(df) {
+  rpt(scale(log(high_dur+1)) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+}
+
+#Calculating repeatability for time spent in high zone F0 ONLY
+rpt_high_dur2 <- function(df) {
+  x <- rpt(log(high_dur+1) ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
+}
+
 #Obtaining within and between-individual variances (time spent freezing)
 rpt_within_between_freezing_dur <- function(df) {
   rpt(scale(log(freezing_dur+1)) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
 
-#Calculating repeatability for time spent freezing
+#Calculating repeatability for time spent freezing 
 rpt_freezing_dur <- function(df) {
   x <- rpt(log(freezing_dur+1) ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
