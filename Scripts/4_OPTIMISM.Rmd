@@ -7,37 +7,25 @@ output: html_document
 
 ### Load packages
 
+### Load packages
 ```{r setup, include=FALSE}
-#install.packages("pacman")
-#install.packages("ggThemeAssist")
-#install.packages("ggbeeswarm")
-#install.packages("rptR")
-#install.packages("lme4")
-#install.packages("lmerTest")
-#install.packages("wesanderson")
-library(lmerTest)
-library(ggThemeAssist)
-library(rptR)
-library(lme4)
-library(readxl)
-library(dplyr)
-pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
-library(sjPlot)
-library(ggplot2)
-library(lubridate)
-library(wesanderson)
-library(ggbeeswarm)
-library(emmeans)
-#sessionInfo()
-#Install miktex and then run this to knit a pdf file
-#install.packages('tinytex')
-#tinytex::install_tinytex()
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
+
 ```
 
-### Import and format data
+### Import, format and filter data
 
 ```{r, include=FALSE}
-Optimism <- read.csv("Optimism_Data.csv")
+Optimism <- read.csv("../Data/Optimism/Optimism_Data.csv")
 Optimism$Video_ID <- as.factor(Optimism$Video_ID)
 Optimism$Time < as.factor(Optimism$Time)
 
@@ -51,105 +39,185 @@ Optimism %>%
 }
 
 #Join Phases to Data Frame
-Video_ID <- read.csv("Video_ID.csv")
+Video_ID <- read.csv("../Data/Optimism/Video_ID.csv") #Video ID enables us to filter positive and negative data
 Video_ID$Video_ID <- as.factor(Video_ID$Video_ID)
 
 left_join(Optimism, Video_ID, by = "Video_ID") -> Optimism
 
 
-```
-
 ## Filtering positive data
 
-```{r}
+
 filter_etho(Optimism, c("1.2", "1.4", "2.2","2.4","3.2","3.4","4.2","4.4"), ("3-6")) -> Positive_Phase_1
 
 filter_etho(Optimism, c("1.1","1.3","2.1","2.3","3.1","3.3","4.1","4.3"), ("9-12")) -> Positive_Phase_2
 
 Positive_ALL <- bind_rows(Positive_Phase_1,Positive_Phase_2)
-```
+
 
 ## Filtering negative data
 
-```{r}
 filter_etho(Optimism, c("1.2", "1.4", "2.2","2.4","3.2","3.4","4.2","4.4"), ("9-12")) -> Negative_Phase_2
 
 filter_etho(Optimism, c("1.1","1.3","2.1","2.3","3.1","3.3","4.1","4.3"), ("3-6")) -> Negative_Phase_1
 
 Negative_ALL <- bind_rows(Negative_Phase_1,Negative_Phase_2)
-```
+
 
 ## Filtering mixed stim data
 
-```{r}
+
 Mixed_ALL <- Optimism %>% filter(Time == "15-18")
+
+
+#Subsetting data by control and treatment
+Positive_Control <- subset(Positive_ALL, Positive_ALL$Group == "Control") 
+Positive_Treatment <- subset(Positive_ALL, Positive_ALL$Group == "Treatment") 
+Negative_Control <- subset(Negative_ALL, Negative_ALL$Group == "Control") 
+Negative_Treatment <- subset(Negative_ALL, Negative_ALL$Group == "Treatment") 
+Mixed_Control <- subset(Mixed_ALL, Mixed_ALL$Group == "Control") 
+Mixed_Treatment <- subset(Mixed_ALL, Mixed_ALL$Group == "Treatment") 
 ```
+
+### MAIN ANALYSIS FOR TIME SPENT NEAR SCREEN (0-5CM)
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH GROUP AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT
 
 # Positive Analysis
 
 ```{r}
-#Zone_05_dur
+#Check Normality with mixed model and then histogram of residuals
 
+Model_Positive <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Positive_ALL) #mixed model
+tab_model(Model_Positive)
+hist(residuals(Model_Positive)) #histogram of residuals to check for normal distribution 
 
-Positive_ALL %>% 
-  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  labs(title = "Positive")+
-  facet_grid(~Sex)
+Model_Positive0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Positive_ALL) #mixed model, interaction added
+tab_model(Model_Positive0)
+hist(residuals(Model_Positive0))
 
+#Calculating repeatabilities using custom made functions
+rpt_optimism_zone05(Positive_Control) -> rpt_positive_control
+rpt_positive_control
+rpt_optimism_zone05(Positive_Treatment) -> rpt_positive_treatment
+rpt_positive_treatment
 
+#Obtaining within-individual and between-individual variance 
 
-model_positive_05_dur <- lmer(zone_05_dur ~ Group*Sex  + (1 | Fish_ID), data = Positive_ALL)
-tab_model(model_positive_05_dur)
-hist(resid(model_positive_05_dur))
+rpt_within_zone05(Positive_Control) -> within_between_positive_control
+within_between_positive_control
+rpt_within_zone05(Positive_Treatment) -> within_between_positive_treatment
+within_between_positive_treatment
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_positive_boot <- unlist_rptr(rpt_positive_control) #unlisting from the short tanks
+Treatment_positive_boot <- unlist_rptr(rpt_positive_treatment) #unlisting from the tall tanks
+positive_diff <- difference_boot(Treatment_positive_boot,Control_positive_boot) #calculating the difference
+q_positive <- quantiles_diff_boot(positive_diff) #obtaining 95% CI
+m_positive <- mean(positive_diff) #Obtaining mean
+m_positive
+q_positive
+
+# Calculating difference in variance between control and treatment groups
+Model_Positive1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Positive_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Positive1)
+Model_Positive2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Positive_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Positive2)
+anova(Model_Positive1, Model_Positive2) #calculating difference between two models to find difference in variance
+
 ```
 
-# Negative analysis
 
+# Negative Analysis
 
 ```{r}
-#Zone_05_dur
+#Check Normality with mixed model and then histogram of residuals
 
+Model_Negative <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Negative_ALL) #mixed model
+tab_model(Model_Negative)
+hist(residuals(Model_Negative)) #histogram of residuals to check for normal distribution 
 
-Negative_ALL %>% 
-  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  labs(title = "Negative Data")+
-  facet_grid(~Sex)
+Model_Negative0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Negative_ALL) #mixed model, interaction added
+tab_model(Model_Negative0)
+hist(residuals(Model_Negative0))
 
+#Calculating repeatabilities using custom made functions
+rpt_optimism_zone05(Negative_Control) -> rpt_Negative_control
+rpt_Negative_control
+rpt_optimism_zone05(Negative_Treatment) -> rpt_Negative_treatment
+rpt_Negative_treatment
 
-model_negative_05_dur <- lmer(sqrt(zone_05_dur) ~ Group*Sex  + (1 | Fish_ID), data = Negative_ALL)
-tab_model(model_negative_05_dur)
-hist(resid(model_negative_05_dur))
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05(Negative_Control) -> within_between_Negative_control
+within_between_Negative_control
+rpt_within_zone05(Negative_Treatment) -> within_between_Negative_treatment
+within_between_Negative_treatment
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_Negative_boot <- unlist_rptr(rpt_Negative_control) #unlisting from the short tanks
+Treatment_Negative_boot <- unlist_rptr(rpt_Negative_treatment) #unlisting from the tall tanks
+Negative_diff <- difference_boot(Treatment_Negative_boot,Control_Negative_boot) #calculating the difference
+q_Negative <- quantiles_diff_boot(Negative_diff) #obtaining 95% CI
+m_Negative <- mean(Negative_diff) #Obtaining mean
+m_Negative
+q_Negative
+
+# Calculating difference in variance between control and treatment groups
+Model_Negative1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Negative_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Negative1)
+Model_Negative2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Negative_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Negative2)
+anova(Model_Negative1, Model_Negative2) #calculating difference between two models to find difference in variance
+
 ```
 
+# Mixed Analysis
 
-# Mixed analysis
 ```{r}
-#Zone_05_dur
+#Check Normality with mixed model and then histogram of residuals
 
+Model_Mixed <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Mixed_ALL) #mixed model
+tab_model(Model_Mixed)
+hist(residuals(Model_Mixed)) #histogram of residuals to check for normal distribution 
 
-Mixed_ALL %>% 
-  ggplot(aes(x = Group, y = zone_05_dur, colour = Group)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()+
-  labs(title = "Mixed Data")+
-  facet_grid(~Sex)
+Model_Mixed0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Mixed_ALL) #mixed model, interaction added
+tab_model(Model_Mixed0)
+hist(residuals(Model_Mixed0))
 
-model_mixed_05_dur <- lmer(zone_05_dur ~ Group*Sex  + (1 | Fish_ID), data = Mixed_ALL)
-tab_model(model_mixed_05_dur)
-hist(resid(model_mixed_05_dur))
+#Calculating repeatabilities using custom made functions
+rpt_optimism_zone05(Mixed_Control) -> rpt_Mixed_control
+rpt_Mixed_control
+rpt_optimism_zone05(Mixed_Treatment) -> rpt_Mixed_treatment
+rpt_Mixed_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05(Mixed_Control) -> within_between_Mixed_control
+within_between_Mixed_control
+rpt_within_zone05(Mixed_Treatment) -> within_between_Mixed_treatment
+within_between_Mixed_treatment
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_Mixed_boot <- unlist_rptr(rpt_Mixed_control) #unlisting from the short tanks
+Treatment_Mixed_boot <- unlist_rptr(rpt_Mixed_treatment) #unlisting from the tall tanks
+Mixed_diff <- difference_boot(Treatment_Mixed_boot,Control_Mixed_boot) #calculating the difference
+q_Mixed <- quantiles_diff_boot(Mixed_diff) #obtaining 95% CI
+m_Mixed <- mean(Mixed_diff) #Obtaining mean
+m_Mixed
+q_Mixed
+
+# Calculating difference in variance between control and treatment groups
+Model_Mixed1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Mixed_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Mixed1)
+Model_Mixed2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Mixed_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Mixed2)
+anova(Model_Mixed1, Model_Mixed2) #calculating difference between two models to find difference in variance
+
 ```
-
-# NEXT STEP...Filtering by the type of stimulus (and seeing their ICC) and looking at different variables 
-
-
-
 
 
 
