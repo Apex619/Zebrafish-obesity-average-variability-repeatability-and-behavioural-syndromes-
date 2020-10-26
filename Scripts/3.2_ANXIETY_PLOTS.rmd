@@ -289,3 +289,36 @@ Sex_New_plot
 ggsave(path = "../Plots", file = "Overall_plot_sex.jpeg", limitsize = FALSE)
 
 ```
+
+#Generating custom designed violin plots to display raw distributions of behavioral responses
+```{r}
+
+
+low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone", "Seconds")
+
+
+tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")
+
+
+
+mid_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$mid_dur, "Time spent in mid zone", "Seconds")
+
+
+high_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$high_dur, "Time spent in high zone", "Seconds")
+
+
+freezing_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$freezing_dur+1), "Time spent freezing", "Seconds")
+
+
+freq_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$freq_high, "Frequency of visits to high zone", "Visits")
+freq_violin
+
+latency_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$latency_high, "Latency to the high zone", "Seconds")
+
+#Joining plots together using patchwork to create one main plot
+
+Joined_violins_new_design <- tot_dist_violin + low_dur_violin + mid_dur_violin + high_dur_violin + freezing_dur_violin + latency_violin+freq_violin + plot_layout(ncol = 2, nrow=4)
+Joined_violins_new_design
+
+ggsave(path = "../Plots/Anxiety", file = "Behavioral responses.jpeg", limitsize = FALSE)
+```
