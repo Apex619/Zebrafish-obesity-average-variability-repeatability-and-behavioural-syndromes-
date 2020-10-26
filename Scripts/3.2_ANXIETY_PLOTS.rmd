@@ -23,12 +23,13 @@ source("../Scripts/functions_repeatability.R") #load custom functions
 Total distance F0
 ```{r, echo=FALSE}
 Tot_Dist_rptr_F0 <- tibble(
-  Condition = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control)", "Within-Individual Variance (Control)","Between-Individual Variance (Treatment)", "Within-Individual Variance (Treatment)"),
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control)", "Within-Individual Variance (Control)","Between-Individual Variance (Treatment)", "Within-Individual Variance (Treatment)"),
   r = c(Control_Tot_Dist$R$Fish_ID,Treatment_Tot_Dist$R$Fish_ID, m1, within_between_tot_dist_control$R[1], within_between_tot_dist_control$R[2],within_between_tot_dist_treatment$R[1], within_between_tot_dist_treatment$R[2]),
   ci.lb = c(Control_Tot_Dist$CI_emp$`2.5%`,Treatment_Tot_Dist$CI_emp$`2.5%`,-0.10, within_between_tot_dist_control$CI_emp[1,1], within_between_tot_dist_control$CI_emp[2,1],within_between_tot_dist_treatment$CI_emp[1,1], within_between_tot_dist_treatment$CI_emp[2,1]),
   ci.ub = c(Control_Tot_Dist$CI_emp$`97.5%`,Treatment_Tot_Dist$CI_emp$`97.5%`, 0.24, within_between_tot_dist_control$CI_emp[1,2], within_between_tot_dist_control$CI_emp[2,2],within_between_tot_dist_treatment$CI_emp[1,2], within_between_tot_dist_treatment$CI_emp[2,2]),
 Endpoint = c("Total distance", "Total distance", "Total distance", "Total distance", "Total distance","Total distance","Total distance"))
   
+Tot_Dist_rptr_F0$r <- as.numeric(Tot_Dist_rptr_F0$r)
 Tot_Dist_rptr_F0
 
 Tot_Dist_rptr_sex <- tibble(
@@ -47,7 +48,7 @@ Tot_Dist_rptr_sex
 
 ```{r}
 low_dur_rptr <- tibble(
-  Condition = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)" ),
+  Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)" ),
   r = c(Control_low_dur$R$Fish_ID,Treatment_low_dur$R$Fish_ID, m2,within_between_low_dur_control$R[1], within_between_low_dur_control$R[2],within_between_low_dur_treatment$R[1], within_between_low_dur_treatment$R[2]),
   ci.lb = c(Control_low_dur$CI_emp$`2.5%`,Treatment_low_dur$CI_emp$`2.5%`, -0.21,within_between_low_dur_control$CI_emp[1,1], within_between_low_dur_control$CI_emp[2,1],within_between_low_dur_treatment$CI_emp[1,1], within_between_low_dur_treatment$CI_emp[2,1]),
   ci.ub = c(Control_low_dur$CI_emp$`97.5%`,Treatment_low_dur$CI_emp$`97.5%`, 0.23,within_between_low_dur_control$CI_emp[1,2], within_between_low_dur_control$CI_emp[2,2],within_between_low_dur_treatment$CI_emp[1,2], within_between_low_dur_treatment$CI_emp[2,2] ),
@@ -225,7 +226,7 @@ Overall_Data_Joined_Final_sex_F0 <- full_join(Overall_Data_Joined55, latency_hig
 Overall_Data_Joined_Final_sex_F0
 ```
 
-#Overall forest plot showing repeatabilities of tall and short tanks
+#Overall forest plot showing repeatabilities of control and treatment groups
 ```{r}
 
 Overall_plot_F0 <- ggplot(Overall_Anxiety_Plotting_Data_F0, aes(x=Endpoint, y=r, colour=Group)) +
@@ -233,18 +234,20 @@ geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0.4, position = position_dodg
 geom_point(aes(x = Endpoint, y = r), position = position_dodge(0.3), size=3)+
 geom_hline(yintercept = 0, lty = "dotted") +
 coord_flip()+
-ylim(-0.2, 0.9)+
+ylim(-0.25, 0.9)+
    theme(axis.title.y=element_blank())+
-   theme(legend.title=element_blank())+
   theme_classic()+
   scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
     theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
   theme(axis.title.y=element_blank())+
-   theme(legend.position = "bottom")
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())
  
 
 
 Overall_plot_F0
+
+ggsave(path = "../Plots", file = "Overall_plot_new.jpeg", limitsize = FALSE)
 ```
 
 #Overall forest plot showing differences between males and female repeatabilities for behavioral parameters in control and treatment groups
@@ -282,5 +285,7 @@ Sex_New_plot <-
   theme(legend.title = element_blank())
 
 Sex_New_plot
+
+ggsave(path = "../Plots", file = "Overall_plot_sex.jpeg", limitsize = FALSE)
 
 ```
