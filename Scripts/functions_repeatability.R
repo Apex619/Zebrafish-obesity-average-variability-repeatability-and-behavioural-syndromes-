@@ -11,9 +11,14 @@ rpt_within_zone05 <- function(df) {
   rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
 
-#Calculating repeatability for body weight
+#Calculating repeatability for body length
 rpt_length <- function(df) {
   x <- rpt(Fish_Length_cm ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
+}
+
+#Calculating repeatability for body length
+rpt_length2 <- function(df) {
+  x <- rpt(Fish_Length_cm ~ Week + (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
 
 #Obtaining within and between-individual variances (body length)
@@ -26,9 +31,19 @@ rpt_weight <- function(df) {
   x <- rpt(Weight.g. ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
 
+#Calculating repeatability for body weight with week
+rpt_weight2 <- function(df) {
+  x <- rpt(Weight.g. ~ Week + (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
+}
+
 #Obtaining within and between-individual variances (body weight)
 rpt_within_weight <- function(df) {
   rpt(scale(Weight.g.) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+}
+
+#Obtaining within and between-individual variances (body weight)
+rpt_within_weight2 <- function(df) {
+  rpt(scale(Weight.g.) ~ Week + (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
 
 #Obtaining within and between-individual variances (total distance)

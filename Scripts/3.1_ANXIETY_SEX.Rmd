@@ -64,9 +64,9 @@ Diff_boot_Tot_Dist_Control <- Control_Tot_Dist_Female_boot - Control_Tot_Dist_Ma
 
 
 q_tot_control <- quantile(Diff_boot_Tot_Dist_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
-mean_tot_control <- mean(Diff_boot_Tot_Dist_Control) #Obtaining mean
+mean_tot_Control <- mean(Diff_boot_Tot_Dist_Control) #Obtaining mean
 
-mean_tot_control
+mean_tot_Control
 q_tot_control
 
 #Contrast analysis to calculate differences between males and females in the treatment group
@@ -114,9 +114,9 @@ Diff_boot_low_dur_Control <- Control_low_dur_Female_boot - Control_low_dur_Male_
 
 
 q_low_dur_control <- quantile(Diff_boot_low_dur_Control, c(0.025, 0.975)) #calculating quantiles at 2.5% and 97.5% (will become 95% CI)
-mean_low_dur_control <- mean(Diff_boot_low_dur_Control) #Obtaining mean
+mean_low_dur_Control <- mean(Diff_boot_low_dur_Control) #Obtaining mean
 
-mean_low_dur_control
+mean_low_dur_Control
 q_low_dur_control
 
 #Contrast analysis to calculate differences between males and females in the treatment group

@@ -30,7 +30,7 @@ Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data.xlsx")
 ### Examine Data
 
 ```{r, include=FALSE}
-str(Anxiety)
+str(Anxiety_Joined)
 
 #Convert characters into factors
 

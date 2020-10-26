@@ -63,16 +63,23 @@ hist(residuals(Model_Body_Weight2))
 
 
 
-#Calculating repeatabilities using custom made functions
-rpt_weight(Weight_Length_Control) -> rpt_body_weight_control
-rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment
-rpt_body_weight_control
-rpt_body_weight_treatment
+#Calculating repeatabilities (without week and with week)
+rpt_weight(Weight_Length_Control) -> rpt_body_weight_control #without week factored in
+
+rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment #without week factored in
+
+rpt_weight2(Weight_Length_Control) -> rpt_body_weight_control2 #adjusted for week
+
+rpt_weight2(Weight_Length_Treatment) -> rpt_body_weight_treatment2 #adjusted for week
+
 
 #Obtaining within-individual and between-individual variance for body weight
 
 rpt_within_weight(Weight_Length_Control) -> within_between_body_weight_control
 rpt_within_weight(Weight_Length_Treatment) -> within_between_body_weight_treatment
+
+rpt_within_weight2(Weight_Length_Control) -> within_between_body_weight_control2 #adjusted for week
+rpt_within_weight2(Weight_Length_Treatment) -> within_between_body_weight_treatment2 #adjusted for week
 
 
 #Obtaining differences between repeatabilities using custom made functions
