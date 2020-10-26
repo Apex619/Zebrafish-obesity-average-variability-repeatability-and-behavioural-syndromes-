@@ -20,7 +20,7 @@ Boxplot_Glucose
 Summary_Glucose <- summarySE(Glucose_Weight, measurevar="Glucose", groupvars=c("Group", "Sex"))
 
 Repeatability_Glucose <- rpt(Glucose ~ Meter + Sex + Group + (1 | Fish_ID), grname = "Fish_ID", data = Glucose_Weight, datatype = "Gaussian", 
-                           nboot = 10000, npermut = 10000)
+                           nboot = 100, npermut = 100)
 
 Repeatability_Glucose
 
