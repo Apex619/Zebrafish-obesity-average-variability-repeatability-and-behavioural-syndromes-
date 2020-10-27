@@ -6,7 +6,7 @@ rpt_optimism_zone05 <- function(df) {
   x <- rpt(zone_05_dur ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
-#Obtaining within and between-individual variances (body length)
+#Obtaining within and between-individual variances (Optimism)
 rpt_within_zone05 <- function(df) {
   rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
 }

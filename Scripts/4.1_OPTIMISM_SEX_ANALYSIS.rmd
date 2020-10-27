@@ -1,0 +1,252 @@
+---
+title: "Optimism Sex Analysis"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
+
+```
+
+#Subset data by sex
+```{r}
+#Subset by sex
+
+#Control and treatment males and females for positive stimulus
+Optimism_Control_Male_Positive <- subset(Positive_Control, Positive_Control$Sex == "male")
+Optimism_Control_Female_Positive <- subset(Positive_Control, Positive_Control$Sex == "female")
+Optimism_Treatment_Male_Positive <- subset(Positive_Treatment, Positive_Treatment$Sex == "male")
+Optimism_Treatment_Female_Positive <- subset(Positive_Treatment, Positive_Treatment$Sex == "female")
+
+#Control and treatment males and females for negative stimulus
+Optimism_Control_Male_Negative <- subset(Negative_Control, Negative_Control$Sex == "male")
+Optimism_Control_Female_Negative <- subset(Negative_Control, Negative_Control$Sex == "female")
+Optimism_Treatment_Male_Negative <- subset(Negative_Control, Negative_Control$Sex == "male")
+Optimism_Treatment_Female_Negative <- subset(Negative_Control, Negative_Control$Sex == "female")
+
+#Control and treatment males and females for mixed stimulus
+Optimism_Control_Male_Mixed <- subset(Mixed_Control, Mixed_Control$Sex == "male")
+Optimism_Control_Female_Mixed <- subset(Mixed_Control, Mixed_Control$Sex == "female")
+Optimism_Treatment_Male_Mixed <- subset(Mixed_Control, Mixed_Control$Sex == "male")
+Optimism_Treatment_Female_Mixed <- subset(Mixed_Control, Mixed_Control$Sex == "female")
+```
+
+### MAIN ANALYSIS FOR TIME SPENT NEAR SCREEN (0-5CM)
+
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH GROUP AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT
+
+# Positive Analysis
+
+```{r}
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Positive <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Positive_ALL) #mixed model
+tab_model(Model_Positive)
+hist(residuals(Model_Positive)) #histogram of residuals to check for normal distribution 
+
+Model_Positive0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Positive_ALL) #mixed model, interaction added
+tab_model(Model_Positive0)
+hist(residuals(Model_Positive0))
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Male_Positive) -> rpt_positive_control_male
+rpt_positive_control_male
+rpt_optimism_zone05(Optimism_Treatment_Male_Positive) -> rpt_positive_treatment_male
+rpt_positive_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Female_Positive) -> rpt_positive_control_female
+rpt_positive_control_female
+rpt_optimism_zone05(Optimism_Treatment_Female_Positive) -> rpt_positive_treatment_female
+rpt_positive_treatment_female
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Male_Positive) -> within_between_positive_control_male
+within_between_positive_control_male
+rpt_within_zone05(Optimism_Treatment_Male_Positive) -> within_between_positive_treatment_male
+within_between_positive_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Female_Positive) -> within_between_positive_control_female
+within_between_positive_control_female
+rpt_within_zone05(Optimism_Treatment_Female_Positive) -> within_between_positive_treatment_female
+within_between_positive_treatment_female
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_positive_boot_male <- unlist_rptr(rpt_positive_control_male) #unlisting from the males
+Control_positive_boot_female <- unlist_rptr(rpt_positive_control_female) #unlisting from the females
+positive_diff_control <- difference_boot(Control_positive_boot_male,Control_positive_boot_female) #calculating the difference between males and females in the control group
+q_positive_control <- quantiles_diff_boot(positive_diff_control) #obtaining 95% CI
+m_positive_control <- mean(positive_diff_control) #Obtaining mean
+m_positive_control
+q_positive_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_positive_boot_male <- unlist_rptr(rpt_positive_treatment_male) #unlisting from the males
+Treatment_positive_boot_female <- unlist_rptr(rpt_positive_treatment_female) #unlisting from the females
+positive_diff_treatment <- difference_boot(Treatment_positive_boot_female,Treatment_positive_boot_male) #calculating the difference between males and females in the control group
+q_positive_treatment <- quantiles_diff_boot(positive_diff_treatment) #obtaining 95% CI
+m_positive_treatment <- mean(positive_diff_treatment) #Obtaining mean
+m_positive_treatment
+q_positive_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Positive1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Positive_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Positive1)
+Model_Positive2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Positive_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Positive2)
+anova(Model_Positive1, Model_Positive2) #calculating difference between two models to find difference in variance
+
+```
+
+
+
+
+# Negative Analysis
+
+```{r}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Negative <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Negative_ALL) #mixed model
+tab_model(Model_Negative)
+hist(residuals(Model_Negative)) #histogram of residuals to check for normal distribution 
+
+Model_Negative0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Negative_ALL) #mixed model, interaction added
+tab_model(Model_Negative0)
+hist(residuals(Model_Negative0))
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Male_Negative) -> rpt_negative_control_male
+rpt_negative_control_male
+rpt_optimism_zone05(Optimism_Treatment_Male_Negative) -> rpt_negative_treatment_male
+rpt_negative_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Female_Negative) -> rpt_negative_control_female
+rpt_negative_control_female
+rpt_optimism_zone05(Optimism_Treatment_Female_Negative) -> rpt_negative_treatment_female
+rpt_negative_treatment_female
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Male_Negative) -> within_between_negative_control_male
+within_between_negative_control_male
+rpt_within_zone05(Optimism_Treatment_Male_Negative) -> within_between_negative_treatment_male
+within_between_negative_treatment_male
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Female_Negative) -> within_between_negative_control_female
+within_between_negative_control_female
+rpt_within_zone05(Optimism_Treatment_Female_Negative) -> within_between_negative_treatment_female
+within_between_negative_treatment_female
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_negative_boot_male <- unlist_rptr(rpt_negative_control_male) #unlisting from the males
+Control_negative_boot_female <- unlist_rptr(rpt_negative_control_female) #unlisting from the females
+negative_diff_control <- difference_boot(Control_negative_boot_male,Control_negative_boot_female) #calculating the difference between males and females in the control group
+q_negative_control <- quantiles_diff_boot(negative_diff_control) #obtaining 95% CI
+m_negative_control <- mean(negative_diff_control) #Obtaining mean
+m_negative_control
+q_negative_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_negative_boot_male <- unlist_rptr(rpt_negative_treatment_male) #unlisting from the males
+Treatment_negative_boot_female <- unlist_rptr(rpt_negative_treatment_female) #unlisting from the females
+negative_diff_treatment <- difference_boot(Treatment_negative_boot_female,Treatment_negative_boot_male) #calculating the difference between males and females in the control group
+q_negative_treatment <- quantiles_diff_boot(negative_diff_treatment) #obtaining 95% CI
+m_negative_treatment <- mean(negative_diff_treatment) #Obtaining mean
+m_negative_treatment
+q_negative_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Negative1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Negative_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Negative1)
+Model_Negative2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Negative_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Negative2)
+anova(Model_Negative1, Model_Negative2) #calculating difference between two models to find difference in variance
+
+```
+
+# Mixed Analysis
+
+```{r}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Mixed <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Mixed_ALL) #mixed model
+tab_model(Model_Mixed)
+hist(residuals(Model_Mixed)) #histogram of residuals to check for normal distribution 
+
+Model_Mixed0 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Mixed_ALL) #mixed model, interaction added
+tab_model(Model_Mixed0)
+hist(residuals(Model_Mixed0))
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Male_Mixed) -> rpt_mixed_control_male
+rpt_mixed_control_male
+rpt_optimism_zone05(Optimism_Treatment_Male_Mixed) -> rpt_mixed_treatment_male
+rpt_mixed_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_optimism_zone05(Optimism_Control_Female_Mixed) -> rpt_mixed_control_female
+rpt_mixed_control_female
+rpt_optimism_zone05(Optimism_Treatment_Female_Mixed) -> rpt_mixed_treatment_female
+rpt_mixed_treatment_female
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Male_Mixed) -> within_between_mixed_control_male
+within_between_mixed_control_male
+rpt_within_zone05(Optimism_Treatment_Male_Mixed) -> within_between_mixed_treatment_male
+within_between_mixed_treatment_male
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Optimism_Control_Female_Mixed) -> within_between_mixed_control_female
+within_between_mixed_control_female
+rpt_within_zone05(Optimism_Treatment_Female_Mixed) -> within_between_mixed_treatment_female
+within_between_mixed_treatment_female
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_mixed_boot_male <- unlist_rptr(rpt_mixed_control_male) #unlisting from the males
+Control_mixed_boot_female <- unlist_rptr(rpt_mixed_control_female) #unlisting from the females
+mixed_diff_control <- difference_boot(Control_mixed_boot_male,Control_mixed_boot_female) #calculating the difference between males and females in the control group
+q_mixed_control <- quantiles_diff_boot(mixed_diff_control) #obtaining 95% CI
+m_mixed_control <- mean(mixed_diff_control) #Obtaining mean
+m_mixed_control
+q_mixed_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_mixed_boot_male <- unlist_rptr(rpt_mixed_treatment_male) #unlisting from the males
+Treatment_mixed_boot_female <- unlist_rptr(rpt_mixed_treatment_female) #unlisting from the females
+mixed_diff_treatment <- difference_boot(Treatment_mixed_boot_male,Treatment_mixed_boot_female) #calculating the difference between males and females in the control group
+q_mixed_treatment <- quantiles_diff_boot(mixed_diff_treatment) #obtaining 95% CI
+m_mixed_treatment <- mean(mixed_diff_treatment) #Obtaining mean
+m_mixed_treatment
+q_mixed_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Mixed1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Mixed_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Mixed1)
+Model_Mixed2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Mixed_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Mixed2)
+anova(Model_Mixed1, Model_Mixed2) #calculating difference between two models to find difference in variance
+```
