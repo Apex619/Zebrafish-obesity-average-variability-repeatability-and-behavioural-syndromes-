@@ -14,7 +14,7 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
                sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
                stargazer)
 # Load custom functions
-source("../Scripts/functions_repeatability.R") #load custom functions
+source("../Scripts/functions_plots.R") #load custom functions
 ```
 
 
@@ -672,5 +672,5 @@ Overall_New_plot_within_between
 
 Table to display mixed model results (using stargazer)
 ```{r}
-stargazer(Model_Tot_Dist1, Model_low_dur1, Model_mid_dur1, Model_high_dur1, Model_freezing_dur1, Model_latency_high1, Model_freq_high1, omit.stat = c("bic","aic","ll"),  covariate.labels = c("Short Tank", "Tall Tank", "Male"), align = TRUE, type= "html",dep.var.labels= c("Total distance travelled", "Time spent in low zone", "Time spent in mid zone", "Time spent in high zone", "Time spent freezing", "Latency to high zone", "Entries to high zone"),dep.var.caption= "Behavioral parameters",style="all", out = "Table.html")
+stargazer(Model_Tot_Dist1, Model_low_dur1, Model_mid_dur1, Model_high_dur1, Model_freezing_dur1, Model_latency_high1, Model_freq_high1, omit.stat = c("bic","aic","ll"),  covariate.labels = c("Control", "Treatment", "Male"), align = TRUE, type= "html",dep.var.labels= c("Total distance travelled", "Time spent in low zone", "Time spent in mid zone", "Time spent in high zone", "Time spent freezing", "Latency to high zone", "Entries to high zone"),dep.var.caption= "Behavioral parameters",style="all", out = "Table.html")
 ```

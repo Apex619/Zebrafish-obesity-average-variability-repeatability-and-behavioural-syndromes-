@@ -1,22 +1,39 @@
 #### Custom functions
 
+#Calculating repeatability for mean speed
+rpt_speed <- function(df) {
+  x <- rpt(mean_speed ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
+}
+
+#Obtaining within and between-individual variances for mean speed
+rpt_within_speed <- function(df) {
+  rpt(scale(mean_speed) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
+}
+
+#Calculating repeatability for zone_05_duration
+rpt_zone05 <- function(df) {
+  x <- rpt(zone_05_dur ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
+}
+
+#Obtaining within and between-individual variances
+rpt_within_zone05 <- function(df) {
+  rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
+}
+------------------------------------------------------------------------------------------------------------
+
 
 #Calculating repeatability for zone_05_duration (Optimism)
 rpt_optimism_zone05 <- function(df) {
   x <- rpt(zone_05_dur ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
-#Obtaining within and between-individual variances (Optimism)
-rpt_within_zone05 <- function(df) {
-  rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
-}
-
-#Calculating repeatability for body length
+----------------------------------------------------------------------------------------------------------
+#Calculating repeatability for body length (unadjusted for week)
 rpt_length <- function(df) {
   x <- rpt(Fish_Length_cm ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
-#Calculating repeatability for body length
+#Calculating repeatability for body length (adjusted for week)
 rpt_length2 <- function(df) {
   x <- rpt(Fish_Length_cm ~ Week + (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
@@ -26,25 +43,27 @@ rpt_within_length <- function(df) {
   rpt(scale(Fish_Length_cm) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
 }
 
-#Calculating repeatability for body weight
+#Calculating repeatability for body weight (unadjusted for week)
 rpt_weight <- function(df) {
   x <- rpt(Weight.g. ~ Week + (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
-#Calculating repeatability for body weight with week
+#Calculating repeatability for body weight with week (adjusted for week)
 rpt_weight2 <- function(df) {
   x <- rpt(Weight.g. ~ Week + (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
 }
 
-#Obtaining within and between-individual variances (body weight)
+#Obtaining within and between-individual variances (body weight without week)
 rpt_within_weight <- function(df) {
   rpt(scale(Weight.g.) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
 }
 
-#Obtaining within and between-individual variances (body weight)
+#Obtaining within and between-individual variances (body weight with week)
 rpt_within_weight2 <- function(df) {
   rpt(scale(Weight.g.) ~ Week + (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
+
+------------------------------------------------------------------------------------------------------------------
 
 #Obtaining within and between-individual variances (total distance)
 rpt_within_between_tot_dist <- function(df) {
@@ -126,6 +145,7 @@ rpt_freq <- function(df) {
   x <- rpt(sqrt(freq_high) ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
+-----------------------------------------------------------------------------------------------------------------
 
 # Writing functions for getting the difference between two tank's repeatablities
 unlist_rptr <- function(rpt_model) { #unlisting the bootstrapped distribution 
@@ -140,36 +160,3 @@ quantiles_diff_boot <- function(from_diff_boot) { #obtaining quantiles at 2.5% a
   quantile(from_diff_boot, c(0.025, 0.975))
 } 
 
-#Function for generating a custom designed violin plot (f1 methods)
-violin_plot_custom_hamza <- function(df,param,lab1,lab2) { #only need to add dataframe, parameter, and labels for axes
-  ggplot(data = df,aes(x = Tank, y = param, fill = Tank))+
-    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ #color scheme
-    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+ #violin plot to display distribution density
-    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+#boxplot to display quantiles
-    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+#scatterplot of individual data points
-    theme_pubr()+
-    labs(title=lab1,y = lab2)+#labels
-    rremove("legend.title")+
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
-    scale_x_discrete(labels=c("Old" = "Short", "Tall" = "Tall"))+#formatting 
-    theme(legend.position = "none")+
-    theme(axis.title.x=element_blank())
-  
-}
-
-#Function for generating a custom designed violin plot (f0)
-violin_plot_custom_hamza2 <- function(df,param,lab1,lab2) { #only need to add dataframe, parameter, and labels for axes
-  ggplot(data = df,aes(x = Group, y = param, fill = Group))+
-    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ #color scheme
-    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+ #violin plot to display distribution density
-    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+#boxplot to display quantiles
-    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+#scatterplot of individual data points
-    theme_pubr()+
-    labs(title=lab1,y = lab2)+#labels
-    rremove("legend.title")+
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
-    scale_x_discrete(labels=c("Old" = "Short", "Tall" = "Tall"))+#formatting 
-    theme(legend.position = "none")+
-    theme(axis.title.x=element_blank())
-  
-}
