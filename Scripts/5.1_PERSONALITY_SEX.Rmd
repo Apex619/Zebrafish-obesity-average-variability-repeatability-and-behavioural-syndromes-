@@ -7,5 +7,389 @@ output: html_document
 
 
 
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+
+# Load custom functions
+source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
+
+```
+
+#Subset data by sex
+```{r}
+#Subset by sex
+
+#Control and treatment males and females for Social stimulus
+Personality_Control_Male_Social <- subset(Social_Control, Social_Control$Sex == "male")
+Personality_Control_Female_Social <- subset(Social_Control, Social_Control$Sex == "female")
+Personality_Treatment_Male_Social <- subset(Social_Treatment, Social_Treatment$Sex == "male")
+Personality_Treatment_Female_Social <- subset(Social_Treatment, Social_Treatment$Sex == "female")
+
+#Control and treatment males and females for Aggression stimulus
+Personality_Control_Male_Aggression <- subset(Aggression_Control, Aggression_Control$Sex == "male")
+Personality_Control_Female_Aggression <- subset(Aggression_Control, Aggression_Control$Sex == "female")
+Personality_Treatment_Male_Aggression <- subset(Aggression_Treatment, Aggression_Treatment$Sex == "male")
+Personality_Treatment_Female_Aggression <- subset(Aggression_Treatment, Aggression_Treatment$Sex == "female")
+
+#Control and treatment males and females for Novel stimulus
+Personality_Control_Male_Novel <- subset(Novel_Control, Novel_Control$Sex == "male")
+Personality_Control_Female_Novel <- subset(Novel_Control, Novel_Control$Sex == "female")
+Personality_Treatment_Male_Novel <- subset(Novel_Treatment, Novel_Treatment$Sex == "male")
+Personality_Treatment_Female_Novel <- subset(Novel_Treatment, Novel_Treatment$Sex == "female")
+
+#Control and treatment males and females for Predator stimulus
+Personality_Control_Male_Predator <- subset(Predator_Control, Predator_Control$Sex == "male")
+Personality_Control_Female_Predator <- subset(Predator_Control, Predator_Control$Sex == "female")
+Personality_Treatment_Male_Predator <- subset(Predator_Treatment, Predator_Treatment$Sex == "male")
+Personality_Treatment_Female_Predator <- subset(Predator_Treatment, Predator_Treatment$Sex == "female")
+```
+
+### Time spent near the stimulus screen analysis
+
+# Social Analysis
+
+```{r}
+
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Social_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Social_ALL) 
+tab_model(Model_Social_zone05)
+hist(residuals(Model_Social_zone05)) 
+
+Model_Social_zone052 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Social_ALL) 
+tab_model(Model_Social_zone052)
+hist(residuals(Model_Social_zone052)) 
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Social) -> rpt_social_control_male
+rpt_social_control_male
+rpt_zone05(Personality_Treatment_Male_Social) -> rpt_social_treatment_male
+rpt_social_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Social) -> rpt_social_control_female
+rpt_social_control_female
+rpt_zone05(Personality_Treatment_Female_Social) -> rpt_social_treatment_female
+rpt_social_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Social) -> within_between_social_control_male
+within_between_social_control_male
+rpt_within_zone05(Personality_Treatment_Male_Social) -> within_between_social_treatment_male
+within_between_social_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Social) -> within_between_social_control_female
+within_between_social_control_female
+rpt_within_zone05(Personality_Treatment_Female_Social) -> within_between_social_treatment_female
+within_between_social_treatment_female
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_social_boot_male <- unlist_rptr(rpt_social_control_male) #unlisting from the males
+Control_social_boot_female <- unlist_rptr(rpt_social_control_female) #unlisting from the females
+social_diff_control <- difference_boot(Control_social_boot_female,Control_social_boot_male) #calculating the difference between males and females in the control group
+q_social_control <- quantiles_diff_boot(social_diff_control) #obtaining 95% CI
+m_social_control <- mean(social_diff_control) #Obtaining mean
+m_social_control
+q_social_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_social_boot_male <- unlist_rptr(rpt_social_treatment_male) #unlisting from the males
+Treatment_social_boot_female <- unlist_rptr(rpt_social_treatment_female) #unlisting from the females
+social_diff_treatment <- difference_boot(Treatment_social_boot_female,Treatment_social_boot_male) #calculating the difference between males and females in the control group
+q_social_treatment <- quantiles_diff_boot(social_diff_treatment) #obtaining 95% CI
+m_social_treatment <- mean(social_diff_treatment) #Obtaining mean
+m_social_treatment
+q_social_treatment
+
+
+# Calculating difference in variance between control and treatment groups
+Model_Social1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Social1)
+Model_Social2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Social2)
+anova(Model_Social1, Model_Social2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+Social_ALL %>%
+  ggplot(aes(Group, zone_05_dur, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+
+```
+
+# Aggression Analysis
+
+```{r}
+
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Aggression_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL) 
+tab_model(Model_Aggression_zone05)
+hist(residuals(Model_Aggression_zone05)) 
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Aggression) -> rpt_aggression_control_male
+rpt_aggression_control_male
+rpt_zone05(Personality_Treatment_Male_Aggression) -> rpt_aggression_treatment_male
+rpt_aggression_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Aggression) -> rpt_aggression_control_female
+rpt_aggression_control_female
+rpt_zone05(Personality_Treatment_Female_Aggression) -> rpt_aggression_treatment_female
+rpt_aggression_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Aggression) -> within_between_aggression_control_male
+within_between_aggression_control_male
+rpt_within_zone05(Personality_Treatment_Male_Aggression) -> within_between_aggression_treatment_male
+within_between_aggression_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Aggression) -> within_between_aggression_control_female
+within_between_aggression_control_female
+rpt_within_zone05(Personality_Treatment_Female_Aggression) -> within_between_aggression_treatment_female
+within_between_aggression_treatment_female
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_aggression_boot_male <- unlist_rptr(rpt_aggression_control_male) #unlisting from the males
+Control_aggression_boot_female <- unlist_rptr(rpt_aggression_control_female) #unlisting from the females
+aggression_diff_control <- difference_boot(Control_aggression_boot_female,Control_aggression_boot_male) #calculating the difference between males and females in the control group
+q_aggression_control <- quantiles_diff_boot(aggression_diff_control) #obtaining 95% CI
+m_aggression_control <- mean(aggression_diff_control) #Obtaining mean
+m_aggression_control
+q_aggression_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_aggression_boot_male <- unlist_rptr(rpt_aggression_treatment_male) #unlisting from the males
+Treatment_aggression_boot_female <- unlist_rptr(rpt_aggression_treatment_female) #unlisting from the females
+aggression_diff_treatment <- difference_boot(Treatment_aggression_boot_female,Treatment_aggression_boot_male) #calculating the difference between males and females in the control group
+q_aggression_treatment <- quantiles_diff_boot(aggression_diff_treatment) #obtaining 95% CI
+m_aggression_treatment <- mean(aggression_diff_treatment) #Obtaining mean
+m_aggression_treatment
+q_aggression_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Aggression1 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Aggression1)
+Model_Aggression2 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Aggression2)
+anova(Model_Aggression1, Model_Aggression2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+Aggression_ALL %>%
+  ggplot(aes(Group, zone_05_dur, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+
+```
+
+# Novel Analysis
+
+```{r}
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Novel_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL) 
+tab_model(Model_Novel_zone05)
+hist(residuals(Model_Novel_zone05)) #data skewed, needs transformation
+
+Model_Novel_zone052 <- lmer(sqrt(zone_05_dur) ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL) 
+tab_model(Model_Novel_zone052)
+hist(residuals(Model_Novel_zone052))
+
+
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Novel) -> rpt_novel_control_male
+rpt_novel_control_male
+rpt_zone05(Personality_Treatment_Male_Novel) -> rpt_novel_treatment_male
+rpt_novel_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Novel) -> rpt_novel_control_female
+rpt_novel_control_female
+rpt_zone05(Personality_Treatment_Female_Novel) -> rpt_novel_treatment_female
+rpt_novel_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Novel) -> within_between_novel_control_male
+within_between_novel_control_male
+rpt_within_zone05(Personality_Treatment_Male_Novel) -> within_between_novel_treatment_male
+within_between_novel_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Novel) -> within_between_novel_control_female
+within_between_novel_control_female
+rpt_within_zone05(Personality_Treatment_Female_Novel) -> within_between_novel_treatment_female
+within_between_novel_treatment_female
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_novel_boot_male <- unlist_rptr(rpt_novel_control_male) #unlisting from the males
+Control_novel_boot_female <- unlist_rptr(rpt_novel_control_female) #unlisting from the females
+novel_diff_control <- difference_boot(Control_novel_boot_female,Control_novel_boot_male) #calculating the difference between males and females in the control group
+q_novel_control <- quantiles_diff_boot(novel_diff_control) #obtaining 95% CI
+m_novel_control <- mean(novel_diff_control) #Obtaining mean
+m_novel_control
+q_novel_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_novel_boot_male <- unlist_rptr(rpt_novel_treatment_male) #unlisting from the males
+Treatment_novel_boot_female <- unlist_rptr(rpt_novel_treatment_female) #unlisting from the females
+novel_diff_treatment <- difference_boot(Treatment_novel_boot_male,Treatment_novel_boot_female) #calculating the difference between males and females in the control group
+q_novel_treatment <- quantiles_diff_boot(novel_diff_treatment) #obtaining 95% CI
+m_novel_treatment <- mean(novel_diff_treatment) #Obtaining mean
+m_novel_treatment
+q_novel_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Novel1 <- lme(sqrt(zone_05_dur) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Novel1)
+Model_Novel2 <- lme(sqrt(zone_05_dur) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Novel2)
+anova(Model_Novel1, Model_Novel2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+Novel_ALL %>%
+  ggplot(aes(Group, zone_05_dur, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+
+```
+
+
+
+# Predator Analysis
+
+```{r}
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Predator_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Predator_ALL) 
+tab_model(Model_Predator_zone05)
+hist(residuals(Model_Predator_zone05)) 
+
+
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Predator) -> rpt_predator_control_male
+rpt_predator_control_male
+rpt_zone05(Personality_Treatment_Male_Predator) -> rpt_predator_treatment_male
+rpt_predator_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Predator) -> rpt_predator_control_female
+rpt_predator_control_female
+rpt_zone05(Personality_Treatment_Female_Predator) -> rpt_predator_treatment_female
+rpt_predator_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Predator) -> within_between_predator_control_male
+within_between_predator_control_male
+rpt_within_zone05(Personality_Treatment_Male_Predator) -> within_between_predator_treatment_male
+within_between_predator_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Predator) -> within_between_predator_control_female
+within_between_predator_control_female
+rpt_within_zone05(Personality_Treatment_Female_Predator) -> within_between_predator_treatment_female
+within_between_predator_treatment_female
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_predator_boot_male <- unlist_rptr(rpt_predator_control_male) #unlisting from the males
+Control_predator_boot_female <- unlist_rptr(rpt_predator_control_female) #unlisting from the females
+predator_diff_control <- difference_boot(Control_predator_boot_female,Control_predator_boot_male) #calculating the difference between males and females in the control group
+q_predator_control <- quantiles_diff_boot(predator_diff_control) #obtaining 95% CI
+m_predator_control <- mean(predator_diff_control) #Obtaining mean
+m_predator_control
+q_predator_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_predator_boot_male <- unlist_rptr(rpt_predator_treatment_male) #unlisting from the males
+Treatment_predator_boot_female <- unlist_rptr(rpt_predator_treatment_female) #unlisting from the females
+predator_diff_treatment <- difference_boot(Treatment_predator_boot_male,Treatment_predator_boot_female) #calculating the difference between males and females in the control group
+q_predator_treatment <- quantiles_diff_boot(predator_diff_treatment) #obtaining 95% CI
+m_predator_treatment <- mean(predator_diff_treatment) #Obtaining mean
+m_predator_treatment
+q_predator_treatment
+
+# Calculating difference in variance between control and treatment groups
+Model_Predator1 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Predator1)
+Model_Predator2 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Predator2)
+anova(Model_Predator1, Model_Predator2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+Predator_ALL %>%
+  ggplot(aes(Group, zone_05_dur, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

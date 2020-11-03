@@ -19,7 +19,7 @@ rpt_zone05 <- function(df) {
 rpt_within_zone05 <- function(df) {
   rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
 }
-------------------------------------------------------------------------------------------------------------
+
 
 
 #Calculating repeatability for zone_05_duration (Optimism)
@@ -27,7 +27,7 @@ rpt_optimism_zone05 <- function(df) {
   x <- rpt(zone_05_dur ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
-----------------------------------------------------------------------------------------------------------
+
 #Calculating repeatability for body length (unadjusted for week)
 rpt_length <- function(df) {
   x <- rpt(Fish_Length_cm ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
@@ -63,7 +63,6 @@ rpt_within_weight2 <- function(df) {
   rpt(scale(Weight.g.) ~ Week + (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
 
-------------------------------------------------------------------------------------------------------------------
 
 #Obtaining within and between-individual variances (total distance)
 rpt_within_between_tot_dist <- function(df) {
@@ -145,7 +144,7 @@ rpt_freq <- function(df) {
   x <- rpt(sqrt(freq_high) ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
 }
 
------------------------------------------------------------------------------------------------------------------
+
 
 # Writing functions for getting the difference between two tank's repeatablities
 unlist_rptr <- function(rpt_model) { #unlisting the bootstrapped distribution 
