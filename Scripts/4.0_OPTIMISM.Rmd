@@ -121,9 +121,9 @@ m_positive
 q_positive
 
 # Calculating difference in variance between control and treatment groups
-Model_Positive1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Positive_ALL, na.action=na.exclude) #mixed model without variance structure
+Model_Positive1 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Positive_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Positive1)
-Model_Positive2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Positive_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Positive2 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Positive_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Positive2)
 anova(Model_Positive1, Model_Positive2) #calculating difference between two models to find difference in variance
 
@@ -166,9 +166,9 @@ m_Negative
 q_Negative
 
 # Calculating difference in variance between control and treatment groups
-Model_Negative1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Negative_ALL, na.action=na.exclude) #mixed model without variance structure
+Model_Negative1 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Negative_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Negative1)
-Model_Negative2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Negative_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Negative2 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Negative_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Negative2)
 anova(Model_Negative1, Model_Negative2) #calculating difference between two models to find difference in variance
 
@@ -210,9 +210,9 @@ m_Mixed
 q_Mixed
 
 # Calculating difference in variance between control and treatment groups
-Model_Mixed1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Mixed_ALL, na.action=na.exclude) #mixed model without variance structure
+Model_Mixed1 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Mixed_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Mixed1)
-Model_Mixed2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Mixed_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Mixed2 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Mixed_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Mixed2)
 anova(Model_Mixed1, Model_Mixed2) #calculating difference between two models to find difference in variance
 

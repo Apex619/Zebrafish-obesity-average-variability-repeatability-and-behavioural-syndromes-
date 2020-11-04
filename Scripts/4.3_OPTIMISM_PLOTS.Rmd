@@ -191,4 +191,7 @@ Joined_violins_optimism <- positive_violin + negative_violin + mixed_violin + pl
 Joined_violins_optimism
 ```
 
-
+Table to display mixed model results (using stargazer)
+```{r}
+stargazer(Model_Positive1, Model_Negative1, Model_Mixed1, omit.stat = c("bic","aic","ll"),  covariate.labels = c("Control", "Treatment", "Male", "Treatment:Male"), align = TRUE, type= "html",dep.var.labels= c("Positive      Negative      Mixed"),dep.var.caption= "Stimuli",style="all", out = "Table.html")
+```

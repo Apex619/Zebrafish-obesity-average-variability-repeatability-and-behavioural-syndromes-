@@ -135,9 +135,9 @@ m_social
 q_social
 
 # Calculating difference in variance between control and treatment groups
-Model_Social1 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
+Model_Social1 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Social1)
-Model_Social2 <- lme(zone_05_dur ~ Group-1*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Social2 <- lme(zone_05_dur ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Social2)
 anova(Model_Social1, Model_Social2) #calculating difference between two models to find difference in variance
 
