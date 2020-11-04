@@ -111,3 +111,48 @@ df$number <- as.numeric(df$number)
 return(df)
 }
 
+#function for adding day column
+add_day <- function(x) {
+  x %>% mutate(day = case_when (grepl("2019-10-08", date) ~ "1",
+                                grepl("2019-10-09", date) ~ "2",
+                                grepl("2019-10-10", date) ~ "3",
+                                grepl("2019-10-11", date) ~ "4",
+                                grepl("2019-10-14", date) ~ "5",
+                                grepl("2019-10-15", date) ~ "6",
+                                grepl("2019-10-16", date) ~ "7",
+                                grepl("2019-10-17", date) ~ "8"))
+}
+
+add_exp <- function(x) {
+  x %>% mutate(exp = case_when (grepl("BLUGRE", filepath) ~ "BLUGRE"))
+}
+
+add_set <- function(x) {
+  x %>% mutate(set = case_when (grepl("c1", filepath) ~ "control",
+                                grepl("c2", filepath) ~ "control",
+                                grepl("c3", filepath) ~ "control",
+                                grepl("c4", filepath) ~ "control",
+                                grepl("t1", filepath) ~ "treatment",
+                                grepl("t2", filepath) ~ "treatment",
+                                grepl("t3", filepath) ~ "treatment",
+                                grepl("t4", filepath) ~ "treatment"))
+}
+
+add_zone <- function(x) {
+  x %>%   mutate(zone = case_when (grepl("CS", test) ~ "CS",
+                                   grepl("NON", test) ~ "NON"))
+}
+
+add_tod <- function(x) {
+  x %>% mutate(tod = case_when (grepl("AM", filepath) ~ "AM",
+                                grepl("NOON", filepath) ~ "NOON",
+                                grepl("PM", filepath) ~ "PM")) 
+}
+
+#function that spreads data and adds difference
+add_diff <- function(x) {
+  
+  x[,7] = NULL
+  
+  x %>% spread(type, time) %>% mutate(difference = (BASELINE - PROBE))
+}

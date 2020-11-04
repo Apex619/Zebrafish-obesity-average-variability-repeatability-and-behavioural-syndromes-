@@ -1,5 +1,16 @@
 #### Custom functions
 
+#Calculating repeatability for learning (Zantiks)
+rpt_learning <- function(df) {
+  x <- rpt(difference ~ (1 |  fishID), grname = "fishID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)
+}
+
+#Obtaining within and between-individual variances for learning
+rpt_within_learning <- function(df) {
+  rpt(scale(difference) ~ (1 |  fishID), grname = c("fishID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
+}
+
+
 #Calculating repeatability for mean speed
 rpt_speed <- function(df) {
   x <- rpt(mean_speed ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 100, npermut = 100)

@@ -1,0 +1,115 @@
+---
+title: "visualisation"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+# Load custom functions
+source("../Scripts/functions_plots.R") #load custom functions
+```
+
+#Creating tibbles to use in plotting repeatabilities : one for overall plots, and one for sex plots
+
+Learning analysis
+```{r, echo=FALSE}
+Learning_rptr_F0 <- tibble(
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
+  r = c(rpt_learning_control$R$fishID,rpt_learning_treatment$R$fishID, m_learning, within_between_learning_control$R[1], within_between_learning_control$R[2],within_between_learning_treatment$R[1], within_between_learning_treatment$R[2]),
+  ci.lb = c(rpt_learning_control$CI_emp$`2.5%`,rpt_learning_treatment$CI_emp$`2.5%`,-0.04, within_between_learning_control$CI_emp[1,1], within_between_learning_control$CI_emp[2,1],within_between_learning_treatment$CI_emp[1,1], within_between_learning_treatment$CI_emp[2,1]),
+  ci.ub = c(rpt_learning_control$CI_emp$`97.5%`,rpt_learning_treatment$CI_emp$`97.5%`, 0.49, within_between_learning_control$CI_emp[1,2], within_between_learning_control$CI_emp[2,2],within_between_learning_treatment$CI_emp[1,2], within_between_learning_treatment$CI_emp[2,2]),
+Endpoint = c("Learning", "Learning", "Learning", "Learning", "Learning","Learning","Learning"))
+  
+Learning_rptr_F0$r <- as.numeric(Learning_rptr_F0$r)
+Learning_rptr_F0
+
+
+Overall_Learning_Plotting_Data_F0 <- subset(Learning_rptr_F0, Learning_rptr_F0$Group %in% c("Treatment","Control","Contrast")) #Will be used for plotting just the overall repeatabilites 
+
+Learning_rptr_sex <- tibble(
+  Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
+  Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
+  r = c(rpt_learning_control_male$R$fishID,rpt_learning_control_female$R$fishID,rpt_learning_treatment_male$R$fishID,rpt_learning_treatment_female$R$fishID,m_learning_control, m_learning_treatment ),
+  ci.lb = c(rpt_learning_control_male$CI_emp$`2.5%`,rpt_learning_control_female$CI_emp$`2.5%`,rpt_learning_treatment_male$CI_emp$`2.5%`,rpt_learning_treatment_female$CI_emp$`2.5%`, -0.16, -0.17),
+  ci.ub = c(rpt_learning_control_male$CI_emp$`97.5%`,rpt_learning_control_female$CI_emp$`97.5%`,rpt_learning_treatment_male$CI_emp$`97.5%`,rpt_learning_treatment_female$CI_emp$`97.5%`, 0.45, 0.48),
+Endpoint = c("Learning","Learning","Learning","Learning","Learning","Learning"))
+  
+Learning_rptr_sex
+
+```
+
+#Overall forest plot showing repeatabilities of control and treatment groups (Learning F0)
+```{r}
+
+Overall_plot_F0_learning <- ggplot(Overall_Learning_Plotting_Data_F0, aes(x=Endpoint, y=r, colour=Group)) +
+geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = Endpoint, y = r), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+ylim(-0.25, 0.9)+
+   theme(axis.title.y=element_blank())+
+  theme_classic()+
+  scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+  theme(axis.title.y=element_blank())+
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())
+ 
+
+
+Overall_plot_F0_learning
+```
+
+#Overall forest plot showing differences between males and female repeatabilities for learning
+```{r}
+Sex_New_plot_personality <-
+  ggplot(Learning_rptr_sex,
+         aes(x = Endpoint, y = r, colour = Condition)) +
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8
+  ) +
+  geom_point(aes(x = Endpoint, y = r),
+             position = position_dodge(0.3),
+             size = 3) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  coord_flip() +
+  ylim(-0.4, 0.9) +
+  facet_grid( ~ Tank) +
+  theme(axis.title.y = element_blank()) +
+  scale_color_manual(values = c("#000000", "#f8766d", "#00bfc4")) +
+    theme_classic()+
+  theme(
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      size = 2
+    ),
+    axis.ticks = element_line(size = 2, color = "black"),
+    axis.ticks.length = unit(0.2, "cm")
+  ) +      font("xylab", size = 15) + font("xy", size = 15) + font("xy.text", size = 15) +
+  theme(axis.title.y = element_blank()) +
+  theme(legend.position = "bottom") +
+  theme(legend.title = element_blank())
+
+Sex_New_plot_personality
+
+```
+
+#Generating custom designed violin plots to display raw distributions of behavioral responses
+```{r}
+
+
+learning_violin <- violin_plot_custom_hamza3(p2cs,p2cs$difference,"Difference between baseline and probe period for CS+", "Seconds")
+
+learning_violin
+```
+

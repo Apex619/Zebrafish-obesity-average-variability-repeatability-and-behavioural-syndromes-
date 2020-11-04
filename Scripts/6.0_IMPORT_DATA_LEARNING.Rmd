@@ -3,88 +3,23 @@ title: "01_import_data"
 output: html_document
 ---
 
+### Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#knitr::opts_knit$set(root.dir = '/Users/dominicmason/OneDrive\ -\ UNSW/hons') #sets WD as project for all chunks - doesn't change directory for setup chunk
 
-#install.packages("pacman")
-#install.packages("ggThemeAssist")
-#install.packages("ggbeeswarm")
-#install.packages("rptR")
-#install.packages("lme4")
-#install.packages("lmerTest")
-#install.packages("wesanderson")
-library(lmerTest)
-library(ggThemeAssist)
-library(rptR)
-library(lme4)
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, plyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
 
-pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
-
-library(ggplot2)
-library(lubridate)
-library(wesanderson)
-library(ggbeeswarm)
-#sessionInfo()
+# Load custom function to extract data 
+source("../Scripts/functions_learning.R")
 ```
 
-```{r}
-source("./scripts/functions.R")
-```
-
-```{r}
-##functions
-#function for adding day column
-add_day <- function(x) {
-x %>% mutate(day = case_when (grepl("2019-10-08", date) ~ "1",
-                    grepl("2019-10-09", date) ~ "2",
-                    grepl("2019-10-10", date) ~ "3",
-                    grepl("2019-10-11", date) ~ "4",
-                    grepl("2019-10-14", date) ~ "5",
-                    grepl("2019-10-15", date) ~ "6",
-                    grepl("2019-10-16", date) ~ "7",
-                    grepl("2019-10-17", date) ~ "8"))
-}
-
-add_exp <- function(x) {
-  x %>% mutate(exp = case_when (grepl("BLUGRE", filepath) ~ "BLUGRE"))
-}
-
-add_set <- function(x) {
- x %>% mutate(set = case_when (grepl("c1", filepath) ~ "control",
-                               grepl("c2", filepath) ~ "control",
-                               grepl("c3", filepath) ~ "control",
-                               grepl("c4", filepath) ~ "control",
-                               grepl("t1", filepath) ~ "treatment",
-                               grepl("t2", filepath) ~ "treatment",
-                               grepl("t3", filepath) ~ "treatment",
-                               grepl("t4", filepath) ~ "treatment"))
-}
-
-add_zone <- function(x) {
-  x %>%   mutate(zone = case_when (grepl("CS", test) ~ "CS",
-                    grepl("NON", test) ~ "NON"))
-}
-
-add_tod <- function(x) {
-  x %>% mutate(tod = case_when (grepl("AM", filepath) ~ "AM",
-                    grepl("NOON", filepath) ~ "NOON",
-                    grepl("PM", filepath) ~ "PM")) 
-}
-
-#function that spreads data and adds difference
-add_diff <- function(x) {
-  
-  x[,7] = NULL
-  
-  x %>% spread(type, time) %>% mutate(difference = (BASELINE - PROBE))
-}
-
-```
 
 ```{r, warning=FALSE}
 ## importing csv's & transforming data
-path <- paste0("./Data/Day", 1:8, "/")
+path <- paste0("../Data/Learning/Day", 1:8, "/")
 
 all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x))
 
@@ -97,7 +32,7 @@ dat
 dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
   group_by(type, fishID, test, filepath, day) %>%
   summarise(time = mean(time_min), arena = unique(arena)) %>%
-  add_diff -> dat_2probe
+  add_diff -> dat_2probe #We will use this dataset as it takes into acocunt the first 2 mins of the probe period, which the literature says is the most important as fish tend to forget after 2 mins, however we have options below for analysis also
 
 dat %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
   group_by(type, fishID, test, filepath, day) %>%
@@ -114,7 +49,7 @@ dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6",
   summarise(time = mean(time_min), arena = unique(arena)) %>%
   add_diff -> dat_1probe
 
-sex <- read.csv("./data/ID_Sex.csv") %>% rename(fishID = Fish_ID) %>% rename(sex = Sex)
+sex <- read.csv("../Data/Learning/ID_Sex.csv") %>% rename(fishID = Fish_ID) %>% rename(sex = Sex)
 
 left_join(sex, dat_2probe, by = "fishID") -> p2
 left_join(sex, dat_2base, by = "fishID") -> b2

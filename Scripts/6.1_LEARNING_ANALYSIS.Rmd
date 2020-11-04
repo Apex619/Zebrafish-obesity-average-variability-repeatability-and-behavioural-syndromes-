@@ -3,56 +3,163 @@ title: "analysis"
 output: html_document
 ---
 
+### Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#knitr::opts_knit$set(root.dir = '/Users/dominicmason/OneDrive\ -\ UNSW/hons') #sets WD as project for all chunks - doesn't change directory for setup chunk
-#install.packages("pacman")
-#install.packages("ggThemeAssist")
-#install.packages("ggbeeswarm")
-#install.packages("rptR")
-#install.packages("lme4")
-#install.packages("lmerTest")
-#install.packages("wesanderson")
-library(lmerTest)
-library(ggThemeAssist)
-library(rptR)
-library(lme4)
-library(emmeans)
 
-pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, plyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
 
-library(ggplot2)
-library(lubridate)
-library(wesanderson)
-library(ggbeeswarm)
-library(sjPlot)
+# Load custom function to extract data 
+source("../Scripts/functions_learning.R")
 ```
+
+#Subset data into control and treatment groups and then by sex
+```{r}
+#Subsetting data by control and treatment
+Learning_Control <- subset(p2cs, p2cs$set == "control") 
+Learning_Treatment <- subset(p2cs, p2cs$set == "treatment") 
+
+
+
+#Subset by sex
+
+#Control and treatment males and females for Social stimulus
+Control_Male_Learning <- subset(Learning_Control, Learning_Control$sex == "male")
+Control_Female_Learning <- subset(Learning_Control, Learning_Control$sex == "female")
+Treatment_Male_Learning <- subset(Learning_Treatment, Learning_Treatment$sex == "male")
+Treatment_Female_Learning <- subset(Learning_Treatment, Learning_Treatment$sex == "female")
+```
+
+### MAIN ANALYSIS 
+1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
+2) PERFORMING REPEATABILITY ANALYSIS FOR EACH GROUP AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
+3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
+4) FINAL MIXED MODEL USING LME FUNCTION
+5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT
 
 ```{r}
-source("./scripts/functions.R")
+#Check Normality with mixed model and then histogram of residuals
+
+Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs) 
+tab_model(Model_Learning)
+hist(residuals(Model_Learning)) 
+
+#Calculating repeatabilities using custom made functions
+rpt_learning(Learning_Control) -> rpt_learning_control
+rpt_learning_control
+rpt_learning(Learning_Treatment) -> rpt_learning_treatment
+rpt_learning_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_learning(Learning_Control) -> within_between_learning_control
+within_between_learning_control
+rpt_within_learning(Learning_Treatment) -> within_between_learning_treatment
+within_between_learning_treatment
+
+
+#Obtaining differences between repeatabilities using custom made functions
+Control_learning_boot <- unlist_rptr(rpt_learning_control)
+Treatment_learning_boot <- unlist_rptr(rpt_learning_treatment) 
+learning_diff <- difference_boot(Treatment_learning_boot,Control_learning_boot)  
+q_learning <- quantiles_diff_boot(learning_diff) #obtaining 95% CI
+m_learning <- mean(learning_diff) #Obtaining mean
+m_learning
+q_learning
+
+# Calculating difference in variance between control and treatment groups
+Model_Learning1 <- lme(difference ~ set + sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Learning1)
+Model_Learning2 <- lme(difference ~ set + sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Learning2)
+anova(Model_Learning1, Model_Learning2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+p2cs %>%
+  ggplot(aes(set, difference, fill=set)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
+
+#Sex Analysis
 
 ```{r}
-p2cs %>% 
-  ggplot(aes(x = set, y = difference, colour = set)) +
-  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
-  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
-  theme_minimal()
+#Check Normality with mixed model and then histogram of residuals
 
-model <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs)
-qqnorm(residuals(model))
-plot(model)
-summary(model)
-tab_model(model)
+Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs) 
+tab_model(Model_Learning)
+hist(residuals(Model_Learning)) 
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_learning(Control_Male_Learning) -> rpt_learning_control_male
+rpt_learning_control_male
+rpt_learning(Treatment_Male_Learning) -> rpt_learning_treatment_male
+rpt_learning_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_learning(Control_Female_Learning) -> rpt_learning_control_female
+rpt_learning_control_female
+rpt_learning(Treatment_Female_Learning) -> rpt_learning_treatment_female
+rpt_learning_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_learning(Control_Male_Learning) -> within_between_learning_control_male
+within_between_learning_control_male
+rpt_within_learning(Treatment_Male_Learning) -> within_between_learning_treatment_male
+within_between_learning_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_learning(Control_Female_Learning) -> within_between_learning_control_female
+within_between_learning_control_female
+rpt_within_learning(Treatment_Female_Learning) -> within_between_learning_treatment_female
+within_between_learning_treatment_female
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_learning_boot_male <- unlist_rptr(rpt_learning_control_male) #unlisting from the males
+Control_learning_boot_female <- unlist_rptr(rpt_learning_control_female) #unlisting from the females
+learning_diff_control <- difference_boot(Control_learning_boot_male,Control_learning_boot_female) #calculating the difference between males and females in the control group
+q_learning_control <- quantiles_diff_boot(learning_diff_control) #obtaining 95% CI
+m_learning_control <- mean(learning_diff_control) #Obtaining mean
+m_learning_control
+q_learning_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+Treatment_learning_boot_male <- unlist_rptr(rpt_learning_treatment_male) #unlisting from the males
+Treatment_learning_boot_female <- unlist_rptr(rpt_learning_treatment_female) #unlisting from the females
+learning_diff_treatment <- difference_boot(Treatment_learning_boot_female,Treatment_learning_boot_male) #calculating the difference between males and females in the control group
+q_learning_treatment <- quantiles_diff_boot(learning_diff_treatment) #obtaining 95% CI
+m_learning_treatment <- mean(learning_diff_treatment) #Obtaining mean
+m_learning_treatment
+q_learning_treatment
+
+
+
+# Calculating difference in variance between control and treatment groups
+Model_Learning1 <- lme(difference ~ set + sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Learning1)
+Model_Learning2 <- lme(difference ~ set + sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
+summary(Model_Learning2)
+anova(Model_Learning1, Model_Learning2) #calculating difference between two models to find difference in variance
+
+#Quick Visualization
+p2cs %>%
+  ggplot(aes(set, difference, fill=set)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~sex)
 ```
-
-```{r}
-model3 <- lmer(difference ~ set + day + sex + (1 | fishID), data = p5cs)
-summary(model3)
-tab_model(model3)
-```
-
-
-
-
-
