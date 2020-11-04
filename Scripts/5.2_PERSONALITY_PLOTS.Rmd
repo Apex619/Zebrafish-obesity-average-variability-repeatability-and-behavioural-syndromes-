@@ -1,0 +1,224 @@
+---
+title: "Personality Plots"
+author: "Hamza"
+date: "04/11/2020"
+output: html_document
+---
+
+### Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
+               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               stargazer)
+# Load custom functions
+source("../Scripts/functions_plots.R") #load custom functions
+```
+
+#Creating tibbles to use in plotting repeatabilities : one for overall plots, and one for sex plots
+
+Social analysis
+```{r, echo=FALSE}
+Social_rptr_F0 <- tibble(
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
+  r = c(rpt_social_control$R$Fish_ID,rpt_social_treatment$R$Fish_ID, m_social, within_between_social_control$R[1], within_between_social_control$R[2],within_between_social_treatment$R[1], within_between_social_treatment$R[2]),
+  ci.lb = c(rpt_social_control$CI_emp$`2.5%`,rpt_social_treatment$CI_emp$`2.5%`,-0.08, within_between_social_control$CI_emp[1,1], within_between_social_control$CI_emp[2,1],within_between_social_treatment$CI_emp[1,1], within_between_social_treatment$CI_emp[2,1]),
+  ci.ub = c(rpt_social_control$CI_emp$`97.5%`,rpt_social_treatment$CI_emp$`97.5%`, 0.30, within_between_social_control$CI_emp[1,2], within_between_social_control$CI_emp[2,2],within_between_social_treatment$CI_emp[1,2], within_between_social_treatment$CI_emp[2,2]),
+Endpoint = c("Social", "Social", "Social", "Social", "Social","Social","Social"))
+  
+Social_rptr_F0$r <- as.numeric(Social_rptr_F0$r)
+Social_rptr_F0
+
+Social_rptr_sex <- tibble(
+  Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
+  Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
+  r = c(rpt_social_control_male$R$Fish_ID,rpt_social_control_female$R$Fish_ID,rpt_social_treatment_male$R$Fish_ID,rpt_social_treatment_female$R$Fish_ID,m_social_control, m_social_treatment ),
+  ci.lb = c(rpt_social_control_male$CI_emp$`2.5%`,rpt_social_control_female$CI_emp$`2.5%`,rpt_social_treatment_male$CI_emp$`2.5%`,rpt_social_treatment_female$CI_emp$`2.5%`, 0.009, 0.03),
+  ci.ub = c(rpt_social_control_male$CI_emp$`97.5%`,rpt_social_control_female$CI_emp$`97.5%`,rpt_social_treatment_male$CI_emp$`97.5%`,rpt_social_treatment_female$CI_emp$`97.5%`, 0.39, 0.49),
+Endpoint = c("Social","Social","Social","Social","Social","Social"))
+  
+Social_rptr_sex
+```
+
+
+Novel analysis
+```{r, echo=FALSE}
+Novel_rptr_F0 <- tibble(
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
+  r = c(rpt_novel_control$R$Fish_ID,rpt_novel_treatment$R$Fish_ID, m_novel, within_between_novel_control$R[1], within_between_novel_control$R[2],within_between_novel_treatment$R[1], within_between_novel_treatment$R[2]),
+  ci.lb = c(rpt_novel_control$CI_emp$`2.5%`,rpt_novel_treatment$CI_emp$`2.5%`,-0.01, within_between_novel_control$CI_emp[1,1], within_between_novel_control$CI_emp[2,1],within_between_novel_treatment$CI_emp[1,1], within_between_novel_treatment$CI_emp[2,1]),
+  ci.ub = c(rpt_novel_control$CI_emp$`97.5%`,rpt_novel_treatment$CI_emp$`97.5%`, 0.26, within_between_novel_control$CI_emp[1,2], within_between_novel_control$CI_emp[2,2],within_between_novel_treatment$CI_emp[1,2], within_between_novel_treatment$CI_emp[2,2]),
+Endpoint = c("Novel", "Novel", "Novel", "Novel", "Novel","Novel","Novel"))
+  
+Novel_rptr_F0$r <- as.numeric(Novel_rptr_F0$r)
+Novel_rptr_F0
+
+Novel_rptr_sex <- tibble(
+  Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
+  Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
+  r = c(rpt_novel_control_male$R$Fish_ID,rpt_novel_control_female$R$Fish_ID,rpt_novel_treatment_male$R$Fish_ID,rpt_novel_treatment_female$R$Fish_ID,m_novel_control, m_novel_treatment ),
+  ci.lb = c(rpt_novel_control_male$CI_emp$`2.5%`,rpt_novel_control_female$CI_emp$`2.5%`,rpt_novel_treatment_male$CI_emp$`2.5%`,rpt_novel_treatment_female$CI_emp$`2.5%`, -0.06, -0.16),
+  ci.ub = c(rpt_novel_control_male$CI_emp$`97.5%`,rpt_novel_control_female$CI_emp$`97.5%`,rpt_novel_treatment_male$CI_emp$`97.5%`,rpt_novel_treatment_female$CI_emp$`97.5%`, 0.40, 0.17),
+Endpoint = c("Novel","Novel","Novel","Novel","Novel","Novel"))
+  
+Novel_rptr_sex
+```
+
+Predator analysis
+```{r, echo=FALSE}
+Predator_rptr_F0 <- tibble(
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
+  r = c(rpt_predator_control$R$Fish_ID,rpt_predator_treatment$R$Fish_ID, m_predator, within_between_predator_control$R[1], within_between_predator_control$R[2],within_between_predator_treatment$R[1], within_between_predator_treatment$R[2]),
+  ci.lb = c(rpt_predator_control$CI_emp$`2.5%`,rpt_predator_treatment$CI_emp$`2.5%`,-0.13, within_between_predator_control$CI_emp[1,1], within_between_predator_control$CI_emp[2,1],within_between_predator_treatment$CI_emp[1,1], within_between_predator_treatment$CI_emp[2,1]),
+  ci.ub = c(rpt_predator_control$CI_emp$`97.5%`,rpt_predator_treatment$CI_emp$`97.5%`, 0.27, within_between_predator_control$CI_emp[1,2], within_between_predator_control$CI_emp[2,2],within_between_predator_treatment$CI_emp[1,2], within_between_predator_treatment$CI_emp[2,2]),
+Endpoint = c("Predator", "Predator", "Predator", "Predator", "Predator","Predator","Predator"))
+  
+Predator_rptr_F0$r <- as.numeric(Predator_rptr_F0$r)
+Predator_rptr_F0
+
+Predator_rptr_sex <- tibble(
+  Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
+  Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
+  r = c(rpt_predator_control_male$R$Fish_ID,rpt_predator_control_female$R$Fish_ID,rpt_predator_treatment_male$R$Fish_ID,rpt_predator_treatment_female$R$Fish_ID,m_predator_control, m_predator_treatment ),
+  ci.lb = c(rpt_predator_control_male$CI_emp$`2.5%`,rpt_predator_control_female$CI_emp$`2.5%`,rpt_predator_treatment_male$CI_emp$`2.5%`,rpt_predator_treatment_female$CI_emp$`2.5%`, -0.10, -0.15),
+  ci.ub = c(rpt_predator_control_male$CI_emp$`97.5%`,rpt_predator_control_female$CI_emp$`97.5%`,rpt_predator_treatment_male$CI_emp$`97.5%`,rpt_predator_treatment_female$CI_emp$`97.5%`, 0.41, 0.39),
+Endpoint = c("Predator","Predator","Predator","Predator","Predator","Predator"))
+  
+Predator_rptr_sex
+```
+
+Aggression analysis
+```{r, echo=FALSE}
+Aggression_rptr_F0 <- tibble(
+  Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
+  r = c(rpt_aggression_control$R$Fish_ID,rpt_aggression_treatment$R$Fish_ID, m_aggression, within_between_aggression_control$R[1], within_between_aggression_control$R[2],within_between_aggression_treatment$R[1], within_between_aggression_treatment$R[2]),
+  ci.lb = c(rpt_aggression_control$CI_emp$`2.5%`,rpt_aggression_treatment$CI_emp$`2.5%`,0.01, within_between_aggression_control$CI_emp[1,1], within_between_aggression_control$CI_emp[2,1],within_between_aggression_treatment$CI_emp[1,1], within_between_aggression_treatment$CI_emp[2,1]),
+  ci.ub = c(rpt_aggression_control$CI_emp$`97.5%`,rpt_aggression_treatment$CI_emp$`97.5%`, 0.26, within_between_aggression_control$CI_emp[1,2], within_between_aggression_control$CI_emp[2,2],within_between_aggression_treatment$CI_emp[1,2], within_between_aggression_treatment$CI_emp[2,2]),
+Endpoint = c("Aggression", "Aggression", "Aggression", "Aggression", "Aggression","Aggression","Aggression"))
+  
+Aggression_rptr_F0$r <- as.numeric(Aggression_rptr_F0$r)
+Aggression_rptr_F0
+
+Aggression_rptr_sex <- tibble(
+  Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
+  Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
+  r = c(rpt_aggression_control_male$R$Fish_ID,rpt_aggression_control_female$R$Fish_ID,rpt_aggression_treatment_male$R$Fish_ID,rpt_aggression_treatment_female$R$Fish_ID,m_aggression_control, m_aggression_treatment ),
+  ci.lb = c(rpt_aggression_control_male$CI_emp$`2.5%`,rpt_aggression_control_female$CI_emp$`2.5%`,rpt_aggression_treatment_male$CI_emp$`2.5%`,rpt_aggression_treatment_female$CI_emp$`2.5%`, 0.12, -0.18),
+  ci.ub = c(rpt_aggression_control_male$CI_emp$`97.5%`,rpt_aggression_control_female$CI_emp$`97.5%`,rpt_aggression_treatment_male$CI_emp$`97.5%`,rpt_aggression_treatment_female$CI_emp$`97.5%`, 0.54, 0.24),
+Endpoint = c("Aggression","Aggression","Aggression","Aggression","Aggression","Aggression"))
+  
+Aggression_rptr_sex
+```
+
+Joining tibbles to use in plotting 
+```{r}
+
+#Joining all tibbles for overall
+Personality_Joined1 <- full_join(Social_rptr_F0, Novel_rptr_F0)
+Personality_Joined2 <- full_join(Personality_Joined1, Aggression_rptr_F0)
+Personality_Joined_Final <- full_join(Personality_Joined2, Predator_rptr_F0)
+
+
+
+
+
+Overall_Personality_Plotting_Data_F0 <- subset(Personality_Joined_Final, Personality_Joined_Final$Group %in% c("Treatment","Control","Contrast")) #Will be used for plotting just the overall repeatabilites 
+
+
+
+#Joining all tibbles for sex
+Overall_Personality_Sex1 <- full_join(Social_rptr_sex, Aggression_rptr_sex)
+Overall_Personality_Sex2 <- full_join(Overall_Personality_Sex1, Predator_rptr_sex)
+Overall_Personality_Sex_Final <- full_join(Overall_Personality_Sex2, Novel_rptr_sex)
+
+
+```
+#Overall forest plot showing repeatabilities of control and treatment groups (Personality F0)
+```{r}
+
+Overall_plot_F0_personality <- ggplot(Overall_Personality_Plotting_Data_F0, aes(x=Endpoint, y=r, colour=Group)) +
+geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = Endpoint, y = r), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+ylim(-0.25, 0.9)+
+   theme(axis.title.y=element_blank())+
+  theme_classic()+
+  scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+  theme(axis.title.y=element_blank())+
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())
+ 
+
+
+Overall_plot_F0_personality
+```
+
+
+
+#Overall forest plot showing differences between males and female repeatabilities for personality
+```{r}
+Sex_New_plot_personality <-
+  ggplot(Overall_Personality_Sex_Final,
+         aes(x = Endpoint, y = r, colour = Condition)) +
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8
+  ) +
+  geom_point(aes(x = Endpoint, y = r),
+             position = position_dodge(0.3),
+             size = 3) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  coord_flip() +
+  ylim(-0.4, 0.9) +
+  facet_grid( ~ Tank) +
+  theme(axis.title.y = element_blank()) +
+  scale_color_manual(values = c("#000000", "#f8766d", "#00bfc4")) +
+    theme_classic()+
+  theme(
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      size = 2
+    ),
+    axis.ticks = element_line(size = 2, color = "black"),
+    axis.ticks.length = unit(0.2, "cm")
+  ) +      font("xylab", size = 15) + font("xy", size = 15) + font("xy.text", size = 15) +
+  theme(axis.title.y = element_blank()) +
+  theme(legend.position = "bottom") +
+  theme(legend.title = element_blank())
+
+Sex_New_plot_personality
+
+```
+
+
+#Generating custom designed violin plots to display raw distributions of behavioral responses
+```{r}
+
+
+social_violin <- violin_plot_custom_hamza2(Social_ALL,Social_ALL$zone_05_dur,"Time spent near social stimulus", "Seconds")
+
+
+aggression_violin <- violin_plot_custom_hamza2(Aggression_ALL, Aggression_ALL$zone_05_dur, "Time spent near aggressive stimulus", "Seconds")
+
+
+
+novel_violin <- violin_plot_custom_hamza2(Novel_ALL, Novel_ALL$zone_05_dur, "Time spent near novel stimulus", "Seconds")
+
+predator_violin <- violin_plot_custom_hamza2(Predator_ALL, Predator_ALL$zone_05_dur, "Time spent near predatory stimulus", "Seconds")
+
+
+
+#Joining plots together using patchwork to create one main plot
+
+Joined_violins_personality <- social_violin + aggression_violin + novel_violin + predator_violin+ plot_layout(ncol = 2, nrow=2)
+Joined_violins_personality
+```
+
+
