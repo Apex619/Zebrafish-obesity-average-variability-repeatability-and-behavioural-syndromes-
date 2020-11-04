@@ -25,7 +25,7 @@ source("../Scripts/functions_repeatability.R")
 #Import and filter data
 ```{r, include = FALSE}
 #Master file with raw data
-Data <- read.csv("./Data/Weight_Length/Analysis.csv")
+Data <- read.csv("../Data/Weight_Length/Analysis.csv")
 
 #Filtered to ensure no spare tanks or fish are included in the analysis
 Data_subset = filter(Data, Tank %in% c("HA_C1","HA_C2","HA_C3", "HA_C4", "HA_T1","HA_T2","HA_T3","HA_T4"))
@@ -100,7 +100,7 @@ summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
 
-# Body Length (need to run code)
+# Body Length 
 ```{r, echo=FALSE}
 
 #Check Normality with mixed model and then histogram of residuals
