@@ -174,14 +174,16 @@ Sex_New_plot_optimism
 ```{r}
 
 
-positive_violin <- violin_plot_custom_hamza2(Positive_ALL,Positive_ALL$zone_05_dur,"Time spent near positive stimulus", "Seconds")
-
-
-negative_violin <- violin_plot_custom_hamza2(Negative_ALL, Negative_ALL$zone_05_dur, "Time spent near negative stimulus", "Seconds")
+positive_violin <- violin_plot_custom_hamza2(Positive_ALL,Positive_ALL$zone_05_dur,"Time spent near positive stimulus", "Seconds") %>% +facet_grid(~Sex) 
 
 
 
-mixed_violin <- violin_plot_custom_hamza2(Mixed_ALL, Mixed_ALL$zone_05_dur, "Time spent near mixed stimulus", "Seconds")
+
+negative_violin <- violin_plot_custom_hamza2(Negative_ALL, Negative_ALL$zone_05_dur, "Time spent near negative stimulus", "Seconds")%>% +facet_grid(~Sex) 
+
+
+
+mixed_violin <- violin_plot_custom_hamza2(Mixed_ALL, Mixed_ALL$zone_05_dur, "Time spent near mixed stimulus", "Seconds")%>% +facet_grid(~Sex) 
 
 
 
