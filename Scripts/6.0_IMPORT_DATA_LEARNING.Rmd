@@ -14,6 +14,8 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, plyr, magrittr, lubridat
 
 # Load custom function to extract data 
 source("../Scripts/functions_learning.R")
+
+#load('myEnvironment.RData')
 ```
 
 

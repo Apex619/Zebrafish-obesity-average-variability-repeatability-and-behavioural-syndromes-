@@ -20,6 +20,9 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 source("../Scripts/functions_learning.R")
 source("../Scripts/functions_repeatability.R")
 
+#Run this after all the coding has been run with 10,000 bootstraps
+#save.image(file='myEnvironment.RData') 
+#load('myEnvironment.RData')
 ```
 
 #Import and filter data
