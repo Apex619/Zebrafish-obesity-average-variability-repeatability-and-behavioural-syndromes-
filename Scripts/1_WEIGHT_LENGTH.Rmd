@@ -43,7 +43,7 @@ Weight_Length_Control <- subset(Weight_Length_Data, Weight_Length_Data$Treatment
 Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Treatment") 
 ```
 
-### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH (body length in progress as last measurements are finalized)
+### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH 
 1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
 2) PERFORMING REPEATABILITY ANALYSIS AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION (FOR BOTH CONTROL AND TREATMENT)
 3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
@@ -120,9 +120,9 @@ hist(residuals(Model_Body_Length2))
 
 
 #Calculating repeatabilities using custom made functions
-rpt_length(Weight_Length_Control) -> rpt_length_control
+rpt_length2(Weight_Length_Control) -> rpt_length_control
 rpt_length_control
-rpt_length(Weight_Length_Treatment) -> rpt_length_treatment
+rpt_length2(Weight_Length_Treatment) -> rpt_length_treatment
 rpt_length_treatment
 
 #Obtaining within-individual and between-individual variance for body weight
