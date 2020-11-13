@@ -204,10 +204,14 @@ Sex_New_plot_personality
 
 social_violin <- violin_plot_custom_hamza2(Social_ALL,Social_ALL$zone_05_dur,"Time spent near social stimulus", "Seconds")
 
+social_violin2 <- violin_plot_custom_hamza2(Social_ALL,Social_ALL$tot_dist,"Total distance travelled", "CM") %>% +facet_grid(~Sex)
+social_violin2
+
 
 aggression_violin <- violin_plot_custom_hamza2(Aggression_ALL, Aggression_ALL$zone_05_dur, "Time spent near aggressive stimulus", "Seconds")
 
-
+aggression_violin2 <- violin_plot_custom_hamza2(Aggression_ALL, Aggression_ALL$tot_dist, "Total distance travelled", "CM")%>% +facet_grid(~Sex)
+aggression_violin2
 
 novel_violin <- violin_plot_custom_hamza2(Novel_ALL, Novel_ALL$zone_05_dur, "Time spent near novel stimulus", "Seconds")
 
