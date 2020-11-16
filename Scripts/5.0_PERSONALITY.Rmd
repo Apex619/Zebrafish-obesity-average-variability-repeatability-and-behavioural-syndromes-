@@ -91,6 +91,11 @@ Novel_Treatment <- subset(Novel_ALL, Novel_ALL$Group == "Treatment")
 
 Aggression_Control <- subset(Aggression_ALL, Aggression_ALL$Group == "Control") 
 Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatment") 
+
+# EXPLORATION DATA
+Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+
 ```
 
 ### MAIN ANALYSIS 
@@ -99,6 +104,41 @@ Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatmen
 3) CALCULATING DIFFERENCES BETWEEN REPEATABILITIES
 4) FINAL MIXED MODEL USING LME FUNCTION
 5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT
+
+Exploration (Acclimation and post-stimulus)
+
+```{r}
+Model_acclimation <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 | ID), data = Acclimation) 
+tab_model(Model_acclimation)
+hist(residuals(Model_acclimation)) 
+
+#Quick Visualization
+Acclimation %>%
+  ggplot(aes(Group, dist.center.point.Total.cm, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+
+Model_post <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 | ID), data = Post_assay) 
+tab_model(Model_post)
+hist(residuals(Model_post)) 
+
+#Quick Visualization
+Post_assay %>%
+  ggplot(aes(Group, dist.center.point.Total.cm, fill=Group)) +
+  geom_violin(
+    trim = FALSE,
+    draw_quantiles = c(0.25, 0.5, 0.75), 
+    alpha=0.5
+  ) + 
+  geom_point(position = "jitter", alpha = 0.7, size = 3)+
+  facet_grid(~Sex)
+```
+
 
 Social Analysis - time spent near stimulus screen 
 ```{r}
