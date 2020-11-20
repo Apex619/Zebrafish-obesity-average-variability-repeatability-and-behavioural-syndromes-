@@ -66,7 +66,8 @@ NEED TO EDIT COMMENTS !
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+tab_model(Model_Tot_Dist)#mixed model 
 hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 

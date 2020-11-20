@@ -76,8 +76,8 @@ rpt_within_weight2 <- function(df) {
 
 
 #Obtaining within and between-individual variances (total distance)
-rpt_within_between_tot_dist <- function(df) {
-  rpt(scale(tot_dist) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+rpt_within_tot_dist <- function(df) {
+  rpt(scale(tot_dist) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 100, npermut = 100, ratio = FALSE)
 }
 
 #Calculating repeatability for total distance travelled
