@@ -21,7 +21,7 @@ source("../Scripts/functions_learning.R")
 source("../Scripts/functions_repeatability.R")
 
 #Run this after all the coding has been run with 10,000 bootstraps
-save.image(file='myEnvironment.RData') 
+#save.image(file='myEnvironment.RData') 
 #load('myEnvironment.RData')
 ```
 
@@ -206,7 +206,7 @@ tab_model(lm_week0)
 ```
 
 
-# Line plot (body weight)
+# plots (body weight)
 
 ```{r, echo = FALSE}
 Summary_Weight <- summarySE(Weight_Length_Data, measurevar="Weight.g.", groupvars=c("Week","Treatment_Tank", "Sex"))
@@ -225,7 +225,20 @@ line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treat
 
 line_plot_weight
 
+body_weight_violin <-  
+  ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank))+
+    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
+    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
+    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
+    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+ 
+    theme_pubr()+
+    rremove("legend.title")+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
+    theme(legend.position = "none")+
+    theme(axis.title.x=element_blank())+
+  facet_grid(~Sex)
 
+body_weight_violin
 ```
 
 
@@ -236,7 +249,7 @@ line_plot_weight
 
 
 
-# Line plot (fish length) for tanks
+# plots (fish length) for tanks
 
 ```{r, echo = FALSE}
 Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex"))
@@ -256,6 +269,19 @@ plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, c
 plot_fish_length_tanks
 
 
+body_length_violin <-  
+  ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Fish_Length_cm, fill = Treatment_Tank))+
+    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
+    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
+    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
+    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+ 
+    theme_pubr()+
+    rremove("legend.title")+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
+    theme(legend.position = "none")+
+    theme(axis.title.x=element_blank())+
+  facet_grid(~Sex)
+body_length_violin
 ```
 
 #Summary (BMI)
