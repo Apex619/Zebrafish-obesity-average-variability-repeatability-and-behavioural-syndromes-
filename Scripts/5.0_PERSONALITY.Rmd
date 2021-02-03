@@ -105,7 +105,7 @@ Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
 4) FINAL MIXED MODEL USING LME FUNCTION
 5) CALCULATING VARIANCE DIFFERENCES BETWEEN CONTROL AND TREATMENT
 
-Exploration (Acclimation and post-stimulus)
+Exploration (Acclimation and post-stimulus); total distance traveled
 
 ```{r}
 
