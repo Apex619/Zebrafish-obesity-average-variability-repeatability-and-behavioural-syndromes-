@@ -32,7 +32,7 @@ Personality <- read.csv("../Data/Personality/ALL.csv")
 # ROSE Q: have you tidied personality data to remove trials that were affected by covers falling down, etc.?
 to_check <- Personality[Personality$Notes!="",] # check these ones
 
-#HAMZA A: Apologies for the confusion. Those with the note "RE-RUN..." were fish that had to be re-run to issues in a previous trial. Those fish are fine. Notes with a delay in time were also accounted for in Ethovision (by creating a unique setting for time). I will double check the other 2 cases. I may have missed these as I had to re-export data from Ethovision and so may have not checked them for exclusion originally. 
+#HAMZA A: Apologies for the confusion. Those with the note "RE-RUN..." were fish that had to be re-run to issues in a previous trial. Those fish are fine. Notes with a delay in time were also accounted for in Ethovision (by creating a unique setting for time). The other trials have been excluded. 
 
 # ROSE request: fix mixing data for trial info
 to_fix <- Personality[Personality$Date==""|Personality$Fish_ID=="",] # need date to know the age of the fish
