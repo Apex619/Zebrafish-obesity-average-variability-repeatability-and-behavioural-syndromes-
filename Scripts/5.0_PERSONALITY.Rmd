@@ -29,6 +29,11 @@ First, we select a stimulus, which we want all the data for. Then with the funct
 ```{r}
 Personality <- read.csv("../Data/Personality/ALL.csv")
 
+# ROSE Q: have you tidied personality data to remove trials that were affected by covers falling down, etc.?
+to_check <- Personality[Personality$Notes!="",] # check these ones
+
+# ROSE request: fix mixing data for trial info
+to_fix <- Personality[Personality$Date==""|Personality$Fish_ID=="",] # need date to know the age of the fish
 
 
 #Gathering all Social Data 
@@ -95,7 +100,52 @@ Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatmen
 # EXPLORATION DATA
 Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
 Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+```
 
+### ROSE: shorter code to Import and subset data   
+
+```{r}
+Personality <- read.csv("../Data/Personality/ALL.csv")
+
+# making a column with a factor where the four levels correspond to the four phases
+Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
+
+# making a list where each level of the list is a different phase
+phases <- split(Personality, Personality$phase)
+
+# function to apply to the four phases: 1, 2, 3, and 4
+func_phase <- function(phase = 1){
+    df <- phases[[phase]] # getting phase dataframe based on index (1-4)
+    df$Behaviour <- df[,paste0("Phase",phase)] # getting columns that says which behaviour was in that phase
+    df <- df[,!(names(df) %in% paste0("Phase", 1:4))] # removing the now-redunant Phase1,...,Phase4 columns
+    return(df) # return dataframe
+}
+
+# applying function, returning a list of four dataframes
+Personality_list <- lapply(1:4, function(x) func_phase(x))
+Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each other
+
+Aggression_ALL <- Personality_df[Personality_df$Behaviour == "Aggression",]
+Novel_ALL <- Personality_df[Personality_df$Behaviour == "Novel",]
+Predator_ALL <- Personality_df[Personality_df$Behaviour == "Predator",]
+Social_ALL <- Personality_df[Personality_df$Behaviour == "Social",]
+
+#Subsetting data by control and treatment
+Social_Control <- subset(Social_ALL, Social_ALL$Group == "Control") 
+Social_Treatment <- subset(Social_ALL, Social_ALL$Group == "Treatment") 
+
+Predator_Control <- subset(Predator_ALL, Predator_ALL$Group == "Control") 
+Predator_Treatment <- subset(Predator_ALL, Predator_ALL$Group == "Treatment") 
+
+Novel_Control <- subset(Novel_ALL, Novel_ALL$Group == "Control") 
+Novel_Treatment <- subset(Novel_ALL, Novel_ALL$Group == "Treatment") 
+
+Aggression_Control <- subset(Aggression_ALL, Aggression_ALL$Group == "Control") 
+Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatment") 
+
+# EXPLORATION DATA
+Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
 ```
 
 ### MAIN ANALYSIS 
@@ -109,7 +159,7 @@ Exploration (Acclimation and post-stimulus); total distance traveled
 
 ```{r}
 
-#Acclimation
+#Acclimation 
 
 Model_acclimation <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 | ID), data = Acclimation) 
 tab_model(Model_acclimation)
@@ -759,6 +809,183 @@ Aggression_ALL %>%
   geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
 
+## ROSE: looking at residuals
+```{r}
+load("~/Dropbox/Shinichi/Postdoc/F0_Chapter_Analysis/Scripts/myEnvironment.RData")
+hist(residuals(Model_acclimation))                                    
+hist(residuals(Model_post))                                           
+hist(residuals(Model_Social_zone05))  # negatively skewed                                 
+hist(residuals(Model_Social_zone052)) # negatively skewed                                   
+hist(residuals(Model_Social_speed))   # positively skewed                                
+hist(residuals(Model_Social_tot_dist))# positively skewed                                 
+hist(residuals(Model_Social_tot_dist2))# positively skewed                               
+hist(residuals(Model_Predator_zone05))# positively skewed                                
+hist(residuals(Model_Predator_speed))                                 
+hist(residuals(Model_Predator_tot_dist))                              
+hist(residuals(Model_Predator_tot_dist2))                             
+hist(residuals(Model_Novel_zone05)) # positively skewed
+hist(residuals(Model_Novel_zone052)) # tails too fat                                  
+hist(residuals(Model_Novel_speed)) # tails too skinny                                   
+hist(residuals(Model_Novel_tot_dist)) # negatively skewed                                 
+hist(residuals(Model_Novel_tot_dist2)) # negatively skewed                                
+hist(residuals(Model_Aggression_zone05))                              
+hist(residuals(Model_Aggression_speed)) # tails too thin                             
+hist(residuals(Model_Aggression_tot_dist)) # tails too thin                             
+hist(residuals(Model_Aggression_tot_dist2))  # tails too thin  
+```
+
+### ROSE: converting from wide to long data format    
+```{r}
+Personality <- read.csv("../Data/Personality/ALL.csv")
+
+# making a column with a factor where the four levels correspond to the four phases
+Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
+
+# making a list where each level of the list is a different phase
+phases <- split(Personality, Personality$phase)
+
+# function to apply to the four phases: 1, 2, 3, and 4
+func_phase <- function(phase = 1){
+    df <- phases[[phase]] # getting phase dataframe based on index (1-4)
+    df$Behaviour <- df[,paste0("Phase",phase)] # getting columns that says which behaviour was in that phase
+    df <- df[,!(names(df) %in% paste0("Phase", 1:4))] # removing the now-redunant Phase1,...,Phase4 columns
+    return(df) # return dataframe
+}
+
+# applying function, returning a list of four dataframes
+Personality_list <- lapply(1:4, function(x) func_phase(x))
+Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each other
+
+# making an ID for the tank info (four phases in a session)
+Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
 
 
+# turning from wide to long
+vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
+          "tot_dist_05", "freeze_dur", "zone_510_dur",  
+          "zone_05_dur",  "zone_2025_dur","zone_1520_dur", 
+          "zone_3035_dur", "zone_1015_dur", "zone_3540_dur", 
+          "zone_2530_dur", "zone_near_dur", "zone_middle_dur", 
+          "zone_far_dur",  "arena_dur",  "moving_dur")
+info <- c("Time", "Day", "Date", "Video",   "Arena",   "Sex", "Mark", "Session", "Camera",  "Tank", "Group",  "Fish_ID", "Notes")
+
+# four behaviours
+behavs <- c("Aggression", "Novel", "Predator", "Social")
+
+# function to rename variables for each behaviour
+func_variable_behav <- function(behav = behavs[1]){
+    behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
+    names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
+    return(behav_vars)
+}
+# applying function to each behaviour
+vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
+# putting the four behaviour columns next to each other
+vars_behavs <- bind_cols(vars_behavs_list)
+
+# adding info
+Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
+```
+
+### ROSE: residual distributions and repeatability values for each variable    
+Using Shapiro-Wilk normality test   
+See ?shapiro.test
+More normal = higher W value and smaller p value
+```{r}
+func_behav_raw <- function(behav = behavs[1]){
+  
+  func_var <- function(var = vars[1]){
+    mod <- lmer(Personality_wide[,paste(var,behav,sep="_")] ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+    residuals <- resid(mod)
+    VC <- data.frame(VarCorr(mod))
+    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
+    sw <- shapiro.test(residuals)
+    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
+    return(df)
+  }
+  
+ rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
+ return(rpt_vals)
+}
+
+rpt_resids <- bind_rows(lapply(behavs, function(x) func_behav_raw(x)))
+
+# restricting to just values of W > 0.9 and seeing which variables are represented for all behaviours
+rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
+
+# only mean_speed and tot_dist are there for everything
+# zone_05_dur and zone_near_dur there for 3/4
+```
+
+## To-do:   
+### Add 'Activity' behaviour into wide dataframe, from no-stimulus periods
+- do you have the pre-stimulus periods in addition to the post-assay period? If so, can average the behaviours from those 5 periods?   
+- acclimation period should be excluded    
+
+### Try sqrt-transformation to see if one of the stimulus variables will be suitable for all four behaviours   
+- Modify func_behav_raw to func_behav_sqrt, with the response variable = square-root transformed   
+- Does normality of residuals for zone_05_dur or zone_near_dur improve for any of the behaviours?   
+
+### Run lmer models for chosen behaviour   
+```{r}
+# example: 
+lmer_zone_05_dur_Aggression <- lmer(zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+hist(resid(lmer_zone_05_dur_Aggression))
+summary(lmer_zone_05_dur_Aggression)
+
+# do this for all behaviours and chosen variables   
+```
+
+### Extract BLUPs from lmer models and plot fitted versus. predicted      
+- make a dataframe with the model parameters    
+- fitted = the actual measured behaviours
+- predicted = the model predictions, calculated according to the below equation:
+
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male})$$
+```{r}
+# example:
+mod = lmer_zone_05_dur_Aggression
+
+# getting population parameters
+betas <- fixef(mod)
+b0 <- betas[1]
+b1 <- betas[2]
+b2 <- betas[3]
+b3 <- betas[4]
+
+# getting blups
+blups <- data.frame(ranef(mod))
+round(mean(blups$condval)) # average of blups = 0
+
+# finding the treatment and male value for each fish_ID
+fish_ID <- as.character(blups$grp)
+# need to match fish_ID ID with their info
+pos <- match(fish_ID, Personality_wide$Fish_ID)
+(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
+
+# making dataframe of parameters
+mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
+# finding predicted values
+pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
+(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
+fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = Personality_wide$zone_05_dur_Aggression)
+plot(fitted_predicted$fitted, fitted_predicted$predicted)
+cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
+```
+
+### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
+```{r}
+library(brms)
+#options(mc.scores = parallel::detectCores()) # allows chains to run simultaneously, but needs enough RAM
+# brm_zone_05_dur_Aggression <- brm(formula = zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), 
+#                                   data = Personality_wide,
+#                                   family = gaussian(),
+#                                   chains = 3,
+#                                   iter = 2000, # iter and warmup quite short, as this is just a practice
+#                                   warmup = 1000)  
+# save(brm_zone_05_dur_Aggression, file = "../Models/brm_zone_05_dur_Aggression.Rdata")
+load("../Models/brm_zone_05_dur_Aggression.Rdata")
+mod_posterior <- as.data.frame(brm_zone_05_dur_Aggression)
+post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
+```
 
