@@ -18,8 +18,8 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
                stargazer)
 
 # Load custom function to extract data 
-source("../Scripts/functions_repeatability.R")
-source("../Scripts/functions_personality.R")
+source("./Scripts/functions_repeatability.R")
+source("./Scripts/functions_personality.R")
 
 ```
 
@@ -27,7 +27,7 @@ source("../Scripts/functions_personality.R")
 
 First, we select a stimulus, which we want all the data for. Then with the function, we filter which videos have that stimulus in the first, second, third and fourth phase (via the time). Then we join all to create one dataset of that stimulus.
 ```{r}
-Personality <- read.csv("../Data/Personality/ALL.csv")
+Personality <- read.csv("./Data/Personality/ALL.csv")
 
 # ROSE Q: have you tidied personality data to remove trials that were affected by covers falling down, etc.?
 to_check <- Personality[Personality$Notes!="",] # check these ones
@@ -102,14 +102,14 @@ Aggression_Control <- subset(Aggression_ALL, Aggression_ALL$Group == "Control")
 Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatment") 
 
 # EXPLORATION DATA
-Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+Acclimation <- read.csv("./Data/Personality/Acclimation.csv")
+Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
 ```
 
 ### ROSE: shorter code to Import and subset data   
 
 ```{r}
-Personality <- read.csv("../Data/Personality/ALL.csv")
+Personality <- read.csv("./Data/Personality/ALL.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
@@ -148,8 +148,8 @@ Aggression_Control <- subset(Aggression_ALL, Aggression_ALL$Group == "Control")
 Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatment") 
 
 # EXPLORATION DATA
-Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+Acclimation <- read.csv("./Data/Personality/Acclimation.csv")
+Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
 ```
 
 ### MAIN ANALYSIS 
@@ -840,7 +840,7 @@ hist(residuals(Model_Aggression_tot_dist2))  # tails too thin
 
 ### ROSE: converting from wide to long data format    
 ```{r}
-Personality <- read.csv("../Data/Personality/ALL.csv")
+Personality <- read.csv("./Data/Personality/ALL.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
@@ -852,7 +852,7 @@ phases <- split(Personality, Personality$phase)
 func_phase <- function(phase = 1){
     df <- phases[[phase]] # getting phase dataframe based on index (1-4)
     df$Behaviour <- df[,paste0("Phase",phase)] # getting columns that says which behaviour was in that phase
-    df <- df[,!(names(df) %in% paste0("Phase", 1:4))] # removing the now-redunant Phase1,...,Phase4 columns
+    df <- df[,!(names(df) %in% paste0("Phase", 1:4))] # removing the now-redundant Phase1,...,Phase4 columns
     return(df) # return dataframe
 }
 
@@ -862,7 +862,6 @@ Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each 
 
 # making an ID for the tank info (four phases in a session)
 Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
-
 
 # turning from wide to long
 vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
@@ -886,6 +885,25 @@ func_variable_behav <- function(behav = behavs[1]){
 vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
 # putting the four behaviour columns next to each other
 vars_behavs <- bind_cols(vars_behavs_list) #HAMZA: not binding due to unequal length? Not sure why Social has 357 rows and the rest 358?
+
+# ROSE: investigating where this error has come from, by adding a column for unique fish sessions etc
+func_variable_behav <- function(behav = behavs[1]){
+    behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
+    names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
+    behav_vars$fish_session_ID <- Personality_df[Personality_df$Behaviour == behav,"fish_session_ID"]
+    return(behav_vars)
+}
+vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
+# now need to find which trial_ID is not present in all of these behaviours
+trial_ID_list <- lapply(vars_behavs_list, function(x) x$fish_session_ID)
+trial_ID_list[[1]] == trial_ID_list[[2]] # these should be all TRUE, so something has gone wrong
+Personality_df %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # there should be FOUR repeats of fish_session_ID, not three
+# is this problem present in the imported datafame?
+Personality <- Personality %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
+Personality %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # NO
+# FOUND THE PROBLEM:
+unique(Personality$Time) #"6-Sep" "13-16" "20-23" "27-30"
+# so when we did Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")), the 6-9 phase was excluded
 
 # adding info
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
@@ -989,8 +1007,8 @@ library(brms)
 #                                   chains = 3,
 #                                   iter = 2000, # iter and warmup quite short, as this is just a practice
 #                                   warmup = 1000)  
-# save(brm_zone_05_dur_Aggression, file = "../Models/brm_zone_05_dur_Aggression.Rdata")
-load("../Models/brm_zone_05_dur_Aggression.Rdata")
+# save(brm_zone_05_dur_Aggression, file = "./Models/brm_zone_05_dur_Aggression.Rdata")
+load("./Models/brm_zone_05_dur_Aggression.Rdata")
 mod_posterior <- as.data.frame(brm_zone_05_dur_Aggression)
 post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
 ```
