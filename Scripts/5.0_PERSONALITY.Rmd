@@ -182,7 +182,7 @@ Acclimation %>%
 
 #Post assay
 
-Model_post <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 | ID), data = Post_assay) 
+Model_post <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 |Fish_ID), data = Post_assay) 
 tab_model(Model_post)
 hist(residuals(Model_post)) 
 
