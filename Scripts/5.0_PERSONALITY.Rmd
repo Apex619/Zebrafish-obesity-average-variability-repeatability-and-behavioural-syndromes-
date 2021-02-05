@@ -924,7 +924,9 @@ rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
 ## To-do:   
 ### Add 'Activity' behaviour into wide dataframe, from no-stimulus periods
 - do you have the pre-stimulus periods in addition to the post-assay period? If so, can average the behaviours from those 5 periods?   
-- acclimation period should be excluded    
+- acclimation period should be excluded  
+
+#HAMZA: I don't have the pre-stimulus periods :/ I can get it from Ethovision but will take some time to ensure I do it correctly. 
 
 ### Try sqrt-transformation to see if one of the stimulus variables will be suitable for all four behaviours   
 - Modify func_behav_raw to func_behav_sqrt, with the response variable = square-root transformed   
