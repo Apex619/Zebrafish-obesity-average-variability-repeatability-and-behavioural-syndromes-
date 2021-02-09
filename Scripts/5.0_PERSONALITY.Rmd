@@ -102,8 +102,8 @@ Aggression_Control <- subset(Aggression_ALL, Aggression_ALL$Group == "Control")
 Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatment") 
 
 # EXPLORATION DATA
-Acclimation <- read.csv("./Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
+# Acclimation <- read.csv("./Data/Personality/Acclimation.csv")
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
 ```
 
 ### ROSE: shorter code to Import and subset data   
@@ -182,13 +182,13 @@ Acclimation %>%
 
 #Post assay
 
-Model_post <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 |Fish_ID), data = Post_assay) 
+Model_post <- lmer(tot_dist ~ Group + Sex + (1 |Fish_ID), data = Post_assay) 
 tab_model(Model_post)
 hist(residuals(Model_post)) 
 
 #Quick Visualization
 Post_assay %>%
-  ggplot(aes(Group, dist.center.point.Total.cm, fill=Group)) +
+  ggplot(aes(Group, tot_dist, fill=Group)) +
   geom_violin(
     trim = FALSE,
     draw_quantiles = c(0.25, 0.5, 0.75), 
@@ -838,7 +838,7 @@ hist(residuals(Model_Aggression_tot_dist)) # tails too thin
 hist(residuals(Model_Aggression_tot_dist2))  # tails too thin  
 ```
 
-### ROSE: converting from wide to long data format    
+### ROSE: converting from wide to long data format   
 ```{r}
 Personality <- read.csv("../Data/Personality/ALL.csv")
 
@@ -909,6 +909,22 @@ unique(Personality$Time) #"6-Sep" "13-16" "20-23" "27-30"
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
 ```
 
+### Adding in activity data (post-assay) to Personality_wide
+```{r}
+Personality_wide <- left_join(Post_assay, Personality_wide)
+
+# Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was sucessful considering that the number of observations did not change, however the number of variables increased. 
+
+names(Personality_wide)[names(Personality_wide)=="Phase"] <- "Phase5"
+# dplyr wasn't working so had to use base functions for now to just incorporate activity as "Phase5" 
+
+# five behaviours
+behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
+
+
+```
+
+
 ### ROSE: residual distributions and repeatability values for each variable    
 Using Shapiro-Wilk normality test   
 See ?shapiro.test
@@ -978,14 +994,14 @@ rpt_resids_log <- bind_rows(lapply(behavs, function(x) func_behav_log(x))) # log
 rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 # only mean_speed and tot_dist are there for everything
-# zone_05_dur and zone_near_dur there for 3/4
+# zone_near_dur there for 4/5
 
 rpt_resids_sqrt %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 # zone_510_dur, zone 2025_dur, zone_middle_dur and zone_far_dur there for everything
 
 rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
-
+#tot_dist_05 there for 5/5
 
 
 ```
@@ -997,6 +1013,8 @@ rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 #HAMZA: I don't have the pre-stimulus periods :/ I can get it from Ethovision but will take some time to ensure I do it correctly. 
 
+#UPDATE: Activity has been added into the dataframe and have ensured to include "Acitvity" as part of our "behavs" list
+
 ### Try sqrt-transformation to see if one of the stimulus variables will be suitable for all four behaviours   
 - Modify func_behav_raw to func_behav_sqrt, with the response variable = square-root transformed   
 - Does normality of residuals for zone_05_dur or zone_near_dur improve for any of the behaviours?   
@@ -1007,6 +1025,7 @@ rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
 lmer_zone_05_dur_Aggression <- lmer(zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
 hist(resid(lmer_zone_05_dur_Aggression))
 summary(lmer_zone_05_dur_Aggression)
+tab_model(lmer_zone_05_dur_Aggression)
 
 
 lmer_zone_05_dur_Novel <- lmer(log(zone_05_dur_Novel+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
@@ -1021,7 +1040,11 @@ lmer_zone_05_dur_Predator <- lmer(sqrt(zone_05_dur_Predator) ~ Group*Sex + (1 | 
 hist(resid(lmer_zone_05_dur_Predator))
 summary(lmer_zone_05_dur_Predator)
 
-# log transformations seem to display better normal distributions for he zone05 variable
+lmer_zone_05_dur_Activity <- lmer(sqrt(zone_05_dur_Activity) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+hist(resid(lmer_zone_05_dur_Activity))
+summary(lmer_zone_05_dur_Activity)
+
+
 
 # near duration
 
