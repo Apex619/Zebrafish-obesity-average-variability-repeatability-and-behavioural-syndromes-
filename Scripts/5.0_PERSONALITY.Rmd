@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #checks for installation and loads packages
 pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
                sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
-               stargazer, brms)
+               stargazer, brms, MCMCglmm)
 
 # Load custom function to extract data 
 source("../Scripts/functions_repeatability.R")
@@ -163,32 +163,16 @@ Exploration (Acclimation and post-stimulus); total distance traveled
 
 ```{r}
 
-#Acclimation 
-
-Model_acclimation <- lmer(dist.center.point.Total.cm ~ Group + Sex + (1 | ID), data = Acclimation) 
-tab_model(Model_acclimation)
-hist(residuals(Model_acclimation)) 
-
-#Quick Visualization
-Acclimation %>%
-  ggplot(aes(Group, dist.center.point.Total.cm, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)+
-  facet_grid(~Sex)
 
 #Post assay
 
-Model_post <- lmer(tot_dist ~ Group + Sex + (1 |Fish_ID), data = Post_assay) 
+Model_post <- lmer(tot_dist_Activity ~ Group*Sex + (1 |Fish_ID), data = Post_assay) 
 tab_model(Model_post)
 hist(residuals(Model_post)) 
 
 #Quick Visualization
 Post_assay %>%
-  ggplot(aes(Group, tot_dist, fill=Group)) +
+  ggplot(aes(Group, tot_dist_Activity, fill=Group)) +
   geom_violin(
     trim = FALSE,
     draw_quantiles = c(0.25, 0.5, 0.75), 
@@ -913,7 +897,7 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 ```{r}
 Personality_wide <- left_join(Post_assay, Personality_wide)
 
-# Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was sucessful considering that the number of observations did not change, however the number of variables increased. 
+# Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was successful considering that the number of observations did not change, however the number of variables increased. Cleaning uo the original excel file also meant joining was easy.
 
 names(Personality_wide)[names(Personality_wide)=="Phase"] <- "Phase5"
 # dplyr wasn't working so had to use base functions for now to just incorporate activity as "Phase5" 
@@ -1067,6 +1051,10 @@ lmer_zone_near_dur_Predator <- lmer(sqrt(zone_near_dur_Predator) ~ Group*Sex + (
 hist(resid(lmer_zone_near_dur_Predator)) # normally distributed
 summary(lmer_zone_near_dur_Predator)
 
+lmer_zone_near_dur_Activity <- lmer(sqrt(zone_near_dur_Activity) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+hist(resid(lmer_zone_near_dur_Activity)) 
+summary(lmer_zone_near_dur_Activity)
+
 ```
 
 ### Extract BLUPs from lmer models and plot fitted versus. predicted      
@@ -1075,6 +1063,8 @@ summary(lmer_zone_near_dur_Predator)
 - predicted = the model predictions, calculated according to the below equation:
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male})$$ 
+
+
 ```{r}
 # example:
 mod = lmer_zone_05_dur_Aggression
@@ -1136,6 +1126,10 @@ mod_posterior_Social <- as.data.frame(brm_zone_05_dur_Social)
 post_means_Social <- apply(mod_posterior_Social, 2, function(x) round(mean(x),4))
 
 summary(brm_zone_05_dur_Social)
+tab_model(brm_zone_05_dur_Social)
+# Comparison with lmer model
+summary(lmer_zone_05_dur_Social)
+tab_model(lmer_zone_05_dur_Social)
 
 
 
@@ -1145,4 +1139,58 @@ summary(brm_zone_05_dur_Social)
 zone_05_post <- posterior_samples(brm_zone_05_dur_Social)
 
 ```
+
+###Example correlation analysis 
+
+Attempting to do some practic and wrap my head around the process
+```{r}
+brm_correlation_Social_Activity <- brm(cbind(scale(zone_05_dur_Social), scale(tot_dist_Activity)) ~ Group*Sex + (1 | Fish_ID),
+                                  data = Personality_wide,
+                                  family = gaussian(),
+                                  chains = 3,
+                                  iter = 2000, warmup = 1000)
+
+
+
+save(brm_correlation_Social_Activity, file = "../Models/brm_correlation_Social_Activity.Rdata")
+
+summary(brm_correlation_Social_Activity)
+
+colnames(posterior_samples(brm_correlation_Social_Activity))[1:18]
+
+Correlation_Time_Spent_Social_Dist_Travel <- posterior_samples(brm_correlation_Social_Activity)[,13]
+par(mar=c(2, 2, 3, 2))
+plot(density(Correlation_Time_Spent_Social_Dist_Travel),
+main="Correlation Time Spent - Total Distance Travelled",
+xlab="",ylab="",cex.main=0.8)
+abline(v=0,col="red",lwd=2)
+abline(v=mean(Correlation_Time_Spent_Social_Dist_Travel),col="black",lwd=2)
+abline(v=HPDinterval(as.mcmc(Correlation_Time_Spent_Social_Dist_Travel))[1],col="black",lty=2)
+abline(v=HPDinterval(as.mcmc(Correlation_Time_Spent_Social_Dist_Travel))[2],col="black",lty=2)
+
+#Can asume a significant positive correlation between time spent near stimulus screen during social stimulus and total distance travelled in actvity phase. Dashed lines indicate the 95% credible interval of the posterior distribution.Does not cross zero.
+
+# For demonstrative purposes we can anyways go ahead and plot the among individual correlation of behaviors. For this we need to extract the posterior mean behavioral types (BLUP) and calculate the slope between behaviors.
+
+#Extract BLUPS
+
+
+  
+
+#Calculating slope
+
+#COV(X,Y ) = (CORX,Y * sqrt(VarX) * sqrt(VarY )
+
+
+cov.social_dist <-
+posterior_samples(Correlation_Time_Spent_Social_Dist_Travel)[,13] *
+sqrt(posterior_samples(Correlation_Time_Spent_Social_Dist_Travel)[,9]^2) *
+sqrt(posterior_samples(Correlation_Time_Spent_Social_Dist_Travel)[,10]^2)
+
+var.dist <- posterior_samples(m4_brm)[,10]^2
+
+Social_Distance_slope <- cov.social_dist / var.dist
+```
+
+
 
