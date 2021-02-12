@@ -845,7 +845,8 @@ Personality_list <- lapply(1:4, function(x) func_phase(x))
 Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each other
 
 # making an ID for the tank info (four phases in a session)
-Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
+Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID) # ROSE2: since the 'ALL.csv' data file has been updated, 'Tank' column is missing, so this needs to change
+Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% arrange(fish_session_ID) # ROSE2: correction since data update
 
 # turning from wide to long
 vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
@@ -854,7 +855,9 @@ vars <- c("tot_dist", "mean_speed", "mean_dist_05",
           "zone_3035_dur", "zone_1015_dur", "zone_3540_dur", 
           "zone_2530_dur", "zone_near_dur", "zone_middle_dur", 
           "zone_far_dur",  "arena_dur",  "moving_dur")
-info <- c("Time", "Day", "Date", "Video",   "Arena",   "Sex", "Mark", "Session", "Camera",  "Tank", "Group",  "Fish_ID", "Notes")
+info <- c("Time", "Day", "Date", "Video",   "Arena",   "Sex", "Mark", "Session", "Camera",  "Tank", "Group",  "Fish_ID", "Notes") # ROSE2: again, not working after data update
+info[!(info %in% names(Personality_df))] # Tank and Video missing
+info <- c("Time", "Day", "Date",  "Arena",   "Sex", "Mark", "Session", "Camera",  "Group",  "Fish_ID", "Notes")#ROSE2: removing missing tank and video
 
 # four behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social")
@@ -870,24 +873,25 @@ vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
 # putting the four behaviour columns next to each other
 vars_behavs <- bind_cols(vars_behavs_list) #HAMZA: not binding due to unequal length? Not sure why Social has 357 rows and the rest 358?
 
+# ROSE2: delete this bit now the error is fixed (keep code tidy)
 # ROSE: investigating where this error has come from, by adding a column for unique fish sessions etc
-func_variable_behav <- function(behav = behavs[1]){
-    behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
-    names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
-    behav_vars$fish_session_ID <- Personality_df[Personality_df$Behaviour == behav,"fish_session_ID"]
-    return(behav_vars)
-}
-vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
-# now need to find which trial_ID is not present in all of these behaviours
-trial_ID_list <- lapply(vars_behavs_list, function(x) x$fish_session_ID)
-trial_ID_list[[1]] == trial_ID_list[[2]] # these should be all TRUE, so something has gone wrong
-Personality_df %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # there should be FOUR repeats of fish_session_ID, not three
-# is this problem present in the imported datafame?
-Personality <- Personality %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
-Personality %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # NO
-# FOUND THE PROBLEM:
-unique(Personality$Time) #"6-Sep" "13-16" "20-23" "27-30"
-# so when we did Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")), the 6-9 phase was excluded
+# func_variable_behav <- function(behav = behavs[1]){
+#     behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
+#     names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
+#     behav_vars$fish_session_ID <- Personality_df[Personality_df$Behaviour == behav,"fish_session_ID"]
+#     return(behav_vars)
+# }
+# vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
+# # now need to find which trial_ID is not present in all of these behaviours
+# trial_ID_list <- lapply(vars_behavs_list, function(x) x$fish_session_ID)
+# trial_ID_list[[1]] == trial_ID_list[[2]] # these should be all TRUE, so something has gone wrong
+# Personality_df %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # there should be FOUR repeats of fish_session_ID, not three
+# # is this problem present in the imported datafame?
+# Personality <- Personality %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
+# Personality %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # NO
+# # FOUND THE PROBLEM:
+# unique(Personality$Time) #"6-Sep" "13-16" "20-23" "27-30"
+# # so when we did Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")), the 6-9 phase was excluded
 
 # adding info
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
@@ -895,17 +899,30 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 
 ### Adding in activity data (post-assay) to Personality_wide
 ```{r}
-Personality_wide <- left_join(Post_assay, Personality_wide)
-
-# Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was successful considering that the number of observations did not change, however the number of variables increased. Cleaning uo the original excel file also meant joining was easy.
-
-names(Personality_wide)[names(Personality_wide)=="Phase"] <- "Phase5"
-# dplyr wasn't working so had to use base functions for now to just incorporate activity as "Phase5" 
+# Personality_wide <- left_join(Post_assay, Personality_wide)
+# 
+# # Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was successful considering that the number of observations did not change, however the number of variables increased. Cleaning up the original excel file also meant joining was easy. 
+# 
+# names(Personality_wide)[names(Personality_wide)=="Phase"] <- "Phase5"
+# # dplyr wasn't working so had to use base functions for now to just incorporate activity as "Phase5"# ROSE2: not sure what is meant by this?
 
 # five behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
 
 
+# ROSE2: checking above
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+Personality_wide2 <- left_join(Post_assay, Personality_wide)
+names(Personality_wide2) # ROSE2: we don't want these "Phase columns"
+Personality_wide2 <- Personality_wide2[,!(str_detect(names(Personality_wide2), "Phase"))]
+# double-checking matching was done correctly
+Personality_wide2$session_ID = paste(Personality_wide2$Fish_ID, Personality_wide2$Date, Personality_wide2$Session, Personality_wide2$Camera) 
+wide_ID = paste(Personality_wide$Fish_ID, Personality_wide$Date, Personality_wide$Session, Personality_wide$Camera) 
+postassay_ID = paste(Post_assay$Fish_ID, Post_assay$Date, Post_assay$Session, Post_assay$Camera)
+Personality_wide2$session_ID == wide_ID
+Personality_wide2$session_ID == postassay_ID # these are all true, so Personality_wide2 is arranged in the order of the postassay dataframe
+Personality_wide$tot_dist_Aggression[match(postassay_ID, wide_ID)] == Personality_wide2$tot_dist_Aggression # correct
+Personality_wide <- Personality_wide2
 ```
 
 
@@ -953,7 +970,7 @@ func_behav_sqrt <- function(behav = behavs[1]){
 func_behav_log <- function(behav = behavs[1]){
   
   func_var <- function(var = vars[1]){
-    mod <- lmer(log(Personality_wide[,paste(var,behav,sep="_")]+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+    mod <- lmer(log(Personality_wide[,paste(var,behav,sep="_")]+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)  # ROSE2: this is common to see in papers but if you care about variance estimation then it's best to avoid log transformations when you have zeroes in your data.
     residuals <- resid(mod)
     VC <- data.frame(VarCorr(mod))
     rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
@@ -986,8 +1003,6 @@ rpt_resids_sqrt %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
 #tot_dist_05 there for 5/5
-
-
 ```
 
 ## To-do:   
@@ -1005,6 +1020,11 @@ rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 ### Run lmer models for chosen behaviour   
 ```{r}
+#ROSE2: To-do:
+# - Write a function that will input your variable name and output the model
+# - use lapply to apply that function across all behaviours
+# - add more notes/annotation justifying your chosen variables
+
 # 05 duration
 lmer_zone_05_dur_Aggression <- lmer(zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
 hist(resid(lmer_zone_05_dur_Aggression))
@@ -1012,7 +1032,7 @@ summary(lmer_zone_05_dur_Aggression)
 tab_model(lmer_zone_05_dur_Aggression)
 
 
-lmer_zone_05_dur_Novel <- lmer(log(zone_05_dur_Novel+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+lmer_zone_05_dur_Novel <- lmer(log(zone_05_dur_Novel+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
 hist(resid(lmer_zone_05_dur_Novel))
 summary(lmer_zone_05_dur_Novel)
 
@@ -1057,6 +1077,7 @@ summary(lmer_zone_near_dur_Activity)
 
 ```
 
+
 ### Extract BLUPs from lmer models and plot fitted versus. predicted      
 - make a dataframe with the model parameters    
 - fitted = the actual measured behaviours
@@ -1066,6 +1087,10 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 
 
 ```{r}
+#ROSE2: To-do:
+# - Write a function that will input your model name and output your dataframe of fitted and predicted values   
+# - use lapply to apply that function across all your models   
+
 # example:
 mod = lmer_zone_05_dur_Aggression
 
@@ -1098,6 +1123,13 @@ cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
 
 ### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
+#ROSE2: To-do:
+# - Write a function that will input your variable name, run, and save your brm model 
+# - use lapply to apply that function across all your variable names
+# - save one Rdata file with all your brm models   
+# - Write a function that will input your brm model object, and output two things: (1) the posterior distributions of population paramaters; (2) the fitted and predicted values for posterior means.
+
+
 library(brms)
 #options(mc.scores = parallel::detectCores()) # allows chains to run simultaneously, but needs enough RAM
 # brm_zone_05_dur_Aggression <- brm(formula = zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), 
@@ -1121,7 +1153,7 @@ brm_zone_05_dur_Social <- brm(formula = sqrt(zone_05_dur_Social) ~ Group*Sex + (
                                   chains = 3,
                                   iter = 2000, warmup = 1000)
 save(brm_zone_05_dur_Social, file = "../Models/brm_zone_05_dur_Social.Rdata")
-
+load("../Models/brm_zone_05_dur_Social.Rdata")
 mod_posterior_Social <- as.data.frame(brm_zone_05_dur_Social)
 post_means_Social <- apply(mod_posterior_Social, 2, function(x) round(mean(x),4))
 
@@ -1137,7 +1169,6 @@ tab_model(lmer_zone_05_dur_Social)
 
 
 zone_05_post <- posterior_samples(brm_zone_05_dur_Social)
-
 ```
 
 ###Example correlation analysis 
@@ -1158,7 +1189,7 @@ summary(brm_correlation_Social_Activity)
 
 colnames(posterior_samples(brm_correlation_Social_Activity))[1:18]
 
-Correlation_Time_Spent_Social_Dist_Travel <- posterior_samples(brm_correlation_Social_Activity)[,13]
+Correlation_Time_Spent_Social_Dist_Travel <- posterior_samples(brm_correlation_Social_Activity)[,13] # ROSE2: always call things by their names, not their index. Reduces mistakes, makes code easier to read + more reproducible.
 par(mar=c(2, 2, 3, 2))
 plot(density(Correlation_Time_Spent_Social_Dist_Travel),
 main="Correlation Time Spent - Total Distance Travelled",
