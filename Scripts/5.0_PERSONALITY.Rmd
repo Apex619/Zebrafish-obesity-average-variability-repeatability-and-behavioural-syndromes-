@@ -871,27 +871,7 @@ func_variable_behav <- function(behav = behavs[1]){
 # applying function to each behaviour
 vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
 # putting the four behaviour columns next to each other
-vars_behavs <- bind_cols(vars_behavs_list) #HAMZA: not binding due to unequal length? Not sure why Social has 357 rows and the rest 358?
-
-# ROSE2: delete this bit now the error is fixed (keep code tidy)
-# ROSE: investigating where this error has come from, by adding a column for unique fish sessions etc
-# func_variable_behav <- function(behav = behavs[1]){
-#     behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
-#     names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
-#     behav_vars$fish_session_ID <- Personality_df[Personality_df$Behaviour == behav,"fish_session_ID"]
-#     return(behav_vars)
-# }
-# vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
-# # now need to find which trial_ID is not present in all of these behaviours
-# trial_ID_list <- lapply(vars_behavs_list, function(x) x$fish_session_ID)
-# trial_ID_list[[1]] == trial_ID_list[[2]] # these should be all TRUE, so something has gone wrong
-# Personality_df %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # there should be FOUR repeats of fish_session_ID, not three
-# # is this problem present in the imported datafame?
-# Personality <- Personality %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID)
-# Personality %>% group_by(fish_session_ID) %>% tally() %>% group_by(n) %>% tally() # NO
-# # FOUND THE PROBLEM:
-# unique(Personality$Time) #"6-Sep" "13-16" "20-23" "27-30"
-# # so when we did Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")), the 6-9 phase was excluded
+vars_behavs <- bind_cols(vars_behavs_list) 
 
 # adding info
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
@@ -899,7 +879,7 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 
 ### Adding in activity data (post-assay) to Personality_wide
 ```{r}
-# Personality_wide <- left_join(Post_assay, Personality_wide)
+Personality_wide <- left_join(Post_assay, Personality_wide)
 # 
 # # Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was successful considering that the number of observations did not change, however the number of variables increased. Cleaning up the original excel file also meant joining was easy. 
 # 
@@ -941,7 +921,7 @@ func_behav_raw <- function(behav = behavs[1]){
     sw <- shapiro.test(residuals)
     df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
     return(df)
-  }
+  } # raw general linear model to determine whether transformations are required
   
 
   
@@ -952,14 +932,14 @@ func_behav_raw <- function(behav = behavs[1]){
 func_behav_sqrt <- function(behav = behavs[1]){
   
   func_var <- function(var = vars[1]){
-    mod <- lmer(sqrt(Personality_wide[,paste(var,behav,sep="_")]) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+    mod <- lmer(sqrt(Personality_wide[,paste(var,behav,sep="_")]) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) # added a square root transformation here to the model
     residuals <- resid(mod)
     VC <- data.frame(VarCorr(mod))
     rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
     sw <- shapiro.test(residuals)
     df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
     return(df)
-  }
+  } # same general linear model as above but with a square root transformation
   
 
   
@@ -967,120 +947,124 @@ func_behav_sqrt <- function(behav = behavs[1]){
  return(rpt_vals)
 }
 
-func_behav_log <- function(behav = behavs[1]){
-  
-  func_var <- function(var = vars[1]){
-    mod <- lmer(log(Personality_wide[,paste(var,behav,sep="_")]+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)  # ROSE2: this is common to see in papers but if you care about variance estimation then it's best to avoid log transformations when you have zeroes in your data.
-    residuals <- resid(mod)
-    VC <- data.frame(VarCorr(mod))
-    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
-    sw <- shapiro.test(residuals)
-    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
-    return(df)
-  }
-  
-
-  
- rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
- return(rpt_vals)
-}
+# RUNNING MODELS 
 
 rpt_resids <- bind_rows(lapply(behavs, function(x) func_behav_raw(x))) # not transformed
 
 rpt_resids_sqrt <- bind_rows(lapply(behavs, function(x) func_behav_sqrt(x))) # sqrt transformed
 
-rpt_resids_log <- bind_rows(lapply(behavs, function(x) func_behav_log(x))) # log transformed
+# CHECKING TO SEE WHICH VARIABLES ARE NORMAL AND WHICH REQUIRE TRANSFORMATION
 
-# restricting to just values of W > 0.9 and seeing which variables are represented for all behaviours
+# restricting to just values of W > 0.9 and seeing which variables are represented for all behaviors
+
 rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
+
 # only mean_speed and tot_dist are there for everything
-# zone_near_dur there for 4/5
+
+
+filter(rpt_resids, var == "mean_speed") # all looks good, except p-val for Aggression?
+
+filter(rpt_resids, var == "tot_dist") # similar to above?
+
+# zone_near_dur there for 4/5, so we want to check which phase would need to be transformed 
+
+filter(rpt_resids, var == "zone_near_dur") 
+
+#this shows that the "Social" phase needs a transformation for the variable zone_near_dur, so we'll see if a square root transformation helps
 
 rpt_resids_sqrt %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
-# zone_510_dur, zone 2025_dur, zone_middle_dur and zone_far_dur there for everything
+filter(rpt_resids_sqrt, var == "zone_near_dur")
 
-rpt_resids_log %>% filter(W>0.9) %>% group_by(var) %>% tally()
-#tot_dist_05 there for 5/5
+# The square root transformation doesn't help for the variable zone_near_dur for the Social phase, so will try to identify another variable that can be used for all 5 phases as long as transformations work
+
+rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
+
+#Will try to see tot_dist_05
+ 
+filter(rpt_resids, var == "tot_dist_05")
+
+#Social and Aggression require transformations, will see if the sqrt transformations helped
+
+filter(rpt_resids_sqrt, var == "tot_dist_05")
+
+#Aggression phase is good with a square root transformation, Social phase improved, possibility it can be used?
+
+# Will now check zone_05_dur
+
+filter(rpt_resids, var == "zone_05_dur")
+
+#Not too fussed with Activity phase as we will use a distance variable, however, Novel phase needs to be transformed. Will see if the transformation helps with normality
+
+filter(rpt_resids_sqrt, var == "zone_05_dur")
+
+#A square root transformation appears to have done the job.
+
+# To summarize, we can use the following variables for analysis
+
+# Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
+
+
+
+
+
 ```
 
-## To-do:   
-### Add 'Activity' behaviour into wide dataframe, from no-stimulus periods
-- do you have the pre-stimulus periods in addition to the post-assay period? If so, can average the behaviours from those 5 periods?   
-- acclimation period should be excluded  
-
-#HAMZA: I don't have the pre-stimulus periods :/ I can get it from Ethovision but will take some time to ensure I do it correctly. 
-
-#UPDATE: Activity has been added into the dataframe and have ensured to include "Acitvity" as part of our "behavs" list
-
-### Try sqrt-transformation to see if one of the stimulus variables will be suitable for all four behaviours   
-- Modify func_behav_raw to func_behav_sqrt, with the response variable = square-root transformed   
-- Does normality of residuals for zone_05_dur or zone_near_dur improve for any of the behaviours?   
 
 ### Run lmer models for chosen behaviour   
 ```{r}
 #ROSE2: To-do:
 # - Write a function that will input your variable name and output the model
-# - use lapply to apply that function across all behaviours
+# - use lapply to apply that function across all behaviors
 # - add more notes/annotation justifying your chosen variables
 
-# 05 duration
-lmer_zone_05_dur_Aggression <- lmer(zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_05_dur_Aggression))
-summary(lmer_zone_05_dur_Aggression)
-tab_model(lmer_zone_05_dur_Aggression)
+#Variables of choice due to normality analysis
+
+# Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
+
+#Variables are also biologically relevant, in particular time spent near the stimulus screen (zone_05_dur)
+
+# First we require our function for mixed models
+func_mod <- function(var,squareroot = F, df = Personality_wide){
+  mod <- lmer(df[,var] ~ Group*Sex + (1 | Fish_ID), data = df)
+  if(squareroot == TRUE){
+    mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) #Note how we added a square root transformation if needed
+  }
+  plot <- hist(residuals(mod)) # to visulaize histogams for checking normality
+  sum <- summary(mod) #obtain summary of the models
+  lt = list(plot, sum) # I am struggling with this section as I want to return both the plot and sumary but it doesn't seem to be working correctly
+  return(lt)
+  
+}
+
+#Total distance
+
+tot_dist <- c("tot_dist_Novel", "tot_dist_Social", "tot_dist_Predator", "tot_dist_Activity", "tot_dist_Aggression") #creating a vector to use when we apply models to all behaviors
+
+mod_list <- lapply(tot_dist, function(x) func_mod(x)) #using lapply to apply function to all behaviors...I get the histograms when I run lapply, but when I open "mod_list" I only see the summaries of the models
+
+mod_list
 
 
-lmer_zone_05_dur_Novel <- lmer(log(zone_05_dur_Novel+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
-hist(resid(lmer_zone_05_dur_Novel))
-summary(lmer_zone_05_dur_Novel)
-
-lmer_zone_05_dur_Social <- lmer(sqrt(zone_05_dur_Social) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_05_dur_Social))
-summary(lmer_zone_05_dur_Social)
-
-lmer_zone_05_dur_Predator <- lmer(sqrt(zone_05_dur_Predator) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_05_dur_Predator))
-summary(lmer_zone_05_dur_Predator)
-
-lmer_zone_05_dur_Activity <- lmer(sqrt(zone_05_dur_Activity) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_05_dur_Activity))
-summary(lmer_zone_05_dur_Activity)
 
 
+#Mean speed
 
-# near duration
+mean_speed <- c("mean_speed_Novel", "mean_speed_Social", "mean_speed_Predator", "mean_speed_Activity", "mean_speed_Aggression") #creating a vector to use when we apply models to all behaviors
 
-lmer_zone_near_dur_Aggression <- lmer(log(zone_near_dur_Aggression+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_near_dur_Aggression))
-summary(lmer_zone_near_dur_Aggression)
+mod_list_speed <- lapply(mean_speed, function(x) func_mod(x))
+
+mod_list_speed
 
 
-lmer_zone_near_dur_Novel <- lmer(log(zone_near_dur_Novel+1) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_near_dur_Novel))
-summary(lmer_zone_near_dur_Novel)
-
-lmer_zone_near_dur_Social <- lmer(sqrt(zone_near_dur_Social) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_near_dur_Social))
-summary(lmer_zone_near_dur_Social)
-
-#Negatively skewed distributions
-
-lmer_zone_near_dur_Predator <- lmer(sqrt(zone_near_dur_Predator) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_near_dur_Predator)) # normally distributed
-summary(lmer_zone_near_dur_Predator)
-
-lmer_zone_near_dur_Activity <- lmer(sqrt(zone_near_dur_Activity) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-hist(resid(lmer_zone_near_dur_Activity)) 
-summary(lmer_zone_near_dur_Activity)
 
 ```
 
 
 ### Extract BLUPs from lmer models and plot fitted versus. predicted      
 - make a dataframe with the model parameters    
-- fitted = the actual measured behaviours
+- fitted = the actual measured behaviors
 - predicted = the model predictions, calculated according to the below equation:
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male})$$ 
@@ -1093,6 +1077,15 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 
 # example:
 mod = lmer_zone_05_dur_Aggression
+
+mod_name = "lmer_zone_05_dur_Aggression"
+mod = get(mod_name)
+
+func_fitted_predicted <- function(mod_name){
+  
+}
+gsub("lmer\\_", "", mod_name) -> var_name
+
 
 # getting population parameters
 betas <- fixef(mod)
