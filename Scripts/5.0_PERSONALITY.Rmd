@@ -5,6 +5,8 @@ date: "12/02/2020"
 output:
   html_document: default
   pdf_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -889,20 +891,7 @@ Personality_wide <- left_join(Post_assay, Personality_wide)
 # five behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
 
-
-# ROSE2: checking above
-Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
-Personality_wide2 <- left_join(Post_assay, Personality_wide)
-names(Personality_wide2) # ROSE2: we don't want these "Phase columns"
-Personality_wide2 <- Personality_wide2[,!(str_detect(names(Personality_wide2), "Phase"))]
-# double-checking matching was done correctly
-Personality_wide2$session_ID = paste(Personality_wide2$Fish_ID, Personality_wide2$Date, Personality_wide2$Session, Personality_wide2$Camera) 
-wide_ID = paste(Personality_wide$Fish_ID, Personality_wide$Date, Personality_wide$Session, Personality_wide$Camera) 
-postassay_ID = paste(Post_assay$Fish_ID, Post_assay$Date, Post_assay$Session, Post_assay$Camera)
-Personality_wide2$session_ID == wide_ID
-Personality_wide2$session_ID == postassay_ID # these are all true, so Personality_wide2 is arranged in the order of the postassay dataframe
-Personality_wide$tot_dist_Aggression[match(postassay_ID, wide_ID)] == Personality_wide2$tot_dist_Aggression # correct
-Personality_wide <- Personality_wide2
+#Data was double checked by Rose
 ```
 
 
@@ -1031,10 +1020,8 @@ func_mod <- function(var,squareroot = F, df = Personality_wide){
   if(squareroot == TRUE){
     mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) #Note how we added a square root transformation if needed
   }
-  plot <- hist(residuals(mod)) # to visulaize histogams for checking normality
-  sum <- summary(mod) #obtain summary of the models
-  lt = list(plot, sum) # I am struggling with this section as I want to return both the plot and sumary but it doesn't seem to be working correctly
-  return(lt)
+
+  return(summary(mod))
   
 }
 
@@ -1042,12 +1029,25 @@ func_mod <- function(var,squareroot = F, df = Personality_wide){
 
 tot_dist <- c("tot_dist_Novel", "tot_dist_Social", "tot_dist_Predator", "tot_dist_Activity", "tot_dist_Aggression") #creating a vector to use when we apply models to all behaviors
 
-mod_list <- lapply(tot_dist, function(x) func_mod(x)) #using lapply to apply function to all behaviors...I get the histograms when I run lapply, but when I open "mod_list" I only see the summaries of the models
+mod_list <- lapply(tot_dist, function(x) func_mod(x)) #using lapply to apply function to all behaviors
 
-mod_list
+names(mod_list) <- tot_dist # Assigning names to the models, am not sure if I could've done this earlier but will ensure I named the elements of the list correctly
 
+tot_dist_Novel_check <- lmer(tot_dist_Novel ~ Group*Sex + (1 | Fish_ID), data = df)
+tab_model(tot_dist_Novel_check) #See tab that appears on right side and now compare to your lapply version
 
+mod_list$tot_dist_Novel #Summaries match
 
+tot_dist_Social_check <- lmer(tot_dist_Social ~ Group*Sex + (1 | Fish_ID), data = df)
+tab_model(tot_dist_Social_check) #See tab that appears on right side and now compare to the lapply version
+
+mod_list$tot_dist_Social #Summaries match
+
+hist(residuals(tot_dist_Social_check)) #Checking to see if residuals match
+
+hist(residuals(mod_list$tot_dist_Social)) #Residuals don't appear to be matching? 
+
+#From these summaries, am confident the rest of the model summaries are matching as it is following the order of the vector, am just not sure about the residuals
 
 #Mean speed
 
@@ -1055,9 +1055,26 @@ mean_speed <- c("mean_speed_Novel", "mean_speed_Social", "mean_speed_Predator", 
 
 mod_list_speed <- lapply(mean_speed, function(x) func_mod(x))
 
+names(mod_list_speed) <- mean_speed
+
 mod_list_speed
 
+#Zone 05 duration (time spent near stimulus screen)
 
+zone_05 <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Activity", "zone_05_dur_Aggression") #not including novel behavior as this requires a transformation, however we can go ahead and use lapply to apply our function to the other 4 behaviors
+
+mod_list_zone05<- lapply(zone_05, function(x) func_mod(x)) 
+
+names(mod_list_zone05) <- zone_05
+
+
+
+#Don't need lapply for one behavior, so can go ahead and use the function
+
+lmer_zone_05_dur_Novel <- func_mod("zone_05_dur_Novel", squareroot = TRUE)
+hist(residuals(lmer_zone_05_dur_Novel))
+
+#HAMZA2: Am just concerned regarding the residuals and how the plots don't seem to match when I compare the lapply versions to the model checks
 
 ```
 
@@ -1073,17 +1090,16 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 ```{r}
 #ROSE2: To-do:
 # - Write a function that will input your model name and output your dataframe of fitted and predicted values   
-# - use lapply to apply that function across all your models   
+# - use lapply to apply that function across all your models  
+
+#HAMZA2: Am still working on this !!
 
 # example:
-mod = lmer_zone_05_dur_Aggression
+mod = lmer_zone_05_dur_Aggression #For the gsubbing, we just need any example
 
 mod_name = "lmer_zone_05_dur_Aggression"
 mod = get(mod_name)
 
-func_fitted_predicted <- function(mod_name){
-  
-}
 gsub("lmer\\_", "", mod_name) -> var_name
 
 
@@ -1112,7 +1128,27 @@ pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
 fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = Personality_wide$zone_05_dur_Aggression)
 plot(fitted_predicted$fitted, fitted_predicted$predicted)
 cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
+
+
+func_fitted_predicted <- function(mod){
+  betas <- fixef(mod)
+  b0 <- betas[1]
+b1 <- betas[2]
+b2 <- betas[3]
+b3 <- betas[4]
+popparameters = B0 + B1 + B2 + B3
+mean(posterior$column)
++ sigma_ID
+plot(predicted_lmer, predicted_brm)
+mean(intercept_posterior) = B0
+return(list(thing1, thing2))
+get_thing1 <- func()[[1]]
+get_thing2 <- func()[[2]]
+}
+
+func_fitted_predicted(lmer_zone_05_dur_Aggression)
 ```
+
 
 ### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
