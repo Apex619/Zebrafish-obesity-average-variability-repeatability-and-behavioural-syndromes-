@@ -1021,9 +1021,11 @@ func_mod <- function(var,squareroot = F, df = Personality_wide){
     mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) #Note how we added a square root transformation if needed
   }
 
-  return(summary(mod))
+  return(mod) #Must return the model and not the summary of the model
   
 }
+
+func_mod(Personality_wide$tot_dist_Novel)
 
 #Total distance
 
@@ -1033,21 +1035,21 @@ mod_list <- lapply(tot_dist, function(x) func_mod(x)) #using lapply to apply fun
 
 names(mod_list) <- tot_dist # Assigning names to the models, am not sure if I could've done this earlier but will ensure I named the elements of the list correctly
 
-tot_dist_Novel_check <- lmer(tot_dist_Novel ~ Group*Sex + (1 | Fish_ID), data = df)
+tot_dist_Novel_check <- lmer(tot_dist_Novel ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
 tab_model(tot_dist_Novel_check) #See tab that appears on right side and now compare to your lapply version
 
 mod_list$tot_dist_Novel #Summaries match
 
-tot_dist_Social_check <- lmer(tot_dist_Social ~ Group*Sex + (1 | Fish_ID), data = df)
+tot_dist_Social_check <- lmer(tot_dist_Social ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
 tab_model(tot_dist_Social_check) #See tab that appears on right side and now compare to the lapply version
 
 mod_list$tot_dist_Social #Summaries match
 
 hist(residuals(tot_dist_Social_check)) #Checking to see if residuals match
 
-hist(residuals(mod_list$tot_dist_Social)) #Residuals don't appear to be matching? 
+hist(residuals(mod_list$tot_dist_Social)) #Residuals matching
 
-#From these summaries, am confident the rest of the model summaries are matching as it is following the order of the vector, am just not sure about the residuals
+#From these summaries, am confident the rest of the model summaries are matching as it is following the order of the vector
 
 #Mean speed
 
@@ -1063,7 +1065,7 @@ mod_list_speed
 
 zone_05 <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Activity", "zone_05_dur_Aggression") #not including novel behavior as this requires a transformation, however we can go ahead and use lapply to apply our function to the other 4 behaviors
 
-mod_list_zone05<- lapply(zone_05, function(x) func_mod(x)) 
+mod_list_zone05 <- lapply(zone_05, function(x) func_mod(x)) 
 
 names(mod_list_zone05) <- zone_05
 
@@ -1072,9 +1074,9 @@ names(mod_list_zone05) <- zone_05
 #Don't need lapply for one behavior, so can go ahead and use the function
 
 lmer_zone_05_dur_Novel <- func_mod("zone_05_dur_Novel", squareroot = TRUE)
-hist(residuals(lmer_zone_05_dur_Novel))
+hist(residuals(lmer_zone_05_dur_Novel)) #Residuals appear better
 
-#HAMZA2: Am just concerned regarding the residuals and how the plots don't seem to match when I compare the lapply versions to the model checks
+
 
 ```
 
@@ -1092,7 +1094,7 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 # - Write a function that will input your model name and output your dataframe of fitted and predicted values   
 # - use lapply to apply that function across all your models  
 
-#HAMZA2: Am still working on this !!
+#HAMZA2: Having trouble with the lapply because I can't figure out how to use gsub properly :/
 
 # example:
 mod = lmer_zone_05_dur_Aggression #For the gsubbing, we just need any example
@@ -1130,23 +1132,36 @@ plot(fitted_predicted$fitted, fitted_predicted$predicted)
 cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
 
 
-func_fitted_predicted <- function(mod){
+func_fitted_predicted <- function(mod,variable){ #I have so far just put the top code into the function :/
   betas <- fixef(mod)
   b0 <- betas[1]
 b1 <- betas[2]
 b2 <- betas[3]
 b3 <- betas[4]
-popparameters = B0 + B1 + B2 + B3
-mean(posterior$column)
-+ sigma_ID
-plot(predicted_lmer, predicted_brm)
-mean(intercept_posterior) = B0
-return(list(thing1, thing2))
-get_thing1 <- func()[[1]]
-get_thing2 <- func()[[2]]
+# getting blups
+blups <- data.frame(ranef(mod))
+round(mean(blups$condval)) # average of blups = 0
+# finding the treatment and male value for each fish_ID
+fish_ID <- as.character(blups$grp)
+# need to match fish_ID ID with their info
+pos <- match(fish_ID, Personality_wide$Fish_ID)
+(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
+# finding predicted values
+pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
+(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
+fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = variable)#This is where I'm having trouble, because it has to be unique and I'm not sure how to use gsub here :/
+lt = list=c(plot(fitted_predicted$fitted, fitted_predicted$predicted),cor(fitted_predicted$fitted, fitted_predicted$predicted)^2)
+return(lt) #return both the R2 value as well as the plot of fitted vs residuals
+
 }
 
-func_fitted_predicted(lmer_zone_05_dur_Aggression)
+func_fitted_predicted(mod_list$tot_dist_Social, Personality_wide$tot_dist_Social) 
+
+#function appears to be working as I am using a different variable and I'm getting an R2 value as well as the plot of fitted vs residuals,however this won't work with lapply because I'm relying on inputting the specific model and specific variable from the datasheet :/ Need to use gsub or vars_behavs but can't quite figure it out :(
+
+mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, mod_list_zone05_sqrt) #Am sure this is the way to create the list to use in lapply
+
+fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #How I would use lapply once I figure out my issue
 ```
 
 
@@ -1172,6 +1187,26 @@ save(brm_zone_05_dur_Aggression, file = "../Models/brm_zone_05_dur_Aggression.Rd
 load("../Models/brm_zone_05_dur_Aggression.Rdata")
 mod_posterior <- as.data.frame(brm_zone_05_dur_Aggression)
 post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
+
+#Function to do the above
+
+func_brm_mod <- function(var, df = Personality_wide){
+  brm <- brm(formula = df[,var] ~ Group*Sex + (1 | Fish_ID), 
+                                  data = df,
+                                  family = gaussian(),
+                                  chains = 3,
+                                 iter = 2000, warmup = 1000)  
+
+  return(brm)
+}
+
+#Testing function
+func_brm_mod("zone_05_dur_Aggression") #Function doesn't appear to be working, am not sure why :/
+
+#Using lapply to use function for all behaviors for total distance
+
+mod_list <- lapply(tot_dist, function(x) func_brm_mod(x))
+
 
 #Another example
 

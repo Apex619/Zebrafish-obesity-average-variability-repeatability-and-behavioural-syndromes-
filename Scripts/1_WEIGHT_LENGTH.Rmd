@@ -22,7 +22,7 @@ source("../Scripts/functions_repeatability.R")
 
 #Run this after all the coding has been run with 10,000 bootstraps
 #save.image(file='myEnvironment.RData') 
-load('myEnvironment.RData')
+#load('myEnvironment.RData')
 ```
 
 #Import and filter data
