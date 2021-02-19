@@ -21,9 +21,7 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 
 ```
 
-
-
-### ROSE: converting from wide to long data format   
+### Converting from wide to long data format   
 ```{r}
 Personality <- read.csv("./Data/Personality/ALL.csv")
 Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
@@ -47,8 +45,7 @@ Personality_list <- lapply(1:4, function(x) func_phase(x))
 Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each other
 
 # making an ID for the tank info (four phases in a session)
-Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera, Tank)) %>% arrange(fish_session_ID) # ROSE2: since the 'ALL.csv' data file has been updated, 'Tank' column is missing, so this needs to change
-Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% arrange(fish_session_ID) # ROSE2: correction since data update
+Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% arrange(fish_session_ID) 
 
 # turning from wide to long
 vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
@@ -57,9 +54,7 @@ vars <- c("tot_dist", "mean_speed", "mean_dist_05",
           "zone_3035_dur", "zone_1015_dur", "zone_3540_dur", 
           "zone_2530_dur", "zone_near_dur", "zone_middle_dur", 
           "zone_far_dur",  "arena_dur",  "moving_dur")
-info <- c("Time", "Day", "Date", "Video",   "Arena",   "Sex", "Mark", "Session", "Camera",  "Tank", "Group",  "Fish_ID", "Notes") # ROSE2: again, not working after data update
-info[!(info %in% names(Personality_df))] # Tank and Video missing
-info <- c("Time", "Day", "Date",  "Arena",   "Sex", "Mark", "Session", "Camera",  "Group",  "Fish_ID", "Notes")#ROSE2: removing missing tank and video
+info <- c("Time", "Day", "Date",  "Arena",   "Sex", "Mark", "Session", "Camera",  "Group",  "Fish_ID", "Notes")
 
 # four behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social")
@@ -82,20 +77,12 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 ### Adding in activity data (post-assay) to Personality_wide
 ```{r}
 Personality_wide <- left_join(Post_assay, Personality_wide)
-# 
-# # Was a simple task considering the post-assay period was just one set period in all videos. Left join was all that was required to join by the same variables. The joining was successful considering that the number of observations did not change, however the number of variables increased. Cleaning up the original excel file also meant joining was easy. 
-# 
-# names(Personality_wide)[names(Personality_wide)=="Phase"] <- "Phase5"
-# # dplyr wasn't working so had to use base functions for now to just incorporate activity as "Phase5"# ROSE2: not sure what is meant by this?
 
 # five behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
-
-#Data was double checked by Rose
 ```
 
-
-### ROSE: residual distributions and repeatability values for each variable    
+### Residual distributions and repeatability values for each variable    
 Using Shapiro-Wilk normality test   
 See ?shapiro.test
 More normal = higher W value and smaller p value
@@ -193,17 +180,12 @@ filter(rpt_resids_sqrt, var == "zone_05_dur")
 # To summarize, we can use the following variables for analysis
 
 # Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
-
-
-
-
-
 ```
 
 
 ### Run lmer models for chosen behaviour   
 ```{r}
-#ROSE2: To-do:
+#Here
 # - Write a function that will input your variable name and output the model
 # - use lapply to apply that function across all behaviors
 # - add more notes/annotation justifying your chosen variables
@@ -213,6 +195,7 @@ filter(rpt_resids_sqrt, var == "zone_05_dur")
 # Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
 
 #Variables are also biologically relevant, in particular time spent near the stimulus screen (zone_05_dur)
+# ROSE: you might want to only use zone_05_dur for the stimulus phases, and total distance for the activity phase? 
 
 # First we require our function for mixed models
 func_mod <- function(var,squareroot = F, df = Personality_wide){
@@ -277,7 +260,22 @@ names(mod_list_zone05) <- zone_05
 lmer_zone_05_dur_Novel <- func_mod("zone_05_dur_Novel", squareroot = TRUE)
 hist(residuals(lmer_zone_05_dur_Novel)) #Residuals appear better
 
+# ROSE: you could modify the function so you can do it all at once:
+func_mod_behav_vars  <- function(var,df = Personality_wide){
+  mod <- lmer(df[,var] ~ Group*Sex + (1 | Fish_ID), data = df)
+  if(str_detect(var, "Novel")){ # if the variable = Novel, we will square-root the variable
+    mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) 
+  }
 
+  return(mod) 
+  
+}
+
+behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") # including novel and changing activity from zone_05_dur to tot_dist_Activity
+mod_list_5behav <- lapply(behav_vars, function(x) func_mod_behav_vars(x)) 
+names(mod_list_5behav) <- behav_vars
+
+fixef(lmer_zone_05_dur_Novel) == fixef(mod_list_5behav$zone_05_dur_Novel) # they're the same
 
 ```
 
@@ -291,11 +289,11 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 
 
 ```{r}
-#ROSE2: To-do:
+#Here:
 # - Write a function that will input your model name and output your dataframe of fitted and predicted values   
 # - use lapply to apply that function across all your models  
 
-#HAMZA2: Having trouble with the lapply because I can't figure out how to use gsub properly :/
+#HAMZA2: Having trouble with the lapply because I can't figure out how to use gsub properly :/ # ROSE: didn't end up needing to use gsub (but we will later on with brms) -- see below
 
 # example:
 mod = tot_dist_Novel_check #For the gsubbing, we just need any example
@@ -333,7 +331,12 @@ plot(fitted_predicted$fitted, fitted_predicted$predicted)
 cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
 
 
-func_fitted_predicted <- function(mod,variable){ #I have so far just put the top code into the function :/
+# ROSE: actually because we named the list the same as the variable names, we actually only need one argument here
+# behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") 
+# mod_list_5behav <- lapply(behav_vars, function(x) func_mod_behav_vars(x)) 
+
+func_fitted_predicted <- function(variable = zone_05[1]){ #I have so far just put the top code into the function :/
+  mod <- mod_list_5behav[[variable]] # using the variable name to get the model
   betas <- fixef(mod)
   b0 <- betas[1]
 b1 <- betas[2]
@@ -341,34 +344,50 @@ b2 <- betas[3]
 b3 <- betas[4]
 # getting blups
 blups <- data.frame(ranef(mod))
-round(mean(blups$condval)) # average of blups = 0
+#round(mean(blups$condval)) # average of blups = 0
 # finding the treatment and male value for each fish_ID
 fish_ID <- as.character(blups$grp)
 # need to match fish_ID ID with their info
 pos <- match(fish_ID, Personality_wide$Fish_ID)
-(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
+#(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
 # finding predicted values
 pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
-(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
-fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = variable)#This is where I'm having trouble, because it has to be unique and I'm not sure how to use gsub here :/
-lt = list=c(plot(fitted_predicted$fitted, fitted_predicted$predicted),cor(fitted_predicted$fitted, fitted_predicted$predicted)^2)
-return(lt) #return both the R2 value as well as the plot of fitted vs residuals
+#(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
+fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = variable)#This is where I'm having trouble, because it has to be unique and I'm not sure how to use gsub here :/ # ROSE: no problem here?
+#lt = list=c(plot(fitted_predicted$fitted, fitted_predicted$predicted),cor(fitted_predicted$fitted, fitted_predicted$predicted)^2)
+return(fitted_predicted) #return both the R2 value as well as the plot of fitted vs residuals # ROSE: work on returning un-processed things (like how we returned the model before, rather than summary(model)). You can write another function to return plots and R2, if you like. 
 
 }
 
-func_fitted_predicted(mod_list$tot_dist_Novel, Personality_wide$tot_dist_Novel) 
+# ROSE: applying this function to our variables
+fitted_predicted_list <- lapply(behav_vars, function(x) func_fitted_predicted(variable = x))
 
-#function appears to be working as I am using a different variable and I'm getting an R2 value as well as the plot of fitted vs residuals,however this won't work with lapply because I'm relying on inputting the specific model and specific variable from the datasheet :/ Need to use gsub or vars_behavs but can't quite figure it out :(
+# now we can write another function to plot fitted vs. predicted and calculate R2
+func_fitted_predicted_plots <- function(df = fitted_predicted_list[[1]]){
+  # TO-DO: in this function we will make a ggplot with fitted vs. predicted, with the following labels:
+  # x-axis says what the raw data variable was
+  # y-axis is the model predictions
+  # title says the behaviour (activity, aggression, etc) 
+  # subtitle says the R2 value
+  
+  
+  return(plot)
+}
 
-mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, lmer_zone_05_dur_Novel) #Am sure this is the way to create the list to use in lapply
 
-fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #How I would use lapply once I figure out my issue
+# func_fitted_predicted(mod_list$tot_dist_Novel, Personality_wide$tot_dist_Novel) 
+# 
+# #function appears to be working as I am using a different variable and I'm getting an R2 value as well as the plot of fitted vs residuals,however this won't work with lapply because I'm relying on inputting the specific model and specific variable from the datasheet :/ Need to use gsub or vars_behavs but can't quite figure it out :(
+# 
+# mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, lmer_zone_05_dur_Novel) #Am sure this is the way to create the list to use in lapply
+# 
+# fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #How I would use lapply once I figure out my issue
 ```
 
 
 ### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
-#ROSE2: To-do:
+#Here To-do:
 # - Write a function that will input your variable name, run, and save your brm model 
 # - use lapply to apply that function across all your variable names
 # - save one Rdata file with all your brm models   
