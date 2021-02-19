@@ -20,8 +20,8 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
                stargazer, brms, MCMCglmm)
 
 # Load custom function to extract data 
-source("../Scripts/functions_repeatability.R")
-source("../Scripts/functions_personality.R")
+source("./Scripts/functions_repeatability.R")
+source("./Scripts/functions_personality.R")
 
 ```
 
@@ -105,13 +105,13 @@ Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatmen
 
 # EXPLORATION DATA
 # Acclimation <- read.csv("./Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
 ```
 
 ### ROSE: shorter code to Import and subset data   
 
 ```{r}
-Personality <- read.csv("../Data/Personality/ALL.csv")
+Personality <- read.csv("./Data/Personality/ALL.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
@@ -151,7 +151,7 @@ Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatmen
 
 # EXPLORATION DATA
 # Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
 ```
 
 ### MAIN ANALYSIS 
@@ -826,7 +826,7 @@ hist(residuals(Model_Aggression_tot_dist2))  # tails too thin
 
 ### ROSE: converting from wide to long data format   
 ```{r}
-Personality <- read.csv("../Data/Personality/ALL.csv")
+Personality <- read.csv("./Data/Personality/ALL.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
@@ -1025,7 +1025,8 @@ func_mod <- function(var,squareroot = F, df = Personality_wide){
   
 }
 
-func_mod(Personality_wide$tot_dist_Novel)
+# testing the function
+func_mod("tot_dist_Novel")
 
 #Total distance
 
@@ -1097,9 +1098,9 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 #HAMZA2: Having trouble with the lapply because I can't figure out how to use gsub properly :/
 
 # example:
-mod = lmer_zone_05_dur_Aggression #For the gsubbing, we just need any example
+mod = tot_dist_Novel_check #For the gsubbing, we just need any example
 
-mod_name = "lmer_zone_05_dur_Aggression"
+mod_name = "tot_dist_Novel_check"
 mod = get(mod_name)
 
 gsub("lmer\\_", "", mod_name) -> var_name
@@ -1127,7 +1128,7 @@ mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = 
 # finding predicted values
 pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
 (mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
-fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = Personality_wide$zone_05_dur_Aggression)
+fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = Personality_wide$tot_dist_Novel)
 plot(fitted_predicted$fitted, fitted_predicted$predicted)
 cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
 
@@ -1155,11 +1156,11 @@ return(lt) #return both the R2 value as well as the plot of fitted vs residuals
 
 }
 
-func_fitted_predicted(mod_list$tot_dist_Social, Personality_wide$tot_dist_Social) 
+func_fitted_predicted(mod_list$tot_dist_Novel, Personality_wide$tot_dist_Novel) 
 
 #function appears to be working as I am using a different variable and I'm getting an R2 value as well as the plot of fitted vs residuals,however this won't work with lapply because I'm relying on inputting the specific model and specific variable from the datasheet :/ Need to use gsub or vars_behavs but can't quite figure it out :(
 
-mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, mod_list_zone05_sqrt) #Am sure this is the way to create the list to use in lapply
+mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, lmer_zone_05_dur_Novel) #Am sure this is the way to create the list to use in lapply
 
 fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #How I would use lapply once I figure out my issue
 ```
@@ -1175,64 +1176,69 @@ fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #
 
 
 library(brms)
-#options(mc.scores = parallel::detectCores()) # allows chains to run simultaneously, but needs enough RAM
-# brm_zone_05_dur_Aggression <- brm(formula = zone_05_dur_Aggression ~ Group*Sex + (1 | Fish_ID), 
-#                                   data = Personality_wide,
-#                                   family = gaussian(),
-#                                   chains = 3,
-#                                   iter = 2000, # iter and warmup quite short, as this is just a practice
-#                                   warmup = 1000)  
-save(brm_zone_05_dur_Aggression, file = "../Models/brm_zone_05_dur_Aggression.Rdata")
+load("./Models/mod_list_brms.Rdata")
+load("./Models/mod_list_speed_brms.Rdata")
+load("./Models/mod_list_speed_brms.Rdata")
+load("./Models/zone_05_dur_Novel_brms.Rdata")
 
-load("../Models/brm_zone_05_dur_Aggression.Rdata")
-mod_posterior <- as.data.frame(brm_zone_05_dur_Aggression)
-post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
+options(mc.scores = parallel::detectCores())
 
-#Function to do the above
 
-func_brm_mod <- function(var, df = Personality_wide){
-  brm <- brm(formula = df[,var] ~ Group*Sex + (1 | Fish_ID), 
+func_brm_mod <- function(var, squareroot = F, df = Personality_wide){
+  df$response <- df[,var] # formula argument relies entirely on the data argument, so you can't just call the columns directly
+  brm <- brm(formula = response ~ Group*Sex + (1 | Fish_ID), 
                                   data = df,
                                   family = gaussian(),
                                   chains = 3,
-                                 iter = 2000, warmup = 1000)  
+                                 iter = 2000, warmup = 1000)
+  if(squareroot == TRUE){
+    brm <- brm(formula = sqrt(response) ~ Group*Sex + (1 | Fish_ID), 
+                                  data = df,
+                                  family = gaussian(),
+                                  chains = 3,
+                                 iter = 2000, warmup = 1000)
+  }
 
   return(brm)
 }
 
 #Testing function
-func_brm_mod("zone_05_dur_Aggression") #Function doesn't appear to be working, am not sure why :/
+func_brm_mod("tot_dist_Novel") #Function works !
 
-#Using lapply to use function for all behaviors for total distance
+#Using lapply to use function for all behaviors for total distance, mean speed and zone_05_dur
 
-mod_list <- lapply(tot_dist, function(x) func_brm_mod(x))
+# total distance
+mod_list_brms <- lapply(tot_dist, function(x) func_brm_mod(x))
+names(mod_list_brms) <- tot_dist
+save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
 
+# mean speed
+mod_list_speed_brms <- lapply(mean_speed, function(x) func_brm_mod(x))
+names(mod_list_speed_brms) <- mean_speed
+save(mod_list_speed_brms, file = "./Models/mod_list_speed_brms.Rdata")
 
-#Another example
+# zone_05_dur
+mod_list_zone05_brms <- lapply(zone_05, function(x) func_brm_mod(x)) 
+names(mod_list_zone05_brms) <- zone_05
+save(mod_list_zone05_brms, file = "./Models/mod_list_zone05_brms.Rdata")
 
-options(mc.scores = parallel::detectCores()) # allows chains to run simultaneously, but needs enough RAM
-brm_zone_05_dur_Social <- brm(formula = sqrt(zone_05_dur_Social) ~ Group*Sex + (1 | Fish_ID),
-                                  data = Personality_wide,
-                                  family = gaussian(),
-                                  chains = 3,
-                                  iter = 2000, warmup = 1000)
-save(brm_zone_05_dur_Social, file = "../Models/brm_zone_05_dur_Social.Rdata")
-load("../Models/brm_zone_05_dur_Social.Rdata")
-mod_posterior_Social <- as.data.frame(brm_zone_05_dur_Social)
-post_means_Social <- apply(mod_posterior_Social, 2, function(x) round(mean(x),4))
-
-summary(brm_zone_05_dur_Social)
-tab_model(brm_zone_05_dur_Social)
-# Comparison with lmer model
-summary(lmer_zone_05_dur_Social)
-tab_model(lmer_zone_05_dur_Social)
+zone_05_dur_Novel_brms <- func_brm_mod("zone_05_dur_Novel", squareroot = TRUE)
+# as this required a square root transformation
+save(zone_05_dur_Novel_brms, file = "./Models/zone_05_dur_Novel_brms.Rdata")
 
 
+#Function for (1) the posterior distributions of population parameters; (2) the fitted and predicted values for posterior means.
 
-#Comparison to the lmer models reveal results are practically the same
+func_brm_fit_post <- function(mod){
+  mod_posterior <- as.data.frame(mod)
+  post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
+  lt <- list(mod_posterior, post_means)
+  return(lt)
+}
 
+#Again, am having trouble regarding how I use lapply and applying the function to all the elements in the list and returning them separately
 
-zone_05_post <- posterior_samples(brm_zone_05_dur_Social)
+func_brm_fit_post(zone_05_dur_Novel_brms)
 ```
 
 ###Example correlation analysis 
