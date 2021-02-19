@@ -26,6 +26,7 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 ### ROSE: converting from wide to long data format   
 ```{r}
 Personality <- read.csv("./Data/Personality/ALL.csv")
+Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
