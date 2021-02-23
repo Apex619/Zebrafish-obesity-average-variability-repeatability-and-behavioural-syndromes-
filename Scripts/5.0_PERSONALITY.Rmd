@@ -223,6 +223,7 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 
 func_fitted_predicted <- function(variable = behav_vars[1]){ 
   mod <- mod_list_5behav[[variable]] # using the variable name to get the model
+  #getting population parameters
   betas <- fixef(mod)
 b0 <- betas[1]
 b1 <- betas[2]
@@ -308,26 +309,35 @@ func_brm_mod <- function(var, df = Personality_wide){
 }
 
 
-
-#Using lapply to use function for our chosen behaviors
 mod_list_brms <- lapply(behav_vars, function(x) func_brm_mod(x))
 names(mod_list_brms) <- behav_vars
 save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
 
+#HAMZA: We need to extract posterior means for every brms model in the list correct? If so, here's the first function for posteriors
 
-#Function for (1) the posterior distributions of population parameters
-
-func_brm_fit_post <- function(mod){ 
+func_mod_posterior <- function(variable = behav_vars[1]){
+  mod <- mod_list_brms[[variable]]
   mod_posterior <- as.data.frame(mod)
-  post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
-  lt <- list(mod_posterior, post_means)
-  return(lt)
+  return(mod_posterior)
 }
 
+mod_post_brms <- lapply(behav_vars, function(x) func_mod_posterior(x))
+names(mod_post_brms) <- behav_vars
+  
+# and second function for post_means
+func_post_means_brms <- function(variable = behav_vars[1]){
+  mod <- mod_post_brms[[variable]]
+  post_means <- apply(mod, 2, function(x) round(mean(x),4))
+  return(post_means)
+}
 
-mod_list_brms_fit_post <- func_brm_fit_post(mod_list_brms)
+post_means_brms <- lapply(behav_vars, function(x) func_post_means_brms(x))
+names(post_means_brms) <- behav_vars
 
-# Function for (2) the fitted and predicted values for posterior means.
+# #Function for (1) the posterior distributions of population parameters and  (2) the fitted and predicted values for posterior means.
+
+#Transpose 
+
 ```
 
 
