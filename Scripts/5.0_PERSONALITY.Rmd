@@ -216,8 +216,9 @@ fixef(lmer_zone_05_dur_Social) == fixef(mod_list_5behav$zone_05_dur_Social) # th
 - fitted = the actual measured behaviors
 - predicted = the model predictions, calculated according to the below equation:
 
-$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male})$$ 
-
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$ 
+$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
+$$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
 ```{r}
 
@@ -317,7 +318,12 @@ save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
 
 func_mod_posterior <- function(variable = behav_vars[1]){
   mod <- mod_list_brms[[variable]]
-  mod_posterior <- as.data.frame(mod)
+  mod_posterior <- as.data.frame(mod) # ROSE: you want to tidy this up and only take the population parameters
+  # excluding the individual differences
+  # use: names(mod_posterior) and str_detect to remove all the columns that contain individual differences (i.e. that contain Fish_ID)
+  # remove that lp__ column at the end
+  # rename the coefficients to make them easier to call later. Can name them the same as however you write the model (e.g., lines 219-221, B0, B1, B2, B3, sigma_ID, sigma_e)
+  
   return(mod_posterior)
 }
 
@@ -326,7 +332,8 @@ names(mod_post_brms) <- behav_vars
   
 # and second function for post_means
 func_post_means_brms <- function(variable = behav_vars[1]){
-  mod <- mod_post_brms[[variable]]
+  mod <- mod_post_brms[[variable]] # this returns an error for me
+  
   post_means <- apply(mod, 2, function(x) round(mean(x),4))
   return(post_means)
 }
@@ -337,6 +344,39 @@ names(post_means_brms) <- behav_vars
 # #Function for (1) the posterior distributions of population parameters and  (2) the fitted and predicted values for posterior means.
 
 #Transpose 
+
+# Rose's tips:
+
+func_process_mod <- function(variable = behav_vars[1]){
+    mod <- mod_list_brms[[variable]]
+    
+  mod_posterior <- as.data.frame(mod) # ROSE: you want to tidy this up and only take the population parameters
+  # excluding the individual differences
+  # use: names(mod_posterior) and str_detect to remove all the columns that contain individual differences (i.e. that contain Fish_ID)
+  # remove that lp__ column at the end
+  # rename the coefficients to make them easier to call later. Can name them the same as however you write the model (e.g., lines 219-221, B0, B1, B2, B3, sigma_ID, sigma_e)
+  # call this new dataframe pop_posterior
+  
+  # next, get the posterior means, as you did above
+   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't found because we're using these in subsequent calcualtions
+  
+  # to make fitted_predicted, the logic is as follows:
+   
+   # we have:
+   fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", variable)]
+   names(fitted)[names(fitted)==variable] <- "fitted"
+   
+   # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
+   
+   # to do this calculation, make three more volumns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
+   
+  
+   
+  return(list(pop_posterior, fitted_predicted))
+  
+}
+
+
 
 ```
 
