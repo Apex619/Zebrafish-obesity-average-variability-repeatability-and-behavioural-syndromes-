@@ -185,80 +185,7 @@ filter(rpt_resids_sqrt, var == "zone_05_dur")
 
 ### Run lmer models for chosen behaviour   
 ```{r}
-#Here
-# - Write a function that will input your variable name and output the model
-# - use lapply to apply that function across all behaviors
-# - add more notes/annotation justifying your chosen variables
-
-#Variables of choice due to normality analysis
-
-# Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
-
-#Variables are also biologically relevant, in particular time spent near the stimulus screen (zone_05_dur)
-# ROSE: you might want to only use zone_05_dur for the stimulus phases, and total distance for the activity phase? 
-
-# First we require our function for mixed models
-func_mod <- function(var,squareroot = F, df = Personality_wide){
-  mod <- lmer(df[,var] ~ Group*Sex + (1 | Fish_ID), data = df)
-  if(squareroot == TRUE){
-    mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) #Note how we added a square root transformation if needed
-  }
-
-  return(mod) #Must return the model and not the summary of the model
-  
-}
-
-# testing the function
-func_mod("tot_dist_Novel")
-
-#Total distance
-
-tot_dist <- c("tot_dist_Novel", "tot_dist_Social", "tot_dist_Predator", "tot_dist_Activity", "tot_dist_Aggression") #creating a vector to use when we apply models to all behaviors
-
-mod_list <- lapply(tot_dist, function(x) func_mod(x)) #using lapply to apply function to all behaviors
-
-names(mod_list) <- tot_dist # Assigning names to the models, am not sure if I could've done this earlier but will ensure I named the elements of the list correctly
-
-tot_dist_Novel_check <- lmer(tot_dist_Novel ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
-tab_model(tot_dist_Novel_check) #See tab that appears on right side and now compare to your lapply version
-
-mod_list$tot_dist_Novel #Summaries match
-
-tot_dist_Social_check <- lmer(tot_dist_Social ~ Group*Sex + (1 | Fish_ID), data = Personality_wide)
-tab_model(tot_dist_Social_check) #See tab that appears on right side and now compare to the lapply version
-
-mod_list$tot_dist_Social #Summaries match
-
-hist(residuals(tot_dist_Social_check)) #Checking to see if residuals match
-
-hist(residuals(mod_list$tot_dist_Social)) #Residuals matching
-
-#From these summaries, am confident the rest of the model summaries are matching as it is following the order of the vector
-
-#Mean speed
-
-mean_speed <- c("mean_speed_Novel", "mean_speed_Social", "mean_speed_Predator", "mean_speed_Activity", "mean_speed_Aggression") #creating a vector to use when we apply models to all behaviors
-
-mod_list_speed <- lapply(mean_speed, function(x) func_mod(x))
-
-names(mod_list_speed) <- mean_speed
-
-mod_list_speed
-
-#Zone 05 duration (time spent near stimulus screen)
-
-zone_05 <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Activity", "zone_05_dur_Aggression") #not including novel behavior as this requires a transformation, however we can go ahead and use lapply to apply our function to the other 4 behaviors
-
-mod_list_zone05 <- lapply(zone_05, function(x) func_mod(x)) 
-
-names(mod_list_zone05) <- zone_05
-
-
-
-#Don't need lapply for one behavior, so can go ahead and use the function
-
-lmer_zone_05_dur_Novel <- func_mod("zone_05_dur_Novel", squareroot = TRUE)
-hist(residuals(lmer_zone_05_dur_Novel)) #Residuals appear better
+# Chosen variables: total distance for activity, zone_05_dur for stimulus phases
 
 # ROSE: you could modify the function so you can do it all at once:
 func_mod_behav_vars  <- function(var,df = Personality_wide){
@@ -275,7 +202,11 @@ behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel
 mod_list_5behav <- lapply(behav_vars, function(x) func_mod_behav_vars(x)) 
 names(mod_list_5behav) <- behav_vars
 
-fixef(lmer_zone_05_dur_Novel) == fixef(mod_list_5behav$zone_05_dur_Novel) # they're the same
+lmer_zone_05_dur_Social <- lmer(zone_05_dur_Social ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) #Extra model to check
+
+fixef(lmer_zone_05_dur_Social) == fixef(mod_list_5behav$zone_05_dur_Social) # they're the same
+
+#lmer_zone_05_dur_Novel <- lmer(sqrt(zone_05_dur_Novel) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) # Extra model to check
 
 ```
 
@@ -289,128 +220,83 @@ $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male
 
 
 ```{r}
-#Here:
-# - Write a function that will input your model name and output your dataframe of fitted and predicted values   
-# - use lapply to apply that function across all your models  
 
-#HAMZA2: Having trouble with the lapply because I can't figure out how to use gsub properly :/ # ROSE: didn't end up needing to use gsub (but we will later on with brms) -- see below
-
-# example:
-mod = tot_dist_Novel_check #For the gsubbing, we just need any example
-
-mod_name = "tot_dist_Novel_check"
-mod = get(mod_name)
-
-gsub("lmer\\_", "", mod_name) -> var_name
-
-
-# getting population parameters
-betas <- fixef(mod)
+func_fitted_predicted <- function(variable = behav_vars[1]){ 
+  mod <- mod_list_5behav[[variable]] # using the variable name to get the model
+  betas <- fixef(mod)
 b0 <- betas[1]
 b1 <- betas[2]
 b2 <- betas[3]
 b3 <- betas[4]
-
 # getting blups
 blups <- data.frame(ranef(mod))
 round(mean(blups$condval)) # average of blups = 0
-
 # finding the treatment and male value for each fish_ID
 fish_ID <- as.character(blups$grp)
 # need to match fish_ID ID with their info
 pos <- match(fish_ID, Personality_wide$Fish_ID)
-(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
-
-# making dataframe of parameters
 mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
+(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
 # finding predicted values
 pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
 (mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
-fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = Personality_wide$tot_dist_Novel)
-plot(fitted_predicted$fitted, fitted_predicted$predicted)
-cor(fitted_predicted$fitted, fitted_predicted$predicted)^2 # R2 value
-
-
-# ROSE: actually because we named the list the same as the variable names, we actually only need one argument here
-# behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") 
-# mod_list_5behav <- lapply(behav_vars, function(x) func_mod_behav_vars(x)) 
-
-func_fitted_predicted <- function(variable = zone_05[1]){ #I have so far just put the top code into the function :/
-  mod <- mod_list_5behav[[variable]] # using the variable name to get the model
-  betas <- fixef(mod)
-  b0 <- betas[1]
-b1 <- betas[2]
-b2 <- betas[3]
-b3 <- betas[4]
-# getting blups
-blups <- data.frame(ranef(mod))
-#round(mean(blups$condval)) # average of blups = 0
-# finding the treatment and male value for each fish_ID
-fish_ID <- as.character(blups$grp)
-# need to match fish_ID ID with their info
-pos <- match(fish_ID, Personality_wide$Fish_ID)
-#(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
-# finding predicted values
-pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
-#(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
-fitted_predicted <- mod_pars[pos,] %>% mutate(fitted = variable)#This is where I'm having trouble, because it has to be unique and I'm not sure how to use gsub here :/ # ROSE: no problem here?
-#lt = list=c(plot(fitted_predicted$fitted, fitted_predicted$predicted),cor(fitted_predicted$fitted, fitted_predicted$predicted)^2)
-return(fitted_predicted) #return both the R2 value as well as the plot of fitted vs residuals # ROSE: work on returning un-processed things (like how we returned the model before, rather than summary(model)). You can write another function to return plots and R2, if you like. 
-
+fitted_predicted <- mod_pars[pos,] 
+fitted_predicted$fitted<- Personality_wide[,variable]
+fitted_predicted$variable_name <- variable
+return(fitted_predicted) 
 }
 
-# ROSE: applying this function to our variables
+# applying this function to our variables
 fitted_predicted_list <- lapply(behav_vars, function(x) func_fitted_predicted(variable = x))
 
-# now we can write another function to plot fitted vs. predicted and calculate R2
-func_fitted_predicted_plots <- function(df = fitted_predicted_list[[1]]){
-  # TO-DO: in this function we will make a ggplot with fitted vs. predicted, with the following labels:
-  # x-axis says what the raw data variable was
-  # y-axis is the model predictions
-  # title says the behaviour (activity, aggression, etc) 
-  # subtitle says the R2 value
+# Function to plot fitted vs. predicted and calculate R2
+func_fitted_predicted_plots <- function(df =
+                                          fitted_predicted_list[[2]]){
+  behav<- gsub(".*dur\\_|.*dist\\_", "", df$variable_name[1]) 
   
+  R2<- cor(df$fitted, df$predicted)^2 %>% round(3)
+  
+  plot<- ggplot(df)+
+    theme_classic()+
+    geom_point(aes(x=fitted, y=predicted))+
+    labs(x=df$variable_name[1],
+         title=behav,subtitle=paste0("R2 = ", R2))
   
   return(plot)
 }
 
+plot_list_behavs <- lapply(fitted_predicted_list, function(x) func_fitted_predicted_plots(x))
 
-# func_fitted_predicted(mod_list$tot_dist_Novel, Personality_wide$tot_dist_Novel) 
-# 
-# #function appears to be working as I am using a different variable and I'm getting an R2 value as well as the plot of fitted vs residuals,however this won't work with lapply because I'm relying on inputting the specific model and specific variable from the datasheet :/ Need to use gsub or vars_behavs but can't quite figure it out :(
-# 
-# mod_list_all <- c(mod_list, mod_list_speed, mod_list_zone05, lmer_zone_05_dur_Novel) #Am sure this is the way to create the list to use in lapply
-# 
-# fit_predict_list <- lapply(mod_list_all, function(x) func_fitted_predicted(x)) #How I would use lapply once I figure out my issue
+plot_list_behavs[[1]]
+plot_list_behavs[[2]]
+plot_list_behavs[[3]]
+plot_list_behavs[[4]]
+plot_list_behavs[[5]]
+
 ```
 
 
 ### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
 #Here To-do:
-# - Write a function that will input your variable name, run, and save your brm model 
-# - use lapply to apply that function across all your variable names
-# - save one Rdata file with all your brm models   
+
 # - Write a function that will input your brm model object, and output two things: (1) the posterior distributions of population paramaters; (2) the fitted and predicted values for posterior means.
 
 
 library(brms)
 load("./Models/mod_list_brms.Rdata")
-load("./Models/mod_list_speed_brms.Rdata")
-load("./Models/mod_list_speed_brms.Rdata")
-load("./Models/zone_05_dur_Novel_brms.Rdata")
 
 options(mc.scores = parallel::detectCores())
 
 
-func_brm_mod <- function(var, squareroot = F, df = Personality_wide){
+func_brm_mod <- function(var, df = Personality_wide){
   df$response <- df[,var] # formula argument relies entirely on the data argument, so you can't just call the columns directly
   brm <- brm(formula = response ~ Group*Sex + (1 | Fish_ID), 
                                   data = df,
                                   family = gaussian(),
                                   chains = 3,
                                  iter = 2000, warmup = 1000)
-  if(squareroot == TRUE){
+  if(str_detect(var, "Novel")){ 
     brm <- brm(formula = sqrt(response) ~ Group*Sex + (1 | Fish_ID), 
                                   data = df,
                                   family = gaussian(),
@@ -421,43 +307,27 @@ func_brm_mod <- function(var, squareroot = F, df = Personality_wide){
   return(brm)
 }
 
-#Testing function
-func_brm_mod("tot_dist_Novel") #Function works !
 
-#Using lapply to use function for all behaviors for total distance, mean speed and zone_05_dur
 
-# total distance
-mod_list_brms <- lapply(tot_dist, function(x) func_brm_mod(x))
-names(mod_list_brms) <- tot_dist
+#Using lapply to use function for our chosen behaviors
+mod_list_brms <- lapply(behav_vars, function(x) func_brm_mod(x))
+names(mod_list_brms) <- behav_vars
 save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
 
-# mean speed
-mod_list_speed_brms <- lapply(mean_speed, function(x) func_brm_mod(x))
-names(mod_list_speed_brms) <- mean_speed
-save(mod_list_speed_brms, file = "./Models/mod_list_speed_brms.Rdata")
 
-# zone_05_dur
-mod_list_zone05_brms <- lapply(zone_05, function(x) func_brm_mod(x)) 
-names(mod_list_zone05_brms) <- zone_05
-save(mod_list_zone05_brms, file = "./Models/mod_list_zone05_brms.Rdata")
+#Function for (1) the posterior distributions of population parameters
 
-zone_05_dur_Novel_brms <- func_brm_mod("zone_05_dur_Novel", squareroot = TRUE)
-# as this required a square root transformation
-save(zone_05_dur_Novel_brms, file = "./Models/zone_05_dur_Novel_brms.Rdata")
-
-
-#Function for (1) the posterior distributions of population parameters; (2) the fitted and predicted values for posterior means.
-
-func_brm_fit_post <- function(mod){
+func_brm_fit_post <- function(mod){ 
   mod_posterior <- as.data.frame(mod)
   post_means <- apply(mod_posterior, 2, function(x) round(mean(x),4))
   lt <- list(mod_posterior, post_means)
   return(lt)
 }
 
-#Again, am having trouble regarding how I use lapply and applying the function to all the elements in the list and returning them separately
 
-func_brm_fit_post(zone_05_dur_Novel_brms)
+mod_list_brms_fit_post <- func_brm_fit_post(mod_list_brms)
+
+# Function for (2) the fitted and predicted values for posterior means.
 ```
 
 
