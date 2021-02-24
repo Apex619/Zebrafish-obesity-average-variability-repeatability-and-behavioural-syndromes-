@@ -72,10 +72,10 @@ vars_behavs <- bind_cols(vars_behavs_list)
 
 # adding info
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
-```
+
 
 ### Adding in activity data (post-assay) to Personality_wide
-```{r}
+
 Personality_wide <- left_join(Post_assay, Personality_wide)
 
 # five behaviours
@@ -283,7 +283,7 @@ plot_list_behavs[[5]]
 #Here To-do:
 
 # - Write a function that will input your brm model object, and output two things: (1) the posterior distributions of population paramaters; (2) the fitted and predicted values for posterior means.
-
+behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") 
 
 
 load("./Models/mod_list_brms.Rdata")
@@ -293,13 +293,15 @@ options(mc.scores = parallel::detectCores())
 
 func_brm_mod <- function(var, df = Personality_wide){
   df$response <- df[,var] # formula argument relies entirely on the data argument, so you can't just call the columns directly
-  brm <- brm(formula = response ~ Group*Sex + (1 | Fish_ID), 
+
+  if(str_detect(var, "Novel")){ 
+    brm <- brm(formula = sqrt(response) ~ Group*Sex + (1 | Fish_ID), 
                                   data = df,
                                   family = gaussian(),
                                   chains = 3,
                                  iter = 2000, warmup = 1000)
-  if(str_detect(var, "Novel")){ 
-    brm <- brm(formula = sqrt(response) ~ Group*Sex + (1 | Fish_ID), 
+  }else{ # ROSE TIP: before, for novel, you had to run two models. Now, you only run one (one of the other). Because baysian models take a while to run, this will speed up the function.
+      brm <- brm(formula = response ~ Group*Sex + (1 | Fish_ID), 
                                   data = df,
                                   family = gaussian(),
                                   chains = 3,
@@ -320,19 +322,20 @@ func_process_mod <- function(variable = behav_vars[1]){
     mod <- mod_list_brms[[variable]]
     
   mod_posterior <- as.data.frame(mod)
-  pop_posterior <- select(mod_posterior,!contains(c("Fish_ID", "lp")))
+  pop_posterior <- select(mod_posterior,!contains(c("Fish_ID", "lp"))) # here you are getting rid of the variance component for individual differences. Need to change Fish_ID to r_Fish_ID
   
   b0 <- pop_posterior[1]
+  b0 <- pop_posterior[,"b_Intercept"] # ROSE tip: it's more reproducible to call names, rather than numbers
   b1 <- pop_posterior[2]
   b2 <- pop_posterior[3]
   b3 <- pop_posterior[4]
-  sigma <- pop_posterior[5]
+  sigma <- pop_posterior[5] # you've lost the variance component for individual differences. You need this to calculate repeatability. 
   
   
   #HAMZA: Is there anything that I am missing here? I tried a different way to get the columns we require
   
   # next, get the posterior means, as you did above
-   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't found because we're using these in subsequent calculations; HAMZA: ???
+   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations; HAMZA: ??? # ROSE: 'found' was a typo, I meant 'round'. Before you had round(mean(x),4)
   
   # to make fitted_predicted, the logic is as follows:
    
@@ -347,6 +350,12 @@ func_process_mod <- function(variable = behav_vars[1]){
    # to do this calculation, make three more columns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
    
    #HAMZA: Having trouble getting the ID :/ I believe I'm supposed to match the ID from the post_means dataframe with the fish_id's from our personality_wide dataframe, a similiar process to using the lmer models hence why I have copied and pasted below to get a better idea
+   
+   # ROSE:
+   blups <- post_means[str_detect(names(post_means), "r_Fish_ID")] # here are your individual differences
+   # now use gsub to rename them so the name is just the fish_ID
+   names(blups) # see how these are all in the format r_Fish_ID[aXXXX,Intercept]? You need to get them to all be aXXXX, then you can match them up with the fish_IDs in the fitted dataframe.
+   
    
   pos <- match(fish_ID, Personality_wide$Fish_ID)
   mod_pars <- data.frame(fish_ID, b0, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
