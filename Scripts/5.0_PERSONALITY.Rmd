@@ -285,7 +285,7 @@ plot_list_behavs[[5]]
 # - Write a function that will input your brm model object, and output two things: (1) the posterior distributions of population paramaters; (2) the fitted and predicted values for posterior means.
 
 
-library(brms)
+
 load("./Models/mod_list_brms.Rdata")
 
 options(mc.scores = parallel::detectCores())
@@ -310,55 +310,29 @@ func_brm_mod <- function(var, df = Personality_wide){
 }
 
 
-mod_list_brms <- lapply(behav_vars, function(x) func_brm_mod(x))
-names(mod_list_brms) <- behav_vars
-save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
-
-#HAMZA: We need to extract posterior means for every brms model in the list correct? If so, here's the first function for posteriors
-
-func_mod_posterior <- function(variable = behav_vars[1]){
-  mod <- mod_list_brms[[variable]]
-  mod_posterior <- as.data.frame(mod) # ROSE: you want to tidy this up and only take the population parameters
-  # excluding the individual differences
-  # use: names(mod_posterior) and str_detect to remove all the columns that contain individual differences (i.e. that contain Fish_ID)
-  # remove that lp__ column at the end
-  # rename the coefficients to make them easier to call later. Can name them the same as however you write the model (e.g., lines 219-221, B0, B1, B2, B3, sigma_ID, sigma_e)
-  
-  return(mod_posterior)
-}
-
-mod_post_brms <- lapply(behav_vars, function(x) func_mod_posterior(x))
-names(mod_post_brms) <- behav_vars
-  
-# and second function for post_means
-func_post_means_brms <- function(variable = behav_vars[1]){
-  mod <- mod_post_brms[[variable]] # this returns an error for me
-  
-  post_means <- apply(mod, 2, function(x) round(mean(x),4))
-  return(post_means)
-}
-
-post_means_brms <- lapply(behav_vars, function(x) func_post_means_brms(x))
-names(post_means_brms) <- behav_vars
-
-# #Function for (1) the posterior distributions of population parameters and  (2) the fitted and predicted values for posterior means.
-
-#Transpose 
+# mod_list_brms <- lapply(behav_vars, function(x) func_brm_mod(x))
+# names(mod_list_brms) <- behav_vars
+# save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
 
 # Rose's tips:
 
 func_process_mod <- function(variable = behav_vars[1]){
     mod <- mod_list_brms[[variable]]
     
-  mod_posterior <- as.data.frame(mod) # ROSE: you want to tidy this up and only take the population parameters
-  # excluding the individual differences
-  # use: names(mod_posterior) and str_detect to remove all the columns that contain individual differences (i.e. that contain Fish_ID)
-  # remove that lp__ column at the end
-  # rename the coefficients to make them easier to call later. Can name them the same as however you write the model (e.g., lines 219-221, B0, B1, B2, B3, sigma_ID, sigma_e)
-  # call this new dataframe pop_posterior
+  mod_posterior <- as.data.frame(mod)
+  pop_posterior <- select(mod_posterior,!contains(c("Fish_ID", "lp")))
+  
+  b0 <- pop_posterior[1]
+  b1 <- pop_posterior[2]
+  b2 <- pop_posterior[3]
+  b3 <- pop_posterior[4]
+  sigma <- pop_posterior[5]
+  
+  
+  #HAMZA: Is there anything that I am missing here? I tried a different way to get the columns we require
   
   # next, get the posterior means, as you did above
-   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't found because we're using these in subsequent calcualtions
+   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't found because we're using these in subsequent calculations; HAMZA: ???
   
   # to make fitted_predicted, the logic is as follows:
    
@@ -366,11 +340,19 @@ func_process_mod <- function(variable = behav_vars[1]){
    fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", variable)]
    names(fitted)[names(fitted)==variable] <- "fitted"
    
+   
+   
    # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
    
-   # to do this calculation, make three more volumns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
+   # to do this calculation, make three more columns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
    
+   #HAMZA: Having trouble getting the ID :/
+   
+  pos <- match(fish_ID, Personality_wide$Fish_ID)
+  mod_pars <- data.frame(fish_ID, b0, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
+(Personality_wide$Fish_ID[pos] == fish_ID) 
   
+  predicted <- 
    
   return(list(pop_posterior, fitted_predicted))
   
