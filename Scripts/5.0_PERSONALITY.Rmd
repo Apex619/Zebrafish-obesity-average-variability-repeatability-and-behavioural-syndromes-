@@ -346,7 +346,7 @@ func_process_mod <- function(variable = behav_vars[1]){
    
    # to do this calculation, make three more columns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
    
-   #HAMZA: Having trouble getting the ID :/
+   #HAMZA: Having trouble getting the ID :/ I believe I'm supposed to match the ID from the mod_posterior dataframe with the fish_id's from our personality_wide dataframe, a similiar process to using the lmer models hence why I have copied and pasted below to get a better idea
    
   pos <- match(fish_ID, Personality_wide$Fish_ID)
   mod_pars <- data.frame(fish_ID, b0, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
