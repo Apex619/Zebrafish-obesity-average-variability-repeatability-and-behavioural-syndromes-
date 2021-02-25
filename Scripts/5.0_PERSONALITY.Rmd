@@ -222,7 +222,7 @@ $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
 ```{r}
 
-func_fitted_predicted <- function(variable = behav_vars[1]){ 
+func_fitted_predicted_lmer <- function(variable = behav_vars[1]){ 
   mod <- mod_list_5behav[[variable]] # using the variable name to get the model
   #getting population parameters
   betas <- fixef(mod)
@@ -243,13 +243,13 @@ mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = 
 pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
 (mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
 fitted_predicted <- mod_pars[pos,] 
-fitted_predicted$fitted<- Personality_wide[,variable]
+fitted_predicted$fitted<- Personality_wide[,variable] # ROSE TO-DO: you need to fix this for novel. As we have taken the square-root of novel in the model, we need ot take the square-root of novel here too
 fitted_predicted$variable_name <- variable
 return(fitted_predicted) 
 }
 
 # applying this function to our variables
-fitted_predicted_list <- lapply(behav_vars, function(x) func_fitted_predicted(variable = x))
+fitted_predicted_lmer_list <- lapply(behav_vars, function(x) func_fitted_predicted(variable = x))
 
 # Function to plot fitted vs. predicted and calculate R2
 func_fitted_predicted_plots <- function(df =
@@ -267,7 +267,7 @@ func_fitted_predicted_plots <- function(df =
   return(plot)
 }
 
-plot_list_behavs <- lapply(fitted_predicted_list, function(x) func_fitted_predicted_plots(x))
+plot_list_behavs <- lapply(fitted_predicted_lmer_list, function(x) func_fitted_predicted_plots(x))
 
 plot_list_behavs[[1]]
 plot_list_behavs[[2]]
@@ -318,7 +318,7 @@ func_brm_mod <- function(var, df = Personality_wide){
 
 # Rose's tips:
 
-func_process_mod <- function(variable = behav_vars[1]){
+func_process_mod_brm <- function(variable = behav_vars[1]){
     mod <- mod_list_brms[[variable]]
     
   mod_posterior <- as.data.frame(mod)
@@ -327,9 +327,11 @@ func_process_mod <- function(variable = behav_vars[1]){
   b0 <- pop_posterior[,"b_Intercept"] 
   b1 <- pop_posterior[, "b_GroupTreatment"]
   b2 <- pop_posterior[, "b_Sexmale"]
-  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"]
-  sigma <- pop_posterior[, "sigma"]
-  var_comp <- pop_posterior[, "sd_Fish_ID__Intercept"] 
+ # b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] # ROSE: this is an error
+  b3 <- pop_posterior[, "b_GroupTreatment:Sexmale"]
+  sigma_e <- pop_posterior[, "sigma"]
+  #var_comp <- pop_posterior[, "sd_Fish_ID__Intercept"] # not quite the right name
+  sigma_ID <- pop_posterior[, "sd_Fish_ID__Intercept"]
   
   
   # next, get the posterior means, as you did above
@@ -340,7 +342,7 @@ func_process_mod <- function(variable = behav_vars[1]){
    # we have:
    fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", variable)]
    names(fitted)[names(fitted)==variable] <- "fitted"
-   
+   # TO-DO: remember to update this to novel so it's square-root
    
    
    # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
@@ -360,14 +362,69 @@ names(blups) # Double checking to make sure we have renamed correctly
  fish_ID <- as.character(names(blups)) #converting to characters as we did above
   
   pos <- match(fish_ID, fitted$Fish_ID)
-  mod_pars <- data.frame(fish_ID, b0, ID = blups, b1, b2, b3, treatment = ifelse(fitted$Group[pos] == "Treatment",1,0), male = ifelse(fitted$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male)) #HAMZA: Issue with matching, we have 3000 values vs. 165 fish ID's ? I suspect I am doing something wrong to match
-(Personality_wide$Fish_ID[pos] == fish_ID) 
+  # ROSE tip: when you get stuck doing something complicated, it's always best to break it down into little steps (rather than the one line below)
   
-fitted_predicted <- 
+  # step one: get the order of fish in the fitted dataset
+  fitted_fish <- fitted$Fish_ID
+  
+  # step two: get an indexing vector to put the indiv differences in the same order as fish in the fitted dataset
+  pos <- match(fitted_fish, fish_ID) # for match, the first argument is the reference, and the second argument is the one you are retrieving an index for (so on line 364, it is backwards)
+  # always check that the matching is correct
+  fish_ID[pos] == fitted_fish # all TRUE
+  # you can also check like this:
+  sum(fish_ID[pos] == fitted_fish) == length(fitted_fish)
+  
+  # step three: get a vector of the individual differences
+  ID <- blups[pos]
+  # checking this is right
+  names(ID) == fitted_fish
+  
+  # step four: get columns for the categorical variables of 'male', 'treatment', and 'treatment*male'
+  male <- ifelse(fitted$Sex=="Male",1,0)
+  treatment <- ifelse(fitted$Group=="Treatment",1,0)
+  treatment.male <- ifelse(fitted$Group=="Treatment"&fitted$Sex=="Male",1,0)
+  
+  # step five: get the posterior mean estimates for your model coefficients: intercept male contrast treatment contrast and male + treatment interaction
+  b0 <- post_means["b_Intercept"] 
+  b1 <- post_means["b_GroupTreatment"]
+  b2 <- post_means["b_Sexmale"]
+  b3 <- post_means["b_GroupTreatment:Sexmale"]
+  
+  # step six: do the maths to get your predicted values
+  predicted <- b0 + ID + b1*treatment + b2*male + b3*treatment.male
+  
+  # step seven: make your dataframe for export
+  fitted_predicted <- data.frame(fish_ID = fitted_fish, 
+                                 fitted = fitted$fitted,
+                                 b0, ID, b1, b2, b3,
+                                 treatment, male, 
+                                 predicted, 
+                                 variable_name = variable)
+  
+#   mod_pars <- data.frame(fish_ID, b0, ID = blups, b1, b2, b3, treatment = ifelse(fitted$Group[pos] == "Treatment",1,0), male = ifelse(fitted$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male)) #HAMZA: Issue with matching, we have 3000 values vs. 165 fish ID's ? I suspect I am doing something wrong to match
+# (Personality_wide$Fish_ID[pos] == fish_ID) 
+  
+
    
   return(list(pop_posterior, fitted_predicted))
   
 }
+
+
+# Next: apply func_process_mod() to all your variables 
+fitted_process_brm_list <- lapply(behav_vars, function(x) func_process_mod_brm(variable = x))
+names(fitted_process_brm_list) <- behav_vars
+
+# note that each item in the list is, itself, a list. If you want to get the first element of each list (pop_posterior), you can go lapply(fitted_process_brm_list, function(x) x[[1]])
+
+# TASK ONE: plot fitted vs. predicted for lmer and brm models on the same plot (using different colours for the different models)
+# you can use the functon func_fitted_predicted_plots() from the previous section as a guide
+
+# TASK TWO: calculate repeatability for all behaviours from the brm models. 
+
+
+
+
 
 ```
 
