@@ -322,20 +322,18 @@ func_process_mod <- function(variable = behav_vars[1]){
     mod <- mod_list_brms[[variable]]
     
   mod_posterior <- as.data.frame(mod)
-  pop_posterior <- select(mod_posterior,!contains(c("Fish_ID", "lp"))) # here you are getting rid of the variance component for individual differences. Need to change Fish_ID to r_Fish_ID
+  pop_posterior <- select(mod_posterior,!contains(c("r_Fish_ID", "lp"))) #We don't want to get rid of the variance component ! Hence why "r_Fish_ID" and not "Fish_ID"
   
-  b0 <- pop_posterior[1]
-  b0 <- pop_posterior[,"b_Intercept"] # ROSE tip: it's more reproducible to call names, rather than numbers
-  b1 <- pop_posterior[2]
-  b2 <- pop_posterior[3]
-  b3 <- pop_posterior[4]
-  sigma <- pop_posterior[5] # you've lost the variance component for individual differences. You need this to calculate repeatability. 
+  b0 <- pop_posterior[,"b_Intercept"] 
+  b1 <- pop_posterior[, "b_GroupTreatment"]
+  b2 <- pop_posterior[, "b_Sexmale"]
+  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"]
+  sigma <- pop_posterior[, "sigma"]
+  var_comp <- pop_posterior[, "sd_Fish_ID__Intercept"] 
   
-  
-  #HAMZA: Is there anything that I am missing here? I tried a different way to get the columns we require
   
   # next, get the posterior means, as you did above
-   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations; HAMZA: ??? # ROSE: 'found' was a typo, I meant 'round'. Before you had round(mean(x),4)
+   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations
   
   # to make fitted_predicted, the logic is as follows:
    
@@ -348,26 +346,28 @@ func_process_mod <- function(variable = behav_vars[1]){
    # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
    
    # to do this calculation, make three more columns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
-   
-   #HAMZA: Having trouble getting the ID :/ I believe I'm supposed to match the ID from the post_means dataframe with the fish_id's from our personality_wide dataframe, a similiar process to using the lmer models hence why I have copied and pasted below to get a better idea
-   
+
    # ROSE:
    blups <- post_means[str_detect(names(post_means), "r_Fish_ID")] # here are your individual differences
    # now use gsub to rename them so the name is just the fish_ID
    names(blups) # see how these are all in the format r_Fish_ID[aXXXX,Intercept]? You need to get them to all be aXXXX, then you can match them up with the fish_IDs in the fitted dataframe.
    
-   
-  pos <- match(fish_ID, Personality_wide$Fish_ID)
-  mod_pars <- data.frame(fish_ID, b0, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
+names(blups) <- gsub(".*Fish_ID.", "",  names(blups))
+names(blups) <- gsub(".Intercept.", "", names(blups))
+# I did this in two steps because I'm not sure how to keep the middle of the string without ruining the entire thing :/ 
+names(blups) # Double checking to make sure we have renamed correctly
+
+ fish_ID <- as.character(names(blups)) #converting to characters as we did above
+  
+  pos <- match(fish_ID, fitted$Fish_ID)
+  mod_pars <- data.frame(fish_ID, b0, ID = blups, b1, b2, b3, treatment = ifelse(fitted$Group[pos] == "Treatment",1,0), male = ifelse(fitted$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male)) #HAMZA: Issue with matching, we have 3000 values vs. 165 fish ID's ? I suspect I am doing something wrong to match
 (Personality_wide$Fish_ID[pos] == fish_ID) 
   
-  predicted <- 
+fitted_predicted <- 
    
   return(list(pop_posterior, fitted_predicted))
   
 }
-
-
 
 ```
 
