@@ -243,13 +243,23 @@ mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = 
 pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
 (mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
 fitted_predicted <- mod_pars[pos,] 
-fitted_predicted$fitted<- Personality_wide[,variable] # ROSE TO-DO: you need to fix this for novel. As we have taken the square-root of novel in the model, we need ot take the square-root of novel here too
+fitted_predicted$fitted<- Personality_wide[,variable]
+
+# my_index <- which(fitted_predicted$variable_name == "zone_05_dur_Novel" & fitted_predicted$predicted)
+# 
+# fitted_predicted$predicted[my_index] <- sqrt(fitted_predicted$predicted[my_index])
+
+#HAMZA: From my understanding, the predicted values need to be square rooted, so I have added the above, but I don't think it is working when the function is run, it seems to work when running on its own, Ihave hashed it out for now as it doesn't seem to be working correctly, see below
+
 fitted_predicted$variable_name <- variable
 return(fitted_predicted) 
 }
 
 # applying this function to our variables
 fitted_predicted_lmer_list <- lapply(behav_vars, function(x) func_fitted_predicted(variable = x))
+names(fitted_predicted_lmer_list) <- behav_vars
+
+fitted_predicted_lmer_list$zone_05_dur_Novel$predicted <- sqrt(fitted_predicted_lmer_list$zone_05_dur_Novel$predicted) #HAMZA: Or I can do this after we have run lapply? Is an extra step which is not ideal 
 
 # Function to plot fitted vs. predicted and calculate R2
 func_fitted_predicted_plots <- function(df =
@@ -328,11 +338,12 @@ func_process_mod_brm <- function(variable = behav_vars[1]){
   b1 <- pop_posterior[, "b_GroupTreatment"]
   b2 <- pop_posterior[, "b_Sexmale"]
  # b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] # ROSE: this is an error
-  b3 <- pop_posterior[, "b_GroupTreatment:Sexmale"]
+  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] #I had to change it back as there's no ":", only a "."
   sigma_e <- pop_posterior[, "sigma"]
   #var_comp <- pop_posterior[, "sd_Fish_ID__Intercept"] # not quite the right name
   sigma_ID <- pop_posterior[, "sd_Fish_ID__Intercept"]
-  
+
+  #HAMZA: These do not seem to be renamed once we run lapply, is this because below we have overrided ? We are naming the co-efficients fromt the means as the same things, does this matter?
   
   # next, get the posterior means, as you did above
    post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations
@@ -341,9 +352,10 @@ func_process_mod_brm <- function(variable = behav_vars[1]){
    
    # we have:
    fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", variable)]
-   names(fitted)[names(fitted)==variable] <- "fitted"
+   names(fitted)[names(fitted)==variable] <- "fitted" #THIS STEP IMPORTANT !
    # TO-DO: remember to update this to novel so it's square-root
    
+  #HAMZA: The predicted values ? See below as I have done a little thing following lapply
    
    # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
    
@@ -359,16 +371,17 @@ names(blups) <- gsub(".Intercept.", "", names(blups))
 # I did this in two steps because I'm not sure how to keep the middle of the string without ruining the entire thing :/ 
 names(blups) # Double checking to make sure we have renamed correctly
 
- fish_ID <- as.character(names(blups)) #converting to characters as we did above
+ fish_ID <- as.character(names(blups)) #converting to characters as we did above, is this completely necessary ? Code seems to work regardless of it
   
-  pos <- match(fish_ID, fitted$Fish_ID)
+  
   # ROSE tip: when you get stuck doing something complicated, it's always best to break it down into little steps (rather than the one line below)
   
   # step one: get the order of fish in the fitted dataset
   fitted_fish <- fitted$Fish_ID
   
   # step two: get an indexing vector to put the indiv differences in the same order as fish in the fitted dataset
-  pos <- match(fitted_fish, fish_ID) # for match, the first argument is the reference, and the second argument is the one you are retrieving an index for (so on line 364, it is backwards)
+  pos <- match(fitted_fish, fish_ID) # for match, the first argument is the reference, and the second argument is the one you are retrieving an index for 
+  
   # always check that the matching is correct
   fish_ID[pos] == fitted_fish # all TRUE
   # you can also check like this:
@@ -380,15 +393,15 @@ names(blups) # Double checking to make sure we have renamed correctly
   names(ID) == fitted_fish
   
   # step four: get columns for the categorical variables of 'male', 'treatment', and 'treatment*male'
-  male <- ifelse(fitted$Sex=="Male",1,0)
+  male <- ifelse(fitted$Sex=="male",1,0) #Has to be lower case
   treatment <- ifelse(fitted$Group=="Treatment",1,0)
-  treatment.male <- ifelse(fitted$Group=="Treatment"&fitted$Sex=="Male",1,0)
+  treatment.male <- ifelse(fitted$Group=="Treatment"&fitted$Sex=="male",1,0) #Changed to lower case
   
   # step five: get the posterior mean estimates for your model coefficients: intercept male contrast treatment contrast and male + treatment interaction
   b0 <- post_means["b_Intercept"] 
   b1 <- post_means["b_GroupTreatment"]
   b2 <- post_means["b_Sexmale"]
-  b3 <- post_means["b_GroupTreatment:Sexmale"]
+  b3 <- post_means["b_GroupTreatment.Sexmale"] #Only works with "."
   
   # step six: do the maths to get your predicted values
   predicted <- b0 + ID + b1*treatment + b2*male + b3*treatment.male
@@ -399,11 +412,8 @@ names(blups) # Double checking to make sure we have renamed correctly
                                  b0, ID, b1, b2, b3,
                                  treatment, male, 
                                  predicted, 
-                                 variable_name = variable)
-  
-#   mod_pars <- data.frame(fish_ID, b0, ID = blups, b1, b2, b3, treatment = ifelse(fitted$Group[pos] == "Treatment",1,0), male = ifelse(fitted$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male)) #HAMZA: Issue with matching, we have 3000 values vs. 165 fish ID's ? I suspect I am doing something wrong to match
-# (Personality_wide$Fish_ID[pos] == fish_ID) 
-  
+                                 variable_name = variable
+                                 )
 
    
   return(list(pop_posterior, fitted_predicted))
@@ -415,16 +425,69 @@ names(blups) # Double checking to make sure we have renamed correctly
 fitted_process_brm_list <- lapply(behav_vars, function(x) func_process_mod_brm(variable = x))
 names(fitted_process_brm_list) <- behav_vars
 
+fitted_process_brm_list$zone_05_dur_Novel[[2]]$predicted <- sqrt(fitted_process_brm_list$zone_05_dur_Novel[[2]]$predicted)
+
 # note that each item in the list is, itself, a list. If you want to get the first element of each list (pop_posterior), you can go lapply(fitted_process_brm_list, function(x) x[[1]])
 
 # TASK ONE: plot fitted vs. predicted for lmer and brm models on the same plot (using different colours for the different models)
 # you can use the functon func_fitted_predicted_plots() from the previous section as a guide
 
+
+#HAMZA: So we want one plot of both models fitted and predicted, overlapping? Or one plot with separate panels?
+
+# Function to plot fitted vs. predicted and calculate R2
+func_fit_pred_plots_brms <- function(df1 = fitted_process_brm_list[[2]]){
+  
+  behav<- gsub(".*dur\\_|.*dist\\_", "", df1[[2]]$variable_name[1]) 
+  
+  R2<- cor(df1[[2]]$fitted, df1[[2]]$predicted)^2 %>% round(3)
+  
+  plot<- ggplot(df1[[2]])+
+    theme_classic()+
+    geom_point(aes(x=fitted, y=predicted, color='#A4A4A4'))+ #
+    theme(legend.position = "none")+
+    labs(x=df1[[2]]$variable_name[1],
+         title=behav,subtitle=paste0("R2 = ", R2))
+  
+  return(plot)
+}
+
+plot_list_behavs_brms <- lapply(fitted_process_brm_list, function(x) func_fit_pred_plots_brms(x))
+
+plot_list_behavs_brms[[1]]
+plot_list_behavs_brms[[2]]
+plot_list_behavs_brms[[3]]
+plot_list_behavs_brms[[4]]
+plot_list_behavs_brms[[5]]
+
+#Attempting to join the two plots together
+plot <- ggplot()+
+    theme_classic()+
+    geom_point(data = df1[[2]], aes(x=fitted, y=predicted, color='#A4A4A4'))+
+    theme(legend.position = "none")+
+  
+geom_point(data=df, aes(x=fitted, y=predicted))
+
+#Rough example I guess but not really sure if I am doing it correctly, or if I have done the brms models correctly either
+
 # TASK TWO: calculate repeatability for all behaviours from the brm models. 
 
+#HAMZA: Need to use variance component that would be in the pop_posterior dataset
 
+#Would need to utilize these but in a function
+    VC <- data.frame(VarCorr(mod))
+    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
 
-
+ func_var_rpt_brms <- function(variable = behav_vars[1]){
+    mod <- mod_list_brms[[variable]]
+    VC <- data.frame(VarCorr(mod))
+    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
+   df2 <- data.frame(behav_vars, variable, rpt)
+    return(df2)
+ }
+ 
+ fitted_process_brm_list_rpt <- lapply(func_var_rpt_brms, function(x) func_var_rpt_brms(variable = x))
+names(fitted_process_brm_list_rpt) <- behav_vars
 
 ```
 
