@@ -466,22 +466,28 @@ plot_list_behavs_brms[[5]]
 
 #Function to do so
 
-func_join_plots <- function(df1 = fitted_process_brm_list[[2]], df2 = fitted_predicted_lmer_list[[2]]){
+#HAMZA: I think it was easier before as I was only working with one set, but now I am working with 2 :/
+
+func_join_plots <- function(variable = behav_vars[1]){
+  
+    mod <- fitted_process_brm_list[[variable]]
+    
    behav<- gsub(".*dur\\_|.*dist\\_", "", df1[[2]]$variable_name[1]) 
+   
    plot <- ggplot()+
     theme_classic()+
-    geom_point(data = df1[[2]],
+    geom_point(data = ,
   aes(x=fitted, y=predicted, color="brm"))+
-geom_point(data=df2, aes(x=fitted, y=predicted, colour="lmer"))+
-      labs(x=df1[[2]]$variable_name[1], #HAMZA: Again, having the same issue where I cannot seem to tell the function pull out every lmer list, rather I have assigned df2 to one particular variable and it is only using that for all plots
+geom_point(data=, aes(x=fitted, y=predicted, colour="lmer"))+
+      labs(x=df1[[2]]$variable_name[1],
          title=behav)
 
 return(plot)
 }
 
-joined_plots <- lapply(fitted_process_brm_list, function(x) func_join_plots(x))
+joined_plots <- lapply(behav_vars, function(x) func_join_plots(variable = x))
 
-joined_plots[3] #HAMZA: For example, it keeps using the lmer data for predator
+
 
 ```
 
@@ -490,7 +496,7 @@ joined_plots[3] #HAMZA: For example, it keeps using the lmer data for predator
 # TASK TWO: calculate repeatability for all behaviors from the brm models. 
 
  func_var_rpt_brms <- function(variable = behav_vars[1]){
-    mod <- fitted_process_brm_list[[1]]
+    mod <- fitted_process_brm_list[[variable]]
     
    post <-  mod[[1]]
     names(post)
@@ -499,13 +505,16 @@ joined_plots[3] #HAMZA: For example, it keeps using the lmer data for predator
     total_var <- indiv_var + resid_var
     rpt <- indiv_var/total_var
     mean_rpt <- mean(rpt) #mean repeatability
-    quantiles <- quantile(rpt,c(0.025, 0.975)) #95% CI
-   df2 <- data.frame(behav_vars, variable, rpt)
+    quantile_0.025 <- quantile(rpt,0.025)
+    quantile_97.5 <- quantile(rpt, 0.975) 
+   df2 <- data.frame(variable, mean_rpt, quantile_0.025, quantile_97.5)
     return(df2)
  }
  
-fitted_process_brm_list_rpt <- lapply(func_var_rpt_brms, function(x) func_var_rpt_brms(variable = x))
+fitted_process_brm_list_rpt <- lapply(behav_vars, function(x) func_var_rpt_brms(variable = x)) 
 names(fitted_process_brm_list_rpt) <- behav_vars
+
+fitted_process_brm_list_rpt
 
 ```
 
