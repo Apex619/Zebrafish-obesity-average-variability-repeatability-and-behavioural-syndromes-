@@ -505,9 +505,10 @@ joined_plots <- lapply(behav_vars, function(x) func_join_plots(variable = x))
     total_var <- indiv_var + resid_var
     rpt <- indiv_var/total_var
     mean_rpt <- mean(rpt) #mean repeatability
-    quantile_0.025 <- quantile(rpt,0.025)
-    quantile_97.5 <- quantile(rpt, 0.975) 
-   df2 <- data.frame(variable, mean_rpt, quantile_0.025, quantile_97.5)
+    ci.lb <- quantile(rpt,0.025) 
+    ci.ub <- quantile(rpt, 0.975) 
+    #95% CI
+   df2 <- data.frame(variable, mean_rpt, ci.lb, ci.ub)
     return(df2)
  }
  
@@ -515,6 +516,7 @@ fitted_process_brm_list_rpt <- lapply(behav_vars, function(x) func_var_rpt_brms(
 names(fitted_process_brm_list_rpt) <- behav_vars
 
 fitted_process_brm_list_rpt
+
 
 ```
 
