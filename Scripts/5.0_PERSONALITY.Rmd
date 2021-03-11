@@ -543,9 +543,9 @@ func_pop <- function(variable = behav_vars[1]){
    post <-  mod[[1]]
     names(post)
     control_female <- post$b0
-    treatment_female <- post$b1
-    control_male <- post$b2
-    int_treatment_male <- post$b3
+    treatment_female <- post$b1 #Need to make sure I have the correct param for labelling
+    control_male <- post$b2 
+    int_treatment_male <- post$b3 
     pop_param <- c("control_female", "treatment_female", "control_male", "int_treatment_male")
     mean <- c(mean(control_female), mean(treatment_female), mean(control_male), mean(int_treatment_male)) 
     ci.lb <- c(quantile(control_female,0.025), quantile(treatment_female,0.025), quantile(control_male, 0.025), quantile(int_treatment_male, 0.025)) 
@@ -558,6 +558,39 @@ fitted_process_brm_list_pop <- lapply(behav_vars, function(x) func_pop(variable 
 names(fitted_process_brm_list_pop) <- behav_vars
 
 fitted_process_brm_list_pop
+
+d<- fitted_process_brm_list_pop[[1]]
+
+#Attempt at doing basic forest plots
+
+func_forest_plots <- function (variable = behav_vars[1]){
+    mod <- fitted_process_brm_list_pop[[variable]]
+    
+   post <-  mod
+    names(post)
+forest <-
+  ggplot(post,
+         aes(x = pop_param, y = mean)) +
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8)+
+  coord_flip()+
+  geom_point(aes(x = pop_param, y = mean),
+             position = position_dodge(0.3),
+             size = 3) 
+return(forest)
+}
+
+forest_plots_pop <- lapply(behav_vars, function(x) func_forest_plots(variable = x)) 
+names(forest_plots_pop) <- behav_vars
+
+forest_plots_pop[1]
+forest_plots_pop[2]
+forest_plots_pop[3]
+forest_plots_pop[4]
+forest_plots_pop[5]
 
 ```
 
