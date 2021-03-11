@@ -525,8 +525,13 @@ plot_grid(plotlist = rpt_plots)
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
 
 
+
 $$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
+
+
+
 $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
+
 
 #TODO 
 1. With the fitted_process_brm_list we want to take the first element of each list. 
@@ -543,15 +548,28 @@ func_pop <- function(variable = behav_vars[1]){
    post <-  mod[[1]]
     names(post)
     control_female <- post$b0
-    treatment_female <- post$b1 #Need to make sure I have the correct param for labelling
-    control_male <- post$b2 
-    int_treatment_male <- post$b3 
-    pop_param <- c("control_female", "treatment_female", "control_male", "int_treatment_male")
-    mean <- c(mean(control_female), mean(treatment_female), mean(control_male), mean(int_treatment_male)) 
-    ci.lb <- c(quantile(control_female,0.025), quantile(treatment_female,0.025), quantile(control_male, 0.025), quantile(int_treatment_male, 0.025)) 
-    ci.ub <- c(quantile(control_female,0.975), quantile(treatment_female,0.975), quantile(control_male, 0.975), quantile(int_treatment_male, 0.975)) 
-   df2 <- data.frame(variable,pop_param, mean,ci.lb, ci.ub)
-    return(df2)
+    treatment_female_minus_control_female <- post$b1 
+    treatment_female <- post$b1 + control_female
+    control_male_minus_control_female <- post$b2
+    control_male <- post$b2 + control_female
+    treatment_male <- post$b0 + post$b1 + post$b2 + post$b3
+    treatment_male_minus_treatment_female <- treatment_male - treatment_female
+    treatment_male_minus_control_male <- treatment_male - control_male
+df_pop <- data.frame (control_female,treatment_female,treatment_female_minus_control_female,control_male,treatment_male,control_male_minus_control_female,treatment_male_minus_control_male, treatment_male_minus_treatment_female)
+
+str(df_pop)
+data <- cbind(
+    apply(df_pop,2,function(x) mean(x)),
+    apply(df_pop, 2, function(x) quantile(x, 0.025)),
+    apply(df_pop, 2, function(x) quantile(x, 0.975))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$variable <- variable
+data$coef <- factor(data$coef, levels = c("control_female", "treatment_female", "control_male", "treatment_male","treatment_female_minus_control_female", "treatment_male_minus_control_male", "control_male_minus_control_female", "treatment_male_minus_treatment_female"))
+    
+   return(data)
 }
 
 fitted_process_brm_list_pop <- lapply(behav_vars, function(x) func_pop(variable = x)) 
@@ -561,7 +579,7 @@ fitted_process_brm_list_pop
 
 d<- fitted_process_brm_list_pop[[1]]
 
-#Attempt at doing basic forest plots
+#Attempt at doing basic forest plots (use geom_pointrange !!! Takes x, ymin, ymax and y to make the points and errorbar in one go; one of the arguements for making the point bigger without the line getting "fatten=5")
 
 func_forest_plots <- function (variable = behav_vars[1]){
     mod <- fitted_process_brm_list_pop[[variable]]
