@@ -535,23 +535,21 @@ $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
 
 ```{r}
-#HAMZA: Main struggle is releveling the population parameters :/
-
-#I can never remember what the betas signify, I understand we have the fixed effects and they need to be releveled ?
+#HAMZA: Main struggle is ensuring I have all parameters?
 
 func_pop <- function(variable = behav_vars[1]){
     mod <- fitted_process_brm_list[[variable]]
     
    post <-  mod[[1]]
     names(post)
+    control_female <- post$b0
     treatment_female <- post$b1
     control_male <- post$b2
     int_treatment_male <- post$b3
-    pop_param <- c("treatment_female", "control_male", "int_treatment_male")
-    mean <- c(mean(treatment_female), mean(control_male), mean(int_treatment_male)) 
-    ci.lb <- c(quantile(treatment_female,0.025), quantile(control_male, 0.025), quantile(int_treatment_male, 0.025)) 
-    ci.ub <- c(quantile(treatment_female,0.975), quantile(control_male, 0.975), quantile(int_treatment_male, 0.975)) 
-    #95% CI
+    pop_param <- c("control_female", "treatment_female", "control_male", "int_treatment_male")
+    mean <- c(mean(control_female), mean(treatment_female), mean(control_male), mean(int_treatment_male)) 
+    ci.lb <- c(quantile(control_female,0.025), quantile(treatment_female,0.025), quantile(control_male, 0.025), quantile(int_treatment_male, 0.025)) 
+    ci.ub <- c(quantile(control_female,0.975), quantile(treatment_female,0.975), quantile(control_male, 0.975), quantile(int_treatment_male, 0.975)) 
    df2 <- data.frame(variable,pop_param, mean,ci.lb, ci.ub)
     return(df2)
 }
