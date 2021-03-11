@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #checks for installation and loads packages
 pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
                sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
-               stargazer, brms, MCMCglmm)
+               stargazer, brms, MCMCglmm, cowplot)
 
 ```
 
@@ -217,6 +217,8 @@ fixef(lmer_zone_05_dur_Social) == fixef(mod_list_5behav$zone_05_dur_Social) # th
 - predicted = the model predictions, calculated according to the below equation:
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$ 
+
+
 $$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
 $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
@@ -340,7 +342,7 @@ func_process_mod_brm <- function(variable = behav_vars[1]){
   b1 <- pop_posterior[, "b_GroupTreatment"]
   b2 <- pop_posterior[, "b_Sexmale"]
  # b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] # ROSE: this is an error
-  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] #I had to change it back as there's no ":", only a "."
+  b3 <- pop_posterior[, "b_GroupTreatment:Sexmale"] #I had to change it back as there's no ":", only a "."
   sigma_e <- pop_posterior[, "sigma"]
 
   sigma_ID <- pop_posterior[, "sd_Fish_ID__Intercept"]
@@ -407,7 +409,7 @@ fish_ID <- names(blups)
   b0 <- post_means["b_Intercept"] 
   b1 <- post_means["b_GroupTreatment"]
   b2 <- post_means["b_Sexmale"]
-  b3 <- post_means["b_GroupTreatment.Sexmale"] #Only works with "."
+  b3 <- post_means["b_GroupTreatment:Sexmale"] #Only works with "."
   
   # step six: do the maths to get your predicted values
   predicted <- b0 + ID + b1*treatment + b2*male + b3*treatment.male
@@ -464,28 +466,7 @@ plot_list_behavs_brms[[5]]
 
 #Attempting to join the two plots together
 
-#Function to do so
 
-#HAMZA: I think it was easier before as I was only working with one set, but now I am working with 2 :/
-
-func_join_plots <- function(variable = behav_vars[1]){
-  
-    mod <- fitted_process_brm_list[[variable]]
-    
-   behav<- gsub(".*dur\\_|.*dist\\_", "", df1[[2]]$variable_name[1]) 
-   
-   plot <- ggplot()+
-    theme_classic()+
-    geom_point(data = ,
-  aes(x=fitted, y=predicted, color="brm"))+
-geom_point(data=, aes(x=fitted, y=predicted, colour="lmer"))+
-      labs(x=df1[[2]]$variable_name[1],
-         title=behav)
-
-return(plot)
-}
-
-joined_plots <- lapply(behav_vars, function(x) func_join_plots(variable = x))
 
 
 
@@ -508,7 +489,7 @@ joined_plots <- lapply(behav_vars, function(x) func_join_plots(variable = x))
     ci.lb <- quantile(rpt,0.025) 
     ci.ub <- quantile(rpt, 0.975) 
     #95% CI
-   df2 <- data.frame(variable, mean_rpt, ci.lb, ci.ub)
+   df2 <- data.frame(variable, mean_rpt, ci.lb, ci.ub, rpt)
     return(df2)
  }
  
@@ -517,6 +498,68 @@ names(fitted_process_brm_list_rpt) <- behav_vars
 
 fitted_process_brm_list_rpt
 
+
+# Function to plot repeatability estimates
+
+df= fitted_process_brm_list_rpt[[1]]
+
+
+
+rpt_density_plot <- function(df){p <- ggplot()+
+  theme_classic()+
+  geom_density(data = df, aes(x=rpt))+
+  labs(title=df$variable[1], x= "repeatability")+
+  scale_y_continuous(expand=c(0,0))+
+  scale_x_continuous(expand=c(0,0), breaks=seq(0,0.5,0.1), lim= c(0,0.5))+
+  geom_vline(xintercept = df$mean_rpt[1])+
+  geom_rect(data = df, aes(xmin = ci.lb[1], xmax = ci.ub[1], ymin=0, ymax=7), alpha=0.005)
+return(p)}
+
+rpt_plots <- lapply(fitted_process_brm_list_rpt, function(x) rpt_density_plot(x))
+
+plot_grid(plotlist = rpt_plots)
+```
+
+###Plotting population effects
+
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
+
+
+$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
+$$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
+
+#TODO 
+1. With the fitted_process_brm_list we want to take the first element of each list. 
+2. We want to obtain the posterior distributions of our four groups (i.e. control male, control female, treatment male, treatment female)
+3. We want a plot (i.e. forest plot) from the mean and credible interval...and using the model, we will be able to see if they are different from each other (think of lmer model outputs)
+
+
+```{r}
+#HAMZA: Main struggle is releveling the population parameters :/
+
+#I can never remember what the betas signify, I understand we have the fixed effects and they need to be releveled ?
+
+func_pop <- function(variable = behav_vars[1]){
+    mod <- fitted_process_brm_list[[variable]]
+    
+   post <-  mod[[1]]
+    names(post)
+    treatment_female <- post$b1
+    control_male <- post$b2
+    int_treatment_male <- post$b3
+    pop_param <- c("treatment_female", "control_male", "int_treatment_male")
+    mean <- c(mean(treatment_female), mean(control_male), mean(int_treatment_male)) 
+    ci.lb <- c(quantile(treatment_female,0.025), quantile(control_male, 0.025), quantile(int_treatment_male, 0.025)) 
+    ci.ub <- c(quantile(treatment_female,0.975), quantile(control_male, 0.975), quantile(int_treatment_male, 0.975)) 
+    #95% CI
+   df2 <- data.frame(variable,pop_param, mean,ci.lb, ci.ub)
+    return(df2)
+}
+
+fitted_process_brm_list_pop <- lapply(behav_vars, function(x) func_pop(variable = x)) 
+names(fitted_process_brm_list_pop) <- behav_vars
+
+fitted_process_brm_list_pop
 
 ```
 
