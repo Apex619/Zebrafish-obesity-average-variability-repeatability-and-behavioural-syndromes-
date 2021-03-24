@@ -292,6 +292,7 @@ plot_list_behavs[[5]]
 ```
 
 
+
 ### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
 #Here To-do:
@@ -533,14 +534,9 @@ $$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
 $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
 
-#TODO 
-1. With the fitted_process_brm_list we want to take the first element of each list. 
-2. We want to obtain the posterior distributions of our four groups (i.e. control male, control female, treatment male, treatment female)
-3. We want a plot (i.e. forest plot) from the mean and credible interval...and using the model, we will be able to see if they are different from each other (think of lmer model outputs)
-
 
 ```{r}
-#HAMZA: Main struggle is ensuring I have all parameters?
+
 
 func_pop <- function(variable = behav_vars[1]){
     mod <- fitted_process_brm_list[[variable]]
@@ -611,6 +607,59 @@ forest_plots_pop[4]
 forest_plots_pop[5]
 
 ```
+
+
+###TODO
+Multivariate models
+```{r}
+
+options(mc.scores = parallel::detectCores())
+
+#Run some example bivariate models
+
+brm_bivar <- brm(formula = cbind(zone_05_dur_Social, tot_dist_Activity) ~ Group*Sex + (1| Fish_ID), 
+                                  data = Personality_wide,
+                                  family = gaussian(),
+                                  chains = 3,
+                                 iter = 2000, warmup = 1000)
+
+
+mod_posterior_bi <- as.data.frame(brm_bivar)
+pop_posterior_bi <- select(mod_posterior_bi,!contains(c("r_Fish_ID", "lp"))) 
+
+  b0 <- pop_posterior_bi[,"b_zone05durSocial_Intercept"] 
+  b1 <- pop_posterior_bi[,"b_totdistActivity_Intercept"]
+  b2 <- pop_posterior_bi[,"b_zone05durSocial_GroupTreatment"]
+  b3 <- pop_posterior_bi[,"b_zone05durSocial_Sexmale"]
+  b4 <- pop_posterior_bi[,"b_zone05durSocial_GroupTreatment.Sexmale"]
+  b5 <- pop_posterior_bi[,"b_totdistActivity_GroupTreatment"]
+  b6 <- pop_posterior_bi[,"b_totdistActivity_Sexmale"]
+  b7 <- pop_posterior_bi[,"b_totdistActivity_GroupTreatment.Sexmale"]
+
+sigma_Activity <- pop_posterior_bi[, "sigma_totdistActivity"]
+sigma_Social <- pop_posterior_bi[, "sigma_zone05durSocial"]
+  sigma_ID_Activity <- pop_posterior_bi[, "sd_Fish_ID__totdistActivity_Intercept"]
+  sigma_ID_Social <- pop_posterior_bi[, "sd_Fish_ID__zone05durSocial_Intercept"]
+  
+  pop_posterior_bi <- data.frame(b0, b1, b2, b3,b4,b5,b6,b7,sigma_Activity,sigma_Social, sigma_ID_Activity, sigma_ID_Social)
+  
+  # next, get the posterior means, as you did above
+   post_means_bi <- apply(mod_posterior_bi, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations
+  
+   # to make fitted_predicted, the logic is as follows:
+   
+   # we have:
+   fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", "zone_05_dur_Social", "tot_dist_Activity")]
+ 
+
+
+
+
+
+#Build a function that will allow you to inout two parameters and run the model
+
+```
+
 
 
 
