@@ -343,7 +343,7 @@ func_process_mod_brm <- function(variable = behav_vars[1]){
   b1 <- pop_posterior[, "b_GroupTreatment"]
   b2 <- pop_posterior[, "b_Sexmale"]
  # b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] # ROSE: this is an error
-  b3 <- pop_posterior[, "b_GroupTreatment:Sexmale"] #I had to change it back as there's no ":", only a "."
+  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] #I had to change it back as there's no ":", only a "."
   sigma_e <- pop_posterior[, "sigma"]
 
   sigma_ID <- pop_posterior[, "sd_Fish_ID__Intercept"]
@@ -410,7 +410,7 @@ fish_ID <- names(blups)
   b0 <- post_means["b_Intercept"] 
   b1 <- post_means["b_GroupTreatment"]
   b2 <- post_means["b_Sexmale"]
-  b3 <- post_means["b_GroupTreatment:Sexmale"] #Only works with "."
+  b3 <- post_means["b_GroupTreatment.Sexmale"] #Only works with "."
   
   # step six: do the maths to get your predicted values
   predicted <- b0 + ID + b1*treatment + b2*male + b3*treatment.male
@@ -584,20 +584,21 @@ func_forest_plots <- function (variable = behav_vars[1]){
     names(post)
 forest <-
   ggplot(post,
-         aes(x = pop_param, y = mean)) +
+         aes(x = coef, y = mean.post)) + 
   geom_errorbar(
     aes(ymin = ci.lb, ymax = ci.ub),
     width = 0.4,
     position = position_dodge(0.3),
     size = 0.8)+
   coord_flip()+
-  geom_point(aes(x = pop_param, y = mean),
+  geom_point(aes(x = coef, y = mean.post), 
              position = position_dodge(0.3),
              size = 3) 
 return(forest)
 }
 
 forest_plots_pop <- lapply(behav_vars, function(x) func_forest_plots(variable = x)) 
+
 names(forest_plots_pop) <- behav_vars
 
 forest_plots_pop[1]
