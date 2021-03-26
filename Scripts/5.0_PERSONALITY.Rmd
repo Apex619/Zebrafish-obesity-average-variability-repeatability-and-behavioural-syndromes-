@@ -662,6 +662,49 @@ sigma_Social <- pop_posterior_bi[, "sigma_zone05durSocial"]
 ```
 
 
+### Meeting 26 March 2021    
+```{r}
+# formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID))
+# formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID))
+# bivar_formula <- mvbrmsformula(formula1, formula2)
+# example_Social_Predator <- brm(formula = bivar_formula,
+#                      data = Personality_wide,
+#                      family = gaussian(),
+#                      chains = 1,#note this is just a test model that we need to run fast, real should have more chains
+#                      iter = 2000, warmup = 1000)#and more iterations and more warmup
+# save(example_Social_Predator, file = "./Models/example_bivar.Rdata")
+
+load("./Models/example_bivar.Rdata")
+# TO-DO: write a function to process bivariate model outputs
+mod_char <- "example_Social_Predator" # character string which you will use in the function argument
+mod <- get(mod_char)
+post <- as.data.frame(mod)
+# getting names of behav1 and behav2
+# use str_split for this
+#behav1 <- 
+#behav2 <- 
+# understand the parameters in the bivariate model:
+names(post)
+#what do we want to get?
+#y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
+# B0_1
+# B1_1
+# B2_1
+# B3_1
+# B0_2
+# B1_2
+# B2_2
+# B3_2
+# sigma_ID1 
+# sigma_ID2
+# cor_ID1_ID2 
+# sigma_e1
+# sigma_e2
+# cor_e1_e2
+# rpt1
+# rpt2
+
+```
 
 
 
