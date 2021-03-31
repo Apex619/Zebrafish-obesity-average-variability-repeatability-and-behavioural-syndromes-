@@ -610,60 +610,31 @@ forest_plots_pop[5]
 ```
 
 
-###TODO
-Multivariate models
+#Function for Bivar Models and Dataframe
 ```{r}
-
-options(mc.scores = parallel::detectCores())
-
-#Run some example bivariate models
-
-brm_bivar <- brm(formula = cbind(zone_05_dur_Social, tot_dist_Activity) ~ Group*Sex + (1| Fish_ID), 
-                                  data = Personality_wide,
-                                  family = gaussian(),
-                                  chains = 3,
-                                 iter = 2000, warmup = 1000)
+#Function for running the bivar model 
 
 
-mod_posterior_bi <- as.data.frame(brm_bivar)
-pop_posterior_bi <- select(mod_posterior_bi,!contains(c("r_Fish_ID", "lp"))) 
 
-  b0 <- pop_posterior_bi[,"b_zone05durSocial_Intercept"] 
-  b1 <- pop_posterior_bi[,"b_totdistActivity_Intercept"]
-  b2 <- pop_posterior_bi[,"b_zone05durSocial_GroupTreatment"]
-  b3 <- pop_posterior_bi[,"b_zone05durSocial_Sexmale"]
-  b4 <- pop_posterior_bi[,"b_zone05durSocial_GroupTreatment.Sexmale"]
-  b5 <- pop_posterior_bi[,"b_totdistActivity_GroupTreatment"]
-  b6 <- pop_posterior_bi[,"b_totdistActivity_Sexmale"]
-  b7 <- pop_posterior_bi[,"b_totdistActivity_GroupTreatment.Sexmale"]
-
-sigma_Activity <- pop_posterior_bi[, "sigma_totdistActivity"]
-sigma_Social <- pop_posterior_bi[, "sigma_zone05durSocial"]
-  sigma_ID_Activity <- pop_posterior_bi[, "sd_Fish_ID__totdistActivity_Intercept"]
-  sigma_ID_Social <- pop_posterior_bi[, "sd_Fish_ID__zone05durSocial_Intercept"]
-  
-  pop_posterior_bi <- data.frame(b0, b1, b2, b3,b4,b5,b6,b7,sigma_Activity,sigma_Social, sigma_ID_Activity, sigma_ID_Social)
-  
-  # next, get the posterior means, as you did above
-   post_means_bi <- apply(mod_posterior_bi, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations
-  
-   # to make fitted_predicted, the logic is as follows:
-   
-   # we have:
-   fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", "zone_05_dur_Social", "tot_dist_Activity")]
- 
+bivar_model <- function(var1,var2, df = Personality_wide){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Group*Sex + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Group*Sex + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
 
 
 
 
 
-#Build a function that will allow you to inout two parameters and run the model
 
-```
-
-
-### Meeting 26 March 2021    
-```{r}
 # formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID))
 # formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID))
 # bivar_formula <- mvbrmsformula(formula1, formula2)
@@ -675,37 +646,178 @@ sigma_Social <- pop_posterior_bi[, "sigma_zone05durSocial"]
 # save(example_Social_Predator, file = "./Models/example_bivar.Rdata")
 
 load("./Models/example_bivar.Rdata")
-# TO-DO: write a function to process bivariate model outputs
-mod_char <- "example_Social_Predator" # character string which you will use in the function argument
+
+
+#Function to handle bivariate model outputs
+
+
+bivar_brm_func <- function(mod_char){
 mod <- get(mod_char)
 post <- as.data.frame(mod)
 # getting names of behav1 and behav2
 # use str_split for this
-#behav1 <- 
-#behav2 <- 
+inter_key <- str_split(mod_char, "_")[[1]] 
+
+
+behav1 <- "response1" #previously inter_key[2]
+behav2 <- "response2" #previously inter_key[3]
+
+#Changed to be able to use it with function for bivar models
+
 # understand the parameters in the bivariate model:
 names(post)
 #what do we want to get?
 #y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
-# B0_1
-# B1_1
-# B2_1
-# B3_1
-# B0_2
-# B1_2
-# B2_2
-# B3_2
-# sigma_ID1 
-# sigma_ID2
-# cor_ID1_ID2 
-# sigma_e1
-# sigma_e2
-# cor_e1_e2
-# rpt1
-# rpt2
+cols <- names(post)
+cols
+
+
+B0_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
+B1_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
+B2_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
+B3_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
+B0_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
+B1_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
+B2_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
+B3_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
+sigma_ID1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "sd_Fish")]
+sigma_ID2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "sd_Fish")]
+cor_ID1_ID2 <- post[,str_detect(cols, behav1)  & str_detect(cols, behav2) & str_detect(cols, "cor_Fish")]
+sigma_e1 <- post[,str_detect(cols, behav1) & str_detect(cols, "sigma_")]
+sigma_e2 <- post[,str_detect(cols, behav2) & str_detect(cols, "sigma_")]
+cor_e1_e2 <- post[,str_detect(cols, behav1) & str_detect(cols, behav2) & str_detect(cols, "rescor_")]
+tot_var1 <- sigma_ID1 + sigma_e1
+tot_var2 <- sigma_ID2 + sigma_e2
+rpt1 <- sigma_ID1/tot_var1
+rpt2 <- sigma_ID2/tot_var2
+mean_rpt1 <- mean(rpt1)
+mean_rpt2 <- mean(rpt2)
+df <- data.frame(B0_1, B1_1, B2_1, B3_1, B0_2,B1_2,B2_2,B3_2,sigma_ID1,sigma_ID2,cor_ID1_ID2,sigma_e1,sigma_e2,cor_e1_e2,tot_var1,tot_var2,rpt1,rpt2,mean_rpt1,mean_rpt2)
+return(df)
+}
+
+
+Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models
 
 ```
+#Bivar Models
+Combinations required (see also object "Combinations"):
+
+Social Predator
+Social Novel
+Social Aggression
+Social Activity
+Aggression Novel
+Aggression Predator
+Aggression Activity
+Novel Predator
+Novel Activity
+Predator Activity
 
 
+```{r}
+
+#Social Predator Bivariate Model
+
+example_Social_Predator <- bivar_model("zone_05_dur_Social", "zone_05_dur_Predator")
+save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata")
+
+
+social_predator_bivar <- bivar_brm_func("example_Social_Predator")
+
+
+#Social_Novel Bivariate model
+
+example_Social_Novel <- bivar_model("zone_05_dur_Social", "zone_05_dur_Novel")
+save(example_Social_Novel, file = "./Models/social_novel_bivar.Rdata")
+
+
+social_novel_bivar <- bivar_brm_func("example_Social_Novel")
+
+
+#Social_Aggression Bivariate model
+
+example_Social_Aggression <- bivar_model("zone_05_dur_Social", "zone_05_dur_Aggression")
+save(example_Social_Aggression, file = "./Models/social_aggression_bivar.Rdata")
+
+
+social_aggression_bivar <- bivar_brm_func("example_Social_Aggression")
+
+
+
+
+#Social_Activity Bivariate Model
+
+example_Social_Activity <- bivar_model("zone_05_dur_Social", "tot_dist_Activity")
+save(example_Social_Activity, file = "./Models/social_activity_bivar.Rdata")
+
+
+social_activity_bivar <- bivar_brm_func("example_Social_Activity")
+
+
+#Agression Novel Bivariate Model
+
+example_Aggression_Novel <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Novel")
+save(example_Aggression_Novel, file = "./Models/aggression_novel_bivar.Rdata")
+
+
+aggression_novel_bivar <- bivar_brm_func("example_Aggression_Novel")
+
+#Agression Predator Bivariate Model
+
+example_Aggression_Predator <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Predator")
+save(example_Aggression_Predator, file = "./Models/aggression_predator_bivar.Rdata")
+
+
+aggression_predator_bivar <- bivar_brm_func("example_Aggression_Predator")
+
+
+#Aggression Activity Bivariate Model
+
+example_Aggression_Activity <- bivar_model("zone_05_dur_Aggression", "tot_dist_Activity")
+save(example_Aggression_Activity, file = "./Models/aggression_activity_bivar.Rdata")
+
+aggression_activity_bivar <- bivar_brm_func("example_Aggression_Activity")
+
+
+#Novel Predator Bivariate Model
+
+example_Novel_Predator <- bivar_model("zone_05_dur_Novel", "zone_05_dur_Predator")
+save(example_Novel_Predator, file = "./Models/novel_predator_bivar.Rdata")
+
+
+novel_predator_bivar <- bivar_brm_func("example_Novel_Predator")
+
+
+
+#Novel Activity Bivariate Model
+
+example_Novel_Activity <- bivar_model("zone_05_dur_Novel", "tot_dist_Activity")
+save(example_Novel_Activity, file = "./Models/novel_activity_bivar.Rdata")
+
+novel_activity_bivar <- bivar_brm_func("example_Novel_Activity")
+
+
+#Predator Activity Bivariate Model
+
+example_Predator_Activity <- bivar_model("zone_05_dur_Predator", "tot_dist_Activity")
+save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
+
+predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
+```
+
+#Loading bivar models
+```{r}
+load("./Models/aggression_activity_bivar.Rdata")
+load("./Models/aggression_novel_bivar.Rdata")
+load("./Models/aggression_predator_bivar.Rdata")
+load("./Models/novel_activity_bivar.Rdata")
+load("./Models/novel_predator_bivar.Rdata")
+load("./Models/predator_activity_bivar.Rdata")
+load("./Models/social_activity_bivar.Rdata")
+load("./Models/social_aggression_bivar.Rdata")
+load("./Models/social_novel_bivar.Rdata")
+load("./Models/social_predator_bivar.Rdata")
+```
 
 
