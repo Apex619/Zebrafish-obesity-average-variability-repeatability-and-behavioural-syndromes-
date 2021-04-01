@@ -465,11 +465,6 @@ plot_list_behavs_brms[[3]]
 plot_list_behavs_brms[[4]]
 plot_list_behavs_brms[[5]]
 
-#Attempting to join the two plots together
-
-
-
-
 
 ```
 
@@ -526,14 +521,11 @@ plot_grid(plotlist = rpt_plots)
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
 
 
-
 $$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
 
 
 
 $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
-
-
 
 ```{r}
 
@@ -662,7 +654,7 @@ inter_key <- str_split(mod_char, "_")[[1]]
 behav1 <- "response1" #previously inter_key[2]
 behav2 <- "response2" #previously inter_key[3]
 
-#Changed to be able to use it with function for bivar models
+#Changed to be able to use it with function for bivar models, however this may need tweaking as response1 and response2 won't be great to work with in future functions for plotting for example
 
 # understand the parameters in the bivariate model:
 names(post)
@@ -699,22 +691,38 @@ return(df)
 
 Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models
 
+
+# Combinations required for bivar models
+
+# Social Predator
+# Social Novel
+# Social Aggression
+# Social Activity
+# Aggression Novel
+# Aggression Predator
+# Aggression Activity
+# Novel Predator
+# Novel Activity
+# Predator Activity
 ```
-#Bivar Models
-Combinations required (see also object "Combinations"):
-
-Social Predator
-Social Novel
-Social Aggression
-Social Activity
-Aggression Novel
-Aggression Predator
-Aggression Activity
-Novel Predator
-Novel Activity
-Predator Activity
 
 
+
+#Loading bivar models
+```{r}
+load("./Models/aggression_activity_bivar.Rdata")
+load("./Models/aggression_novel_bivar.Rdata")
+load("./Models/aggression_predator_bivar.Rdata")
+load("./Models/novel_activity_bivar.Rdata")
+load("./Models/novel_predator_bivar.Rdata")
+load("./Models/predator_activity_bivar.Rdata")
+load("./Models/social_activity_bivar.Rdata")
+load("./Models/social_aggression_bivar.Rdata")
+load("./Models/social_novel_bivar.Rdata")
+load("./Models/social_predator_bivar.Rdata")
+```
+
+#Bivariate models and dataframes
 ```{r}
 
 #Social Predator Bivariate Model
@@ -806,18 +814,62 @@ save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
 predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
 ```
 
-#Loading bivar models
+#Function for population parameters
 ```{r}
-load("./Models/aggression_activity_bivar.Rdata")
-load("./Models/aggression_novel_bivar.Rdata")
-load("./Models/aggression_predator_bivar.Rdata")
-load("./Models/novel_activity_bivar.Rdata")
-load("./Models/novel_predator_bivar.Rdata")
-load("./Models/predator_activity_bivar.Rdata")
-load("./Models/social_activity_bivar.Rdata")
-load("./Models/social_aggression_bivar.Rdata")
-load("./Models/social_novel_bivar.Rdata")
-load("./Models/social_predator_bivar.Rdata")
+#y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
+
+
+func_pop_bivar <- function(mod_char){
+  mod <- get(mod_char)
+
+    control_female_r1 <- mod$B0_1
+    treatment_female_minus_control_female_r1 <- mod$B1_1 
+    treatment_female_r1 <- mod$B1_1 + control_female_r1
+    control_male_minus_control_female_r1 <- mod$B2_1
+    control_male_r1 <- mod$B2_1 + control_female_r1
+    treatment_male_r1 <- mod$B0_1 + mod$B1_1 + mod$B2_1 + mod$B3_1
+    treatment_male_minus_treatment_female_r1 <- treatment_male_r1 - treatment_female_r1
+    treatment_male_minus_control_male_r1 <- treatment_male_r1 - control_male_r1
+    
+    control_female_r2 <- mod$B0_2
+    treatment_female_minus_control_female_r2 <- mod$B1_2 
+    treatment_female_r2 <- mod$B1_2 + control_female_r2
+    control_male_minus_control_female_r2 <- mod$B2_2
+    control_male_r2 <- mod$B2_2 + control_female_r2
+    treatment_male_r2 <- mod$B0_2 + mod$B1_2 + mod$B2_2 + mod$B3_2
+    treatment_male_minus_treatment_female_r2 <- treatment_male_r2 - treatment_female_r2
+    treatment_male_minus_control_male_r2 <- treatment_male_r2 - control_male_r2
+    
+    correlation_ID <- mod$cor_ID1_ID2
+    correlation_resid <- mod$cor_e1_e2
+    
+df_pop <- data.frame (control_female_r1,treatment_female_r1,treatment_female_minus_control_female_r1,control_male_r1,treatment_male_r1,control_male_minus_control_female_r1,treatment_male_minus_control_male_r1, treatment_male_minus_treatment_female_r1,control_female_r2,treatment_female_r2,treatment_female_minus_control_female_r2,control_male_r2,treatment_male_r2,control_male_minus_control_female_r2,treatment_male_minus_control_male_r2, treatment_male_minus_treatment_female_r2,correlation_ID,correlation_resid)
+
+
+
+str(df_pop)
+data <- cbind(
+    apply(df_pop,2,function(x) mean(x)),
+    apply(df_pop, 2, function(x) quantile(x, 0.025)),
+    apply(df_pop, 2, function(x) quantile(x, 0.975))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$variable <- mod_char
+data$coef <- factor(data$coef, levels = c("control_female_r1", "treatment_female_r1", "control_male_r1", "treatment_male_r1","treatment_female_minus_control_female_r1", "treatment_male_minus_control_male_r1", "control_male_minus_control_female_r1", "treatment_male_minus_treatment_female_r1","control_female_r2", "treatment_female_r2", "control_male_r2", "treatment_male_r2","treatment_female_minus_control_female_r2", "treatment_male_minus_control_male_r2", "control_male_minus_control_female_r2", "treatment_male_minus_treatment_female_r2","correlation_ID","correlation_resid"))
+
+
+    
+   return(data)
+}
+
+test <- func_pop_bivar("social_predator_bivar")
 ```
+
+
+
+
+
 
 
