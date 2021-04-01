@@ -865,6 +865,47 @@ data$coef <- factor(data$coef, levels = c("control_female_r1", "treatment_female
 }
 
 test <- func_pop_bivar("social_predator_bivar")
+
+bivar_models #character vector with names of data frames of the bivar model outputs
+
+bivar_list_pop <- lapply(bivar_models, function(x) func_pop_bivar(mod_char = x)) #applying function to all bivar model outputs
+names(bivar_list_pop) <- bivar_models #naming the elements of the list
+
+
+
+
+
+
+func_forest_plots_bivar <- function (variable = bivar_list_pop[1]){
+    mod <- bivar_list_pop[[variable]]
+    
+   post <-  mod
+    names(post)
+forest <-
+  ggplot(post,
+         aes(x = coef, y = mean.post)) + 
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8)+
+  coord_flip()+
+  geom_point(aes(x = coef, y = mean.post), 
+             position = position_dodge(0.3),
+             size = 3) 
+return(forest)
+}
+
+
+forest_plots_pop_bivar <- lapply(bivar_models, function(x) func_forest_plots_bivar(variable = x)) 
+
+names(forest_plots_pop_bivar) <- bivar_models
+
+forest_plots_pop_bivar[1]
+forest_plots_pop_bivar[2]
+forest_plots_pop_bivar[3]
+forest_plots_pop_bivar[4]
+forest_plots_pop_bivar[5]
 ```
 
 
