@@ -814,7 +814,7 @@ save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
 predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
 ```
 
-#Function for population parameters
+#Function for population parameters and plotting forest plots
 ```{r}
 #y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
 
@@ -863,8 +863,6 @@ data$coef <- factor(data$coef, levels = c("control_female_r1", "treatment_female
     
    return(data)
 }
-
-test <- func_pop_bivar("social_predator_bivar")
 
 bivar_models #character vector with names of data frames of the bivar model outputs
 
