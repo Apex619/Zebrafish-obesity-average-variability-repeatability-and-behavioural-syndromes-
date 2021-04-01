@@ -733,6 +733,16 @@ save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata")
 
 social_predator_bivar <- bivar_brm_func("example_Social_Predator")
 
+#Example of plot from model
+Social_Predator_cor <- posterior_samples(example_Social_Predator)[,11]
+par(mar=c(2, 2, 3, 2))
+plot(density(Social_Predator_cor),
+main="Correlation Social - Predator",
+xlab="",ylab="",cex.main=0.8)
+abline(v=0,col="red",lwd=2)
+abline(v=mean(Dist_RT),col="black",lwd=2)
+abline(v=HPDinterval(as.mcmc(Dist_RT))[1],col="black",lty=2)
+abline(v=HPDinterval(as.mcmc(Dist_RT))[2],col="black",lty=2)
 
 #Social_Novel Bivariate model
 
@@ -869,41 +879,6 @@ bivar_models #character vector with names of data frames of the bivar model outp
 bivar_list_pop <- lapply(bivar_models, function(x) func_pop_bivar(mod_char = x)) #applying function to all bivar model outputs
 names(bivar_list_pop) <- bivar_models #naming the elements of the list
 
-
-
-
-
-
-func_forest_plots_bivar <- function (variable = bivar_list_pop[1]){
-    mod <- bivar_list_pop[[variable]]
-    
-   post <-  mod
-    names(post)
-forest <-
-  ggplot(post,
-         aes(x = coef, y = mean.post)) + 
-  geom_errorbar(
-    aes(ymin = ci.lb, ymax = ci.ub),
-    width = 0.4,
-    position = position_dodge(0.3),
-    size = 0.8)+
-  coord_flip()+
-  geom_point(aes(x = coef, y = mean.post), 
-             position = position_dodge(0.3),
-             size = 3) 
-return(forest)
-}
-
-
-forest_plots_pop_bivar <- lapply(bivar_models, function(x) func_forest_plots_bivar(variable = x)) 
-
-names(forest_plots_pop_bivar) <- bivar_models
-
-forest_plots_pop_bivar[1]
-forest_plots_pop_bivar[2]
-forest_plots_pop_bivar[3]
-forest_plots_pop_bivar[4]
-forest_plots_pop_bivar[5]
 ```
 
 
