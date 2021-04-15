@@ -641,52 +641,9 @@ load("./Models/example_bivar.Rdata")
 
 
 #Function to handle bivariate model outputs
+mod_char
 
 
-bivar_brm_func <- function(mod_char){
-mod <- get(mod_char)
-post <- as.data.frame(mod)
-# getting names of behav1 and behav2
-# use str_split for this
-inter_key <- str_split(mod_char, "_")[[1]] 
-
-
-behav1 <- "response1" #previously inter_key[2]
-behav2 <- "response2" #previously inter_key[3]
-
-#Changed to be able to use it with function for bivar models, however this may need tweaking as response1 and response2 won't be great to work with in future functions for plotting for example
-
-# understand the parameters in the bivariate model:
-names(post)
-#what do we want to get?
-#y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
-cols <- names(post)
-cols
-
-
-B0_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
-B1_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
-B2_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
-B3_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
-B0_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
-B1_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
-B2_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
-B3_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
-sigma_ID1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "sd_Fish")]
-sigma_ID2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "sd_Fish")]
-cor_ID1_ID2 <- post[,str_detect(cols, behav1)  & str_detect(cols, behav2) & str_detect(cols, "cor_Fish")]
-sigma_e1 <- post[,str_detect(cols, behav1) & str_detect(cols, "sigma_")]
-sigma_e2 <- post[,str_detect(cols, behav2) & str_detect(cols, "sigma_")]
-cor_e1_e2 <- post[,str_detect(cols, behav1) & str_detect(cols, behav2) & str_detect(cols, "rescor_")]
-tot_var1 <- sigma_ID1 + sigma_e1
-tot_var2 <- sigma_ID2 + sigma_e2
-rpt1 <- sigma_ID1/tot_var1
-rpt2 <- sigma_ID2/tot_var2
-mean_rpt1 <- mean(rpt1)
-mean_rpt2 <- mean(rpt2)
-df <- data.frame(B0_1, B1_1, B2_1, B3_1, B0_2,B1_2,B2_2,B3_2,sigma_ID1,sigma_ID2,cor_ID1_ID2,sigma_e1,sigma_e2,cor_e1_e2,tot_var1,tot_var2,rpt1,rpt2,mean_rpt1,mean_rpt2)
-return(df)
-}
 
 
 Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models
@@ -708,19 +665,7 @@ Combinations <- combn(behav_vars,2) # To see the combinations required for the b
 
 
 
-#Loading bivar models
-```{r}
-load("./Models/aggression_activity_bivar.Rdata")
-load("./Models/aggression_novel_bivar.Rdata")
-load("./Models/aggression_predator_bivar.Rdata")
-load("./Models/novel_activity_bivar.Rdata")
-load("./Models/novel_predator_bivar.Rdata")
-load("./Models/predator_activity_bivar.Rdata")
-load("./Models/social_activity_bivar.Rdata")
-load("./Models/social_aggression_bivar.Rdata")
-load("./Models/social_novel_bivar.Rdata")
-load("./Models/social_predator_bivar.Rdata")
-```
+
 
 #Bivariate models and dataframes
 ```{r}
@@ -740,9 +685,9 @@ plot(density(Social_Predator_cor),
 main="Correlation Social - Predator",
 xlab="",ylab="",cex.main=0.8)
 abline(v=0,col="red",lwd=2)
-abline(v=mean(Dist_RT),col="black",lwd=2)
-abline(v=HPDinterval(as.mcmc(Dist_RT))[1],col="black",lty=2)
-abline(v=HPDinterval(as.mcmc(Dist_RT))[2],col="black",lty=2)
+abline(v=mean(Social_Predator_cor),col="black",lwd=2)
+abline(v=HPDinterval(as.mcmc(Social_Predator_cor))[1],col="black",lty=2)
+abline(v=HPDinterval(as.mcmc(Social_Predator_cor))[2],col="black",lty=2)
 
 #Social_Novel Bivariate model
 
@@ -822,16 +767,96 @@ example_Predator_Activity <- bivar_model("zone_05_dur_Predator", "tot_dist_Activ
 save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
 
 predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
+
+
 ```
 
-#Function for population parameters and plotting forest plots
+#Loading bivar models
+```{r}
+load("./Models/aggression_activity_bivar.Rdata")
+load("./Models/aggression_novel_bivar.Rdata")
+load("./Models/aggression_predator_bivar.Rdata")
+load("./Models/novel_activity_bivar.Rdata")
+load("./Models/novel_predator_bivar.Rdata")
+load("./Models/predator_activity_bivar.Rdata")
+load("./Models/social_activity_bivar.Rdata")
+load("./Models/social_aggression_bivar.Rdata")
+load("./Models/social_novel_bivar.Rdata")
+load("./Models/social_predator_bivar.Rdata")
+
+
+
+bivar_models_names <- c("example_Aggression_Activity",
+"example_Aggression_Novel",
+"example_Aggression_Predator",
+"example_Novel_Activity",
+"example_Novel_Predator",
+"example_Predator_Activity",
+"example_Social_Activity",
+"example_Social_Aggression",
+"example_Social_Novel",
+"example_Social_Predator")
+
+bivar_brm_func <- function(mod_char){
+mod <- get(mod_char)
+post <- as.data.frame(mod)
+# getting names of behav1 and behav2
+# use str_split for this
+inter_key <- str_split(mod_char, "_")[[1]] 
+
+
+behaviour1 <- inter_key[2]
+behaviour2 <- inter_key[3]
+behav1 <- "response1"
+behav2 <- "response2"
+
+#Changed to be able to use it with function for bivar models, however this may need tweaking as response1 and response2 won't be great to work with in future functions for plotting for example
+
+# understand the parameters in the bivariate model:
+names(post)
+#what do we want to get?
+#y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
+cols <- names(post)
+cols
+
+
+B0_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
+B1_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
+B2_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
+B3_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
+B0_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
+B1_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
+B2_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
+B3_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
+sigma_ID1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "sd_Fish")]
+sigma_ID2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "sd_Fish")]
+cor_ID1_ID2 <- post[,str_detect(cols, behav1)  & str_detect(cols, behav2) & str_detect(cols, "cor_Fish")]
+sigma_e1 <- post[,str_detect(cols, behav1) & str_detect(cols, "sigma_")]
+sigma_e2 <- post[,str_detect(cols, behav2) & str_detect(cols, "sigma_")]
+cor_e1_e2 <- post[,str_detect(cols, behav1) & str_detect(cols, behav2) & str_detect(cols, "rescor_")]
+tot_var1 <- sigma_ID1 + sigma_e1
+tot_var2 <- sigma_ID2 + sigma_e2
+rpt1 <- sigma_ID1/tot_var1
+rpt2 <- sigma_ID2/tot_var2
+
+
+df <- data.frame(behaviour1,behaviour2, B0_1, B1_1, B2_1, B3_1, B0_2,B1_2,B2_2,B3_2,sigma_ID1,sigma_ID2,cor_ID1_ID2,sigma_e1,sigma_e2,cor_e1_e2,rpt1,rpt2)
+return(df)
+}
+
+bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
+
+bivar_combined <- bind_rows(bivar_processed)
+```
+
+
+#Function for population parameters
 ```{r}
 #y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
 
 
-func_pop_bivar <- function(mod_char){
-  mod <- get(mod_char)
-
+func_pop_bivar <- function(behav = "Aggression", mod_processed = bivar_combined){
+test <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,behaviour2 == behav ~ B0_2 )) %>% select(behaviour1, behaviour2, B0_1, B0_2, B0)
     control_female_r1 <- mod$B0_1
     treatment_female_minus_control_female_r1 <- mod$B1_1 
     treatment_female_r1 <- mod$B1_1 + control_female_r1
@@ -874,10 +899,54 @@ data$coef <- factor(data$coef, levels = c("control_female_r1", "treatment_female
    return(data)
 }
 
-bivar_models #character vector with names of data frames of the bivar model outputs
+bivar_models <- c() #character vector with names of data frames of the bivar model outputs
 
 bivar_list_pop <- lapply(bivar_models, function(x) func_pop_bivar(mod_char = x)) #applying function to all bivar model outputs
 names(bivar_list_pop) <- bivar_models #naming the elements of the list
+
+```
+
+#Plotting density distributions 
+HAMZA: I had to have something for the presentation and so I made some tweaks to the code to plot the density distributions but with the mean and credible intervals also. However to be able to figure out how to obtain that from each model from the one list we created was difficult to put in a function and so I had to sub set and then use a list of their model names
+```{r}
+bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
+
+col_behav_syndrome <- bivar_combined$behav_syndrome 
+unique(col_behav_syndrome, incomparables = FALSE)
+
+behav_syndromes <- list(Aggression_Activity,Aggression_Novel, Aggression_Predator,Novel_Activity,Novel_Predator, Predator_Activity ,Social_Activity, Social_Aggression, Social_Novel,Social_Predator)
+
+Aggression_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Activity")
+Aggression_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Novel")
+Aggression_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Predator")
+Novel_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Activity")
+Novel_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Predator")
+Predator_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Predator vs. Activity")
+Social_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Activity")
+Social_Aggression <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Aggression")
+Social_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Novel")
+Social_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Predator")
+
+
+density_plot_bivar <- function(df){
+  heading = df$behav_syndrome
+plot <- ggplot(df) + 
+  theme_classic() +
+  geom_density(aes(cor_ID1_ID2)) +
+  geom_vline(xintercept = 0, color = "red") +
+  geom_vline(xintercept = mean(df$cor_ID1_ID2),col="black",lwd=2) +
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[1],col="black",lty=2)+
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[2],col="black",lty=2)+
+  labs(title = heading)
+  return(plot)
+}
+
+
+bivar_density_plots <- lapply(behav_syndromes, function(x) density_plot_bivar(x)) #applying function to all bivar model outputs
+names(bivar_density_plots) <- behav_syndromes #naming the elements of the list
+
+bivar_density_plots
+
 
 ```
 
