@@ -907,6 +907,7 @@ names(bivar_list_pop) <- bivar_models #naming the elements of the list
 ```
 
 #Plotting density distributions 
+
 HAMZA: I had to have something for the presentation and so I made some tweaks to the code to plot the density distributions but with the mean and credible intervals also. However to be able to figure out how to obtain that from each model from the one list we created was difficult to put in a function and so I had to sub set and then use a list of their model names
 ```{r}
 bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
@@ -949,6 +950,9 @@ bivar_density_plots
 
 
 ```
+
+
+
 
 
 
