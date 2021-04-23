@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #checks for installation and loads packages
 pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
-               sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
+               sjPlot,sjstats, ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
                stargazer, brms, MCMCglmm, cowplot)
 
 ```
@@ -955,7 +955,7 @@ bivar_density_plots
 
 ```
 
-#Practice Plots
+#Practice
 ```{r}
 bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
 
@@ -979,14 +979,28 @@ test_df_plot$param <- row.names(test_df_plot)
 
 test_df_plot$behav_syndrome <- df$behav_syndrome[1]
 
-#Have a go with geom_pointrange to make some plots with the bivar_behavs_result !!! 
+#I can't remember what this chunk was for, I remmeber you said I will need to do this for something, can't remember what
 
-#Think about tables
+```
+
+Example plots and tables
+```{r}
+
+#Creating multiple plots and subsetting to remove contrasts
+ggplot(subset(bivar_behavs_results,coef %in% c("treatment_male", "control_male", "treatment_female", "control_female"))) + 
+geom_pointrange(mapping=aes(x=coef, y=mean.post, ymin=ci.lb, ymax=ci.ub, color=behavior))+
+  coord_flip()+
+  facet_wrap(~behavior)
+#Issues with error bars though :/ Some of the ranges are too small too see
+
+#tab_model() in sJplot actually can create html tables from Bayesian outputs, which can be exported into an html file and then copied and edited manually in word; however this doesn't include correlation analysis :/ however I can add this information manually in word, not sure how else to create a table output atm :/
+
+tab_model(example_Social_Aggression, show.hdi50 = FALSE, bpe = "mean", file = "Social_Aggression.html") #bpe calculates mean of posterior, otherwise would be median
+
 
 
 
 ```
-
 
 
 
