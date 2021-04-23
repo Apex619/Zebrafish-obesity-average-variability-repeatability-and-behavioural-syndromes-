@@ -856,29 +856,34 @@ bivar_combined <- bind_rows(bivar_processed)
 
 
 func_pop_bivar <- function(behav = "Aggression", mod_processed = bivar_combined){
-test <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,behaviour2 == behav ~ B0_2 )) %>% select(behaviour1, behaviour2, B0_1, B0_2, B0)
-    control_female_r1 <- mod$B0_1
-    treatment_female_minus_control_female_r1 <- mod$B1_1 
-    treatment_female_r1 <- mod$B1_1 + control_female_r1
-    control_male_minus_control_female_r1 <- mod$B2_1
-    control_male_r1 <- mod$B2_1 + control_female_r1
-    treatment_male_r1 <- mod$B0_1 + mod$B1_1 + mod$B2_1 + mod$B3_1
-    treatment_male_minus_treatment_female_r1 <- treatment_male_r1 - treatment_female_r1
-    treatment_male_minus_control_male_r1 <- treatment_male_r1 - control_male_r1
+mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+                                                behaviour2 == behav ~ B0_2 ),
+                                 B1 = case_when(behaviour1 == behav ~ B1_1,
+                                                behaviour2 == behav ~ B1_2),
+                                 B2 = case_when(behaviour1 == behav ~ B2_1,
+                                                behaviour2 == behav ~ B2_2),
+                                 B3 = case_when(behaviour1 == behav ~ B3_1,
+                                                behaviour2 == behav ~ B3_2),
+                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                                behaviour2 == behav ~ sigma_ID2),
+                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                                behaviour2 == behav ~ sigma_e2),
+                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                                behaviour2 == behav ~ rpt2)) %>%
+  filter(!is.na(B0))
+  
+    control_female <- mod$B0
+    treatment_female_minus_control_female <- mod$B1 
+    treatment_female <- mod$B1 + control_female
+    control_male_minus_control_female <- mod$B2
+    control_male <- mod$B2 + control_female
+    treatment_male <- mod$B0 + mod$B1 + mod$B2 + mod$B3
+    treatment_male_minus_treatment_female <- treatment_male - treatment_female
+    treatment_male_minus_control_male <- treatment_male - control_male
     
-    control_female_r2 <- mod$B0_2
-    treatment_female_minus_control_female_r2 <- mod$B1_2 
-    treatment_female_r2 <- mod$B1_2 + control_female_r2
-    control_male_minus_control_female_r2 <- mod$B2_2
-    control_male_r2 <- mod$B2_2 + control_female_r2
-    treatment_male_r2 <- mod$B0_2 + mod$B1_2 + mod$B2_2 + mod$B3_2
-    treatment_male_minus_treatment_female_r2 <- treatment_male_r2 - treatment_female_r2
-    treatment_male_minus_control_male_r2 <- treatment_male_r2 - control_male_r2
+  
     
-    correlation_ID <- mod$cor_ID1_ID2
-    correlation_resid <- mod$cor_e1_e2
-    
-df_pop <- data.frame (control_female_r1,treatment_female_r1,treatment_female_minus_control_female_r1,control_male_r1,treatment_male_r1,control_male_minus_control_female_r1,treatment_male_minus_control_male_r1, treatment_male_minus_treatment_female_r1,control_female_r2,treatment_female_r2,treatment_female_minus_control_female_r2,control_male_r2,treatment_male_r2,control_male_minus_control_female_r2,treatment_male_minus_control_male_r2, treatment_male_minus_treatment_female_r2,correlation_ID,correlation_resid)
+df_pop <- data.frame (control_female,treatment_female,treatment_female_minus_control_female,control_male,treatment_male,control_male_minus_control_female,treatment_male_minus_control_male, treatment_male_minus_treatment_female)
 
 
 
@@ -891,18 +896,17 @@ data <- cbind(
 
 names(data) <- c("mean.post", "ci.lb", "ci.ub")
 data$coef <- (row.names(data))
-data$variable <- mod_char
-data$coef <- factor(data$coef, levels = c("control_female_r1", "treatment_female_r1", "control_male_r1", "treatment_male_r1","treatment_female_minus_control_female_r1", "treatment_male_minus_control_male_r1", "control_male_minus_control_female_r1", "treatment_male_minus_treatment_female_r1","control_female_r2", "treatment_female_r2", "control_male_r2", "treatment_male_r2","treatment_female_minus_control_female_r2", "treatment_male_minus_control_male_r2", "control_male_minus_control_female_r2", "treatment_male_minus_treatment_female_r2","correlation_ID","correlation_resid"))
+data$behavior <- behav
+data$coef <- factor(data$coef, levels = c("control_female", "treatment_female", "control_male", "treatment_male","treatment_female_minus_control_female", "treatment_male_minus_control_male", "control_male_minus_control_female", "treatment_male_minus_treatment_female"))
 
 
     
    return(data)
 }
 
-bivar_models <- c() #character vector with names of data frames of the bivar model outputs
+behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
-bivar_list_pop <- lapply(bivar_models, function(x) func_pop_bivar(mod_char = x)) #applying function to all bivar model outputs
-names(bivar_list_pop) <- bivar_models #naming the elements of the list
+bivar_behavs_results <- bind_rows(lapply(behaviors, function(x) func_pop_bivar(x)))
 
 ```
 
@@ -950,6 +954,39 @@ bivar_density_plots
 
 
 ```
+
+#Practice Plots
+```{r}
+bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
+
+splt <- split(bivar_combined, bivar_combined$behav_syndrome)
+
+df=splt[[1]]
+
+sapply(3:18, function(x) mean(df[,x]))
+
+mean_df <- apply(df[,3:18],2,function(x) mean(x))
+
+ci.lower <- apply(df[,3:18],2, function(x) quantile(x, 0.025))
+
+ci.upper <- apply(df[,3:18],2, function(x) quantile(x, 0.975))
+
+test_df_plot <- data.frame(mean_df,ci.lower,ci.upper)
+
+row.names(test_df_plot)
+
+test_df_plot$param <- row.names(test_df_plot)
+
+test_df_plot$behav_syndrome <- df$behav_syndrome[1]
+
+#Have a go with geom_pointrange to make some plots with the bivar_behavs_result !!! 
+
+#Think about tables
+
+
+
+```
+
 
 
 
