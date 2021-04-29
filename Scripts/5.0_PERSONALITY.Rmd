@@ -626,7 +626,6 @@ return(bivar)
 
 
 
-
 # formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID))
 # formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID))
 # bivar_formula <- mvbrmsformula(formula1, formula2)
@@ -677,17 +676,6 @@ save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata")
 
 
 social_predator_bivar <- bivar_brm_func("example_Social_Predator")
-
-#Example of plot from model
-Social_Predator_cor <- posterior_samples(example_Social_Predator)[,11]
-par(mar=c(2, 2, 3, 2))
-plot(density(Social_Predator_cor),
-main="Correlation Social - Predator",
-xlab="",ylab="",cex.main=0.8)
-abline(v=0,col="red",lwd=2)
-abline(v=mean(Social_Predator_cor),col="black",lwd=2)
-abline(v=HPDinterval(as.mcmc(Social_Predator_cor))[1],col="black",lty=2)
-abline(v=HPDinterval(as.mcmc(Social_Predator_cor))[2],col="black",lty=2)
 
 #Social_Novel Bivariate model
 
@@ -990,7 +978,7 @@ Example plots and tables
 ggplot(subset(bivar_behavs_results,coef %in% c("treatment_male", "control_male", "treatment_female", "control_female"))) + 
 geom_pointrange(mapping=aes(x=coef, y=mean.post, ymin=ci.lb, ymax=ci.ub, color=behavior))+
   coord_flip()+
-  facet_wrap(~behavior)
+  facet_wrap(~behavior, scales = "free_x")
 #Issues with error bars though :/ Some of the ranges are too small too see
 
 #tab_model() in sJplot actually can create html tables from Bayesian outputs, which can be exported into an html file and then copied and edited manually in word; however this doesn't include correlation analysis :/ however I can add this information manually in word, not sure how else to create a table output atm :/
@@ -998,10 +986,370 @@ geom_pointrange(mapping=aes(x=coef, y=mean.post, ymin=ci.lb, ymax=ci.ub, color=b
 tab_model(example_Social_Aggression, show.hdi50 = FALSE, bpe = "mean", file = "Social_Aggression.html") #bpe calculates mean of posterior, otherwise would be median
 
 
+```
 
+
+
+#Comparing Control and Treatment groups
+To do this, we want to subset by control and treatment groups and then run the 2x10 models again without "group" as a fixed effect
+
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{male})+ e_i$$
+
+Is this formula correct? As we have removed the group component and now we only have sex remaining?
+
+
+```{r}
+#Subsetting data into control and treatment 
+
+Personality_wide_control <- subset(Personality_wide, Personality_wide$Group == "Control")
+Personality_wide_treatment <- subset(Personality_wide, Personality_wide$Group == "Treatment")
+
+
+
+
+#Functions for control and treatment bivariate models
+bivar_model_control <- function(var1,var2, df = Personality_wide_control){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Sex + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+bivar_model_treatment <- function(var1,var2, df = Personality_wide_treatment){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Sex + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+
+
+
+
+
+bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
+
+bivar_combined <- bind_rows(bivar_processed)
+```
+
+#Bivariate models CONTROL
+```{r}
+
+# #Social Predator Bivariate Model
+# 
+# example_Social_Predator_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Predator")
+# save(example_Social_Predator_control, file = "./Models/social_predator_bivar_control.Rdata")
+# 
+# 
+# #Social_Novel Bivariate model
+# 
+# example_Social_Novel_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Novel")
+# save(example_Social_Novel_control, file = "./Models/social_novel_bivar_control.Rdata")
+# 
+# 
+# 
+# #Social_Aggression Bivariate model
+# 
+# example_Social_Aggression_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Aggression")
+# save(example_Social_Aggression_control, file = "./Models/social_aggression_bivar_control.Rdata")
+# 
+# 
+# #Social_Activity Bivariate Model
+# 
+# example_Social_Activity_control <- bivar_model_control("zone_05_dur_Social", "tot_dist_Activity")
+# save(example_Social_Activity_control, file = "./Models/social_activity_bivar_control.Rdata")
+# 
+# 
+# #Agression Novel Bivariate Model
+# 
+# example_Aggression_Novel_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Novel")
+# save(example_Aggression_Novel_control, file = "./Models/aggression_novel_bivar_control.Rdata")
+# 
+# 
+# #Agression Predator Bivariate Model
+# 
+# example_Aggression_Predator_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Predator")
+# save(example_Aggression_Predator_control, file = "./Models/aggression_predator_bivar_control.Rdata")
+# 
+# 
+# #Aggression Activity Bivariate Model
+# 
+# example_Aggression_Activity_control <- bivar_model_control("zone_05_dur_Aggression", "tot_dist_Activity")
+# save(example_Aggression_Activity_control, file = "./Models/aggression_activity_bivar_control.Rdata")
+# 
+# 
+# 
+# #Novel Predator Bivariate Model
+# 
+# example_Novel_Predator_control <- bivar_model_control("zone_05_dur_Novel", "zone_05_dur_Predator")
+# save(example_Novel_Predator_control, file = "./Models/novel_predator_bivar_control.Rdata")
+# 
+# #Novel Activity Bivariate Model
+# 
+# example_Novel_Activity_control <- bivar_model_control("zone_05_dur_Novel", "tot_dist_Activity")
+# save(example_Novel_Activity_control, file = "./Models/novel_activity_bivar_control.Rdata")
+# 
+# 
+# #Predator Activity Bivariate Model
+# 
+# example_Predator_Activity_control <- bivar_model_control("zone_05_dur_Predator", "tot_dist_Activity")
+# save(example_Predator_Activity_control, file = "./Models/predator_activity_bivar_control.Rdata")
+
+load("./Models/aggression_activity_bivar_control.Rdata")
+load("./Models/aggression_novel_bivar_control.Rdata")
+load("./Models/aggression_predator_bivar_control.Rdata")
+load("./Models/novel_activity_bivar_control.Rdata")
+load("./Models/novel_predator_bivar_control.Rdata")
+load("./Models/predator_activity_bivar_control.Rdata")
+load("./Models/social_activity_bivar_control.Rdata")
+load("./Models/social_aggression_bivar_control.Rdata")
+load("./Models/social_novel_bivar_control.Rdata")
+load("./Models/social_predator_bivar_control.Rdata")
+
+
+#Vector of model names to be able to use with lapply
+bivar_models_names_control <- c("example_Aggression_Activity_control",
+"example_Aggression_Novel_control",
+"example_Aggression_Predator_control",
+"example_Novel_Activity_control",
+"example_Novel_Predator_control",
+"example_Predator_Activity_control",
+"example_Social_Activity_control",
+"example_Social_Aggression_control",
+"example_Social_Novel_control",
+"example_Social_Predator_control")
+
+
+#Applying brm_func
+bivar_processed_control <- lapply(bivar_models_names_control, function(x) bivar_brm_func(x))
+
+bivar_combined_control <- bind_rows(bivar_processed_control)
+
+#Population parameters 
+
+#HAMZA: What I did here was just remove the treatment components from the formula so keeping the sex as B2...I did this rather than changing bivar_brm_func, although am not sure if this is correct :/
+
+func_pop_bivar_control <- function(behav = "Aggression", mod_processed = bivar_combined_control){
+mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+                                                behaviour2 == behav ~ B0_2 ),
+                                B2 = case_when(behaviour1 == behav ~ B2_1,
+                                                behaviour2 == behav ~ B2_2),
+                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                                behaviour2 == behav ~ sigma_ID2),
+                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                                behaviour2 == behav ~ sigma_e2),
+                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                                behaviour2 == behav ~ rpt2)) %>%
+  filter(!is.na(B0))
+  
+    control_female <- mod$B0
+    control_male_minus_control_female <- mod$B2
+    control_male <- mod$B2 + control_female
+
+    
+  
+    
+df_pop <- data.frame (control_female,control_male,control_male_minus_control_female)
+
+
+
+str(df_pop)
+data <- cbind(
+    apply(df_pop,2,function(x) mean(x)),
+    apply(df_pop, 2, function(x) quantile(x, 0.025)),
+    apply(df_pop, 2, function(x) quantile(x, 0.975))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$behavior <- behav
+data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female"))
+
+
+    
+   return(data)
+}
+
+behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
+
+bivar_behavs_results_control <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_control(x)))
+#It seemed to work although am not sure this is correct, please double check!
+
+
+#Plots
+
+bivar_combined_control$behav_syndrome <- paste0(bivar_combined_control$behaviour1, " vs. ", bivar_combined_control$behaviour2)
+ggplot(bivar_combined_control) + theme_classic() +
+  geom_density(aes(cor_ID1_ID2)) +
+  geom_vline(xintercept = 0) +
+  facet_wrap(~behav_syndrome)
 
 ```
 
+#Bivariate models TREATMENT
+```{r}
+# #Social Predator Bivariate Model
+# 
+# example_Social_Predator_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Predator")
+# save(example_Social_Predator_treatment, file = "./Models/social_predator_bivar_treatment.Rdata")
+# 
+# 
+# #Social_Novel Bivariate model
+# 
+# example_Social_Novel_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Novel")
+# save(example_Social_Novel_treatment, file = "./Models/social_novel_bivar_treatment.Rdata")
+# 
+# 
+# 
+# #Social_Aggression Bivariate model
+# 
+# example_Social_Aggression_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Aggression")
+# save(example_Social_Aggression_treatment, file = "./Models/social_aggression_bivar_treatment.Rdata")
+# 
+# 
+# #Social_Activity Bivariate Model
+# 
+# example_Social_Activity_treatment <- bivar_model_treatment("zone_05_dur_Social", "tot_dist_Activity")
+# save(example_Social_Activity_treatment, file = "./Models/social_activity_bivar_treatment.Rdata")
+# 
+# 
+# #Agression Novel Bivariate Model
+# 
+# example_Aggression_Novel_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Novel")
+# save(example_Aggression_Novel_treatment, file = "./Models/aggression_novel_bivar_treatment.Rdata")
+# 
+# 
+# #Agression Predator Bivariate Model
+# 
+# example_Aggression_Predator_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Predator")
+# save(example_Aggression_Predator_treatment, file = "./Models/aggression_predator_bivar_treatment.Rdata")
+# 
+# 
+# #Aggression Activity Bivariate Model
+# 
+# example_Aggression_Activity_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "tot_dist_Activity")
+# save(example_Aggression_Activity_treatment, file = "./Models/aggression_activity_bivar_treatment.Rdata")
+# 
+# 
+# 
+# #Novel Predator Bivariate Model
+# 
+# example_Novel_Predator_treatment <- bivar_model_treatment("zone_05_dur_Novel", "zone_05_dur_Predator")
+# save(example_Novel_Predator_treatment, file = "./Models/novel_predator_bivar_treatment.Rdata")
+# 
+# #Novel Activity Bivariate Model
+# 
+# example_Novel_Activity_treatment <- bivar_model_treatment("zone_05_dur_Novel", "tot_dist_Activity")
+# save(example_Novel_Activity_treatment, file = "./Models/novel_activity_bivar_treatment.Rdata")
+# 
+# 
+# #Predator Activity Bivariate Model
+# 
+# example_Predator_Activity_treatment <- bivar_model_treatment("zone_05_dur_Predator", "tot_dist_Activity")
+# save(example_Predator_Activity_treatment, file = "./Models/predator_activity_bivar_treatment.Rdata")
+
+load("./Models/aggression_activity_bivar_treatment.Rdata")
+load("./Models/aggression_novel_bivar_treatment.Rdata")
+load("./Models/aggression_predator_bivar_treatment.Rdata")
+load("./Models/novel_activity_bivar_treatment.Rdata")
+load("./Models/novel_predator_bivar_treatment.Rdata")
+load("./Models/predator_activity_bivar_treatment.Rdata")
+load("./Models/social_activity_bivar_treatment.Rdata")
+load("./Models/social_aggression_bivar_treatment.Rdata")
+load("./Models/social_novel_bivar_treatment.Rdata")
+load("./Models/social_predator_bivar_treatment.Rdata")
+
+
+#Vector of model names to be able to use with lapply
+bivar_models_names_treatment <- c("example_Aggression_Activity_treatment",
+"example_Aggression_Novel_treatment",
+"example_Aggression_Predator_treatment",
+"example_Novel_Activity_treatment",
+"example_Novel_Predator_treatment",
+"example_Predator_Activity_treatment",
+"example_Social_Activity_treatment",
+"example_Social_Aggression_treatment",
+"example_Social_Novel_treatment",
+"example_Social_Predator_treatment")
+
+
+#Applying brm_func
+bivar_processed_treatment <- lapply(bivar_models_names_treatment, function(x) bivar_brm_func(x))
+
+bivar_combined_treatment <- bind_rows(bivar_processed_treatment)
+
+#Population parameters 
+
+#HAMZA: What I did here was just remove the treatment components from the formula so keeping the sex as B2...I did this rather than changing bivar_brm_func, although am not sure if this is correct :/
+
+func_pop_bivar_treatment <- function(behav = "Aggression", mod_processed = bivar_combined_treatment){
+mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+                                                behaviour2 == behav ~ B0_2 ),
+                                B2 = case_when(behaviour1 == behav ~ B2_1,
+                                                behaviour2 == behav ~ B2_2),
+                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                                behaviour2 == behav ~ sigma_ID2),
+                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                                behaviour2 == behav ~ sigma_e2),
+                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                                behaviour2 == behav ~ rpt2)) %>%
+  filter(!is.na(B0))
+  
+    treatment_female <- mod$B0
+    treatment_male_minus_treatment_female <- mod$B2
+    treatment_male <- mod$B2 + treatment_female
+
+    
+  
+    
+df_pop <- data.frame (treatment_female,treatment_male,treatment_male_minus_treatment_female)
+
+
+
+str(df_pop)
+data <- cbind(
+    apply(df_pop,2,function(x) mean(x)),
+    apply(df_pop, 2, function(x) quantile(x, 0.025)),
+    apply(df_pop, 2, function(x) quantile(x, 0.975))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$behavior <- behav
+data$coef <- factor(data$coef, levels = c("treatment_female", "treatment_male",  "treatment_male_minus_treatment_female"))
+
+
+    
+   return(data)
+}
+
+behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
+
+bivar_behavs_results_treatment <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_treatment(x)))
+#It seemed to work although am not sure this is correct, please double check!
+
+#Density plots
+
+bivar_combined_treatment$behav_syndrome <- paste0(bivar_combined_treatment$behaviour1, " vs. ", bivar_combined_treatment$behaviour2)
+ggplot(bivar_combined_treatment) + theme_classic() +
+  geom_density(aes(cor_ID1_ID2)) +
+  geom_vline(xintercept = 0) +
+  facet_wrap(~behav_syndrome)
+```
 
 
 
