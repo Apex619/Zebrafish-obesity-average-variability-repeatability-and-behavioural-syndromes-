@@ -1489,6 +1489,42 @@ behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
 bivar_behavs_results_control_treatment_contrast <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_control_treatment_contrasts(x)))
 
+
+#Plotting
+
+ggplot(subset(bivar_behavs_results,coef %in% c("treatment_male", "control_male", "treatment_female", "control_female")))
+
+Contrasts_personality_plots <- 
+  ggplot(subset(bivar_behavs_results_control_treatment_contrast, coef %in% c("correlation_treatment", "correlation_control", "rpt_control", "rpt_treatment")),
+         aes(x = coef, y = mean.post, colour = behavior)) +
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8
+  ) +
+  geom_point(aes(x = coef, y = mean.post),
+             position = position_dodge(0.3),
+             size = 3) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  coord_flip() +
+  facet_grid( ~ behavior, scales = "free_x") +
+  theme(axis.title.y = element_blank()) +
+    theme_classic()+
+  theme(
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      size = 2
+    ),
+    axis.ticks = element_line(size = 2, color = "black"),
+    axis.ticks.length = unit(0.2, "cm")
+  ) +      font("xylab", size = 15) + font("xy", size = 15) + font("xy.text", size = 15) +
+  theme(axis.title.y = element_blank()) +
+  theme(legend.position = "bottom") +
+  theme(legend.title = element_blank())
+
+Contrasts_personality_plots
 ```
 
 
