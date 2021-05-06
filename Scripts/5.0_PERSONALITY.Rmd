@@ -1430,9 +1430,10 @@ mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == beh
                                 
                                  rpt_control = case_when(behaviour1_control == behav ~ rpt1_control,
                                                 behaviour2_control == behav ~ rpt2_control),
+                                cor_control = cor_ID1_ID2_control,
                                 
                                 B0_treatment = case_when(behaviour1_treatment == behav ~ B0_1_treatment,
-                                                behaviour2_treatment == behav ~ B0_2_treatment,
+                                                behaviour2_treatment == behav ~ B0_2_treatment),
                                                 
                                 B2_treatment = case_when(behaviour1_treatment == behav ~ B2_1_treatment,
                                                 behaviour2_treatment == behav ~ B2_2_treatment),
@@ -1442,8 +1443,9 @@ mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == beh
                                  sigma_e_treatment = case_when(behaviour1_treatment == behav ~ sigma_e1_treatment,behaviour2_treatment == behav ~ sigma_e2_treatment),
                                 
                                  rpt_treatment = case_when(behaviour1_treatment == behav ~ rpt1_treatment,
-                                                behaviour2_treatment == behav ~ rpt2_treatment))) %>%
-  filter(!is.na(B0_control, B0_treatment))
+                                                behaviour2_treatment == behav ~ rpt2_treatment),
+                                cor_treatment = cor_ID1_ID2_treatment) %>%
+  filter(!is.na(B0_control))
   
     control_female <- mod$B0_control
     control_male_minus_control_female <- mod$B2_control
@@ -1451,14 +1453,18 @@ mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == beh
     treatment_female <- mod$B0_treatment
     treatment_male_minus_treatment_female <- mod$B2_treatment
     treatment_male <- mod$B2_treatment + treatment_female
+    rpt_control <- mod$rpt_control
+    rpt_treatment <- mod$rpt_treatment
     rpt_control_minus_rpt_treatment <- rpt_control - rpt_treatment
-    correlation_control_minus_correlation_treatment <- cor_ID1_ID2_control - cor_ID1_ID2_treatment
+    correlation_control <- mod$cor_control
+    correlation_treatment <- mod$cor_treatment
+    correlation_control_minus_correlation_treatment <- correlation_control - correlation_treatment
     
 
     
   
     
-df_pop <- data.frame (control_female,control_male,control_male_minus_control_female,   treatment_female,treatment_male,treatment_male_minus_treatment_female, rpt_control_minus_rpt_treatment,correlation_control_minus_correlation_treatment)
+df_pop <- data.frame (control_female, control_male,  control_male_minus_control_female, treatment_female, treatment_male, treatment_male_minus_treatment_female,rpt_control, rpt_treatment, rpt_control_minus_rpt_treatment,correlation_control, correlation_treatment, correlation_control_minus_correlation_treatment)
 
 
 
@@ -1472,7 +1478,7 @@ data <- cbind(
 names(data) <- c("mean.post", "ci.lb", "ci.ub")
 data$coef <- (row.names(data))
 data$behavior <- behav
-data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female", "treatment_female", "treatment_male",  "treatment_male_minus_treatment_female", "rpt_control_minus_rpt_treatment", "correlation_control_minus_corelation_treatment"  ))
+data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female", "treatment_female", "treatment_male",  "treatment_male_minus_treatment_female","rpt_control", "rpt_treatment", "rpt_control_minus_rpt_treatment","correlation_control", "correlation_treatment", "correlation_control_minus_corelation_treatment"))
 
 
     
