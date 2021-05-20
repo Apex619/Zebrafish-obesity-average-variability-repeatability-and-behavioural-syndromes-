@@ -1440,98 +1440,7 @@ contrasts_var <- bivar_control_treatment %>% mutate(sigma_ID1_treatment_minus_co
                                    rpt1_treatment_minus_control,
                                    rpt2_treatment_minus_control)
 
-#Function for contrasts and popn params
 
-func_pop_bivar_control_treatment_contrasts <- function(behav = "Aggression", mod_processed = bivar_control_treatment){
-mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == behav ~ B0_1_control,
-                                                behaviour2_control == behav ~ B0_2_control ),
-                                
-                                B2_control = case_when(behaviour1_control == behav ~ B2_1_control,
-                                                behaviour2_control == behav ~ B2_2_control),
-                                
-                                 sigma_ID_control = case_when(behaviour1_control == behav ~ sigma_ID1_control,behaviour2_control == behav ~ sigma_ID2_control),
-                                
-                                 sigma_e_control = case_when(behaviour1_control == behav ~ sigma_e1_control,
-                                                behaviour2_control == behav ~ sigma_e2_control),
-                                
-                                 rpt_control = case_when(behaviour1_control == behav ~ rpt1_control,
-                                                behaviour2_control == behav ~ rpt2_control),
-                                cor_control = cor_ID1_ID2_control,
-                                
-                                B0_treatment = case_when(behaviour1_treatment == behav ~ B0_1_treatment,
-                                                behaviour2_treatment == behav ~ B0_2_treatment),
-                                                
-                                B2_treatment = case_when(behaviour1_treatment == behav ~ B2_1_treatment,
-                                                behaviour2_treatment == behav ~ B2_2_treatment),
-                                
-                                 sigma_ID_treatment = case_when(behaviour1_treatment == behav ~ sigma_ID1_treatment,behaviour2_treatment == behav ~ sigma_ID2_treatment),
-                                
-                                 sigma_e_treatment = case_when(behaviour1_treatment == behav ~ sigma_e1_treatment,behaviour2_treatment == behav ~ sigma_e2_treatment),
-                                
-                                 rpt_treatment = case_when(behaviour1_treatment == behav ~ rpt1_treatment,
-                                                behaviour2_treatment == behav ~ rpt2_treatment),
-                                cor_treatment = cor_ID1_ID2_treatment) %>%
-  filter(!is.na(B0_control))
-  
-    control_female <- mod$B0_control
-    control_male_minus_control_female <- mod$B2_control
-    control_male <- mod$B2_control + control_female
-    treatment_female <- mod$B0_treatment
-    treatment_male_minus_treatment_female <- mod$B2_treatment
-    treatment_male <- mod$B2_treatment + treatment_female
-    rpt_control <- mod$rpt_control
-    rpt_treatment <- mod$rpt_treatment
-    rpt_treatment_minus_rpt_control <- rpt_treatment - rpt_control
-    correlation_control <- mod$cor_control
-    correlation_treatment <- mod$cor_treatment
-    correlation_control_minus_correlation_treatment <- correlation_control - correlation_treatment
-    
-
-    
-  
-    
-df_pop <- data.frame (control_female, control_male,  control_male_minus_control_female, treatment_female, treatment_male, treatment_male_minus_treatment_female,rpt_control, rpt_treatment, rpt_treatment_minus_rpt_control,correlation_control, correlation_treatment, correlation_control_minus_correlation_treatment)
-
-
-
-str(df_pop)
-data <- cbind(
-    apply(df_pop,2,function(x) mean(x)),
-    apply(df_pop, 2, function(x) quantile(x, 0.025)),
-    apply(df_pop, 2, function(x) quantile(x, 0.975))
-) %>% as.data.frame()
-
-names(data) <- c("mean.post", "ci.lb", "ci.ub")
-data$coef <- (row.names(data))
-data$behavior <- behav
-data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female", "treatment_female", "treatment_male",  "treatment_male_minus_treatment_female","rpt_control", "rpt_treatment", "rpt_treatment_minus_rpt_control","correlation_control", "correlation_treatment", "correlation_control_minus_corelation_treatment"))
-
-
-    
-   return(data)
-}
-
-behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
-
-bivar_behavs_results_control_treatment_contrast <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_control_treatment_contrasts(x)))
-
-
-#Plotting
-
-Contrasts_personality_plots <- 
-  ggplot(subset(bivar_behavs_results_control_treatment_contrast, coef %in% c("correlation_treatment", "correlation_control", "rpt_control", "rpt_treatment")),
-  aes(x = coef, y = mean.post, colour = behavior)) +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub),width = 0.4,position = position_dodge(0.3),size = 0.8) +
-  geom_point(aes(x = coef, y = mean.post),
-  position = position_dodge(0.3),size = 3) +
-  geom_hline(yintercept = 0, lty = "dotted") +
-  coord_flip()
-
-Contrasts_personality_plots
-```
-
-#Improved plot
-```{r}
 #Contrasts behavioral syndromes
 
 contrasts_var %>% dplyr::group_by(mod_id) %>% summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control))
@@ -1547,20 +1456,60 @@ geom_pointrange(aes(x = mod_id, y = est, ymin = lower_bounds, ymax = upper_bound
 geom_hline(yintercept=0, linetype="dotted")+
 coord_flip()
 
-#Contrasts repeatabilites per behaviour
-
-Contrasts_rpt <- 
-  ggplot(subset(bivar_behavs_results_control_treatment_contrast, coef %in% c(	
-"rpt_treatment_minus_rpt_control")),
-  aes(x = coef, y = mean.post, colour = behavior)) +
-  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub),width = 0.4,position = position_dodge(0.3),size = 0.8) +
-  geom_point(aes(x = coef, y = mean.post),
-  position = position_dodge(0.3),size = 3) +
-  geom_hline(yintercept = 0, lty = "dotted") +
-  coord_flip()
-
-Contrasts_rpt
-
-
 ```
+
+#Function and contrasts for repeatabilities contrasts
+```{r}
+#Function for contrasts and popn params
+
+func_rpt_contrasts <- function(behav = "Aggression", mod_processed = bivar_control_treatment){
+mod <- mod_processed %>% mutate(rpt_control = case_when(behaviour1_control == behav ~ rpt1_control,
+                                                behaviour2_control == behav ~ rpt2_control),
+                                 rpt_treatment = case_when(behaviour1_treatment == behav ~ rpt1_treatment,
+                                                behaviour2_treatment == behav ~ rpt2_treatment))
+    rpt_control <- mod$rpt_control
+    rpt_treatment <- mod$rpt_treatment
+    rpt_treatment_minus_rpt_control <- rpt_treatment - rpt_control
+
+    
+
+    
+  
+    
+df <- data.frame(rpt_treatment_minus_rpt_control)
+
+
+
+str(df)
+data <- cbind(
+    apply(df,2,function(x) mean(x,na.rm = TRUE)),
+    apply(df, 2, function(x) quantile(x, 0.025,na.rm = TRUE)),
+    apply(df, 2, function(x) quantile(x, 0.975,na.rm = TRUE))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$behavior <- behav
+data$coef <- factor(data$coef, levels = c("rpt_treatment_minus_rpt_control"))
+
+
+    
+   return(data)
+}
+
+behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
+
+rpt_behav_contrasts <- bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
+
+#plot
+
+ggplot(rpt_behav_contrasts) + 
+geom_pointrange(aes(x = behavior, y = mean.post, ymin = ci.lb, ymax = ci.ub))+
+geom_hline(yintercept=0, linetype="dotted")+
+coord_flip()
+```
+
+
+
+
 
