@@ -9,8 +9,8 @@ editor_options:
   chunk_output_type: console
 ---
 
-
 ### Load packages
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -21,7 +21,8 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 
 ```
 
-### Converting from wide to long data format   
+### Converting from wide to long data format
+
 ```{r}
 Personality <- read.csv("./Data/Personality/ALL.csv")
 Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
@@ -82,10 +83,11 @@ Personality_wide <- left_join(Post_assay, Personality_wide)
 behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
 ```
 
-### Residual distributions and repeatability values for each variable    
-Using Shapiro-Wilk normality test   
-See ?shapiro.test
-More normal = higher W value and smaller p value
+### Residual distributions and repeatability values for each variable
+
+Using Shapiro-Wilk normality test\
+See ?shapiro.test More normal = higher W value and smaller p value
+
 ```{r}
 func_behav_raw <- function(behav = behavs[1]){
   
@@ -182,8 +184,8 @@ filter(rpt_resids_sqrt, var == "zone_05_dur")
 # Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
 ```
 
+### Run lmer models for chosen behaviour
 
-### Run lmer models for chosen behaviour   
 ```{r}
 # Chosen variables: total distance for activity, zone_05_dur for stimulus phases
 
@@ -210,17 +212,15 @@ fixef(lmer_zone_05_dur_Social) == fixef(mod_list_5behav$zone_05_dur_Social) # th
 
 ```
 
+### Extract BLUPs from lmer models and plot fitted versus. predicted
 
-### Extract BLUPs from lmer models and plot fitted versus. predicted      
-- make a dataframe with the model parameters    
-- fitted = the actual measured behaviors
-- predicted = the model predictions, calculated according to the below equation:
+-   make a dataframe with the model parameters\
+-   fitted = the actual measured behaviors
+-   predicted = the model predictions, calculated according to the below equation:
 
-$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$ 
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
 
-
-$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
-$$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
+$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$ $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
 ```{r}
 
@@ -291,9 +291,8 @@ plot_list_behavs[[5]]
 
 ```
 
+### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models
 
-
-### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models   
 ```{r}
 #Here To-do:
 
@@ -437,7 +436,8 @@ names(fitted_process_brm_list) <- behav_vars
 # note that each item in the list is, itself, a list. If you want to get the first element of each list (pop_posterior), you can go lapply(fitted_process_brm_list, function(x) x[[1]])
 ```
 
-###Plotting 
+\#\#\#Plotting
+
 ```{r}
 
 # Function to plot fitted vs. predicted and calculate R2
@@ -468,7 +468,8 @@ plot_list_behavs_brms[[5]]
 
 ```
 
-###Repeatability of BRM models
+\#\#\#Repeatability of BRM models
+
 ```{r}
 # TASK TWO: calculate repeatability for all behaviors from the brm models. 
 
@@ -516,14 +517,11 @@ rpt_plots <- lapply(fitted_process_brm_list_rpt, function(x) rpt_density_plot(x)
 plot_grid(plotlist = rpt_plots)
 ```
 
-###Plotting population effects
+\#\#\#Plotting population effects
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
 
-
 $$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
-
-
 
 $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
 
@@ -601,8 +599,8 @@ forest_plots_pop[5]
 
 ```
 
+\#Function for Bivar Models and Dataframe
 
-#Function for Bivar Models and Dataframe
 ```{r}
 #Function for running the bivar model 
 
@@ -661,12 +659,8 @@ Combinations <- combn(behav_vars,2) # To see the combinations required for the b
 # Novel Activity
 # Predator Activity
 ```
-
-
-
-
-
 #Bivariate models and dataframes
+
 ```{r}
 
 #Social Predator Bivariate Model
@@ -760,6 +754,7 @@ predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
 ```
 
 #Loading bivar models
+
 ```{r}
 load("./Models/aggression_activity_bivar.Rdata")
 load("./Models/aggression_novel_bivar.Rdata")
@@ -837,8 +832,8 @@ bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
 bivar_combined <- bind_rows(bivar_processed)
 ```
 
-
 #Function for population parameters
+
 ```{r}
 #y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
 
@@ -898,9 +893,10 @@ bivar_behavs_results <- bind_rows(lapply(behaviors, function(x) func_pop_bivar(x
 
 ```
 
-#Plotting density distributions 
+#Plotting density distributions
 
 HAMZA: I had to have something for the presentation and so I made some tweaks to the code to plot the density distributions but with the mean and credible intervals also. However to be able to figure out how to obtain that from each model from the one list we created was difficult to put in a function and so I had to sub set and then use a list of their model names
+
 ```{r}
 bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
 
@@ -943,8 +939,8 @@ bivar_density_plots
 
 ```
 
-#Practice
-I cannot remember what this chunk was for?
+#Practice I cannot remember what this chunk was for?
+
 ```{r}
 bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
 
@@ -973,6 +969,7 @@ test_df_plot$behav_syndrome <- df$behav_syndrome[1]
 ```
 
 Example plots and tables
+
 ```{r}
 
 #Creating multiple plots and subsetting to remove contrasts
@@ -989,15 +986,11 @@ tab_model(example_Social_Aggression, show.hdi50 = FALSE, bpe = "mean") #bpe calc
 
 ```
 
-
-
-#Comparing Control and Treatment groups
-To do this, we want to subset by control and treatment groups and then run the 2x10 models again without "group" as a fixed effect
+#Comparing Control and Treatment groups To do this, we want to subset by control and treatment groups and then run the 2x10 models again without "group" as a fixed effect
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{male})+ e_i$$
 
 Is this formula correct? As we have removed the group component and now we only have sex remaining?
-
 
 ```{r}
 #Subsetting data into control and treatment 
@@ -1048,6 +1041,7 @@ bivar_combined <- bind_rows(bivar_processed)
 ```
 
 #Bivariate models CONTROL
+
 ```{r}
 
 # #Social Predator Bivariate Model
@@ -1202,6 +1196,7 @@ ggplot(bivar_combined_control) + theme_classic() +
 ```
 
 #Bivariate models TREATMENT
+
 ```{r}
 # #Social Predator Bivariate Model
 # 
@@ -1353,6 +1348,7 @@ ggplot(bivar_combined_treatment) + theme_classic() +
 ```
 
 #Tables - importing
+
 ```{r}
 t1 <- read_excel("Table1.xlsx", sheet = "Table 1", skip = 2)
 
@@ -1400,6 +1396,7 @@ write.csv(t1, file="t1.csv", row.names=FALSE, na="")
 ```
 
 #Contrast Analysis
+
 ```{r}
 
 #Rename columns
@@ -1413,6 +1410,35 @@ colnames(bivar_combined_treatment) <- c("behaviour1_treatment", "behaviour2_trea
 #Add columns together to create a new wide data frame
 
 bivar_control_treatment <- bind_cols(bivar_combined_control, bivar_combined_treatment)
+
+#Checking model results same order
+paste0(bivar_control_treatment$behaviour1_control, bivar_control_treatment$behaviour2_control) == paste0(bivar_control_treatment$behaviour1_treatment, bivar_control_treatment$behaviour2_treatment)
+
+#All TRUE
+
+#Getting treatment difference in variance components
+
+names(bivar_control_treatment)
+
+contrasts_var <- bivar_control_treatment %>% mutate(sigma_ID1_treatment_minus_control=sigma_ID1_treatment-sigma_ID1_control,
+                                   sigma_ID2_treatment_minus_control=sigma_ID2_treatment-sigma_ID2_control,
+                                   cor_ID1_ID2_treatment_minus_control=cor_ID1_ID2_treatment-cor_ID1_ID2_control,
+                                   sigma_e1_treatment_minus_control=sigma_e1_treatment-sigma_e1_control,
+                                   sigma_e2_treatment_minus_control=sigma_e2_treatment-sigma_e2_control,
+                                   cor_e1_e2_treatment_minus_control=cor_e1_e2_treatment-cor_e1_e2_control,
+                                   rpt1_treatment_minus_control=rpt1_treatment-rpt1_control,
+                                   rpt2_treatment_minus_control=rpt2_treatment-rpt2_control,
+                                   mod_id=paste0(behaviour1_control, " vs ",behaviour2_control)) %>%
+  dplyr::rename(behaviour1=behaviour1_control, behaviour2=behaviour2_control) %>%
+  select(behaviour1, behaviour2,mod_id,
+         sigma_ID1_treatment_minus_control,
+                                   sigma_ID2_treatment_minus_control,
+                                   cor_ID1_ID2_treatment_minus_control,
+                                   sigma_e1_treatment_minus_control,
+                                   sigma_e2_treatment_minus_control,
+                                   cor_e1_e2_treatment_minus_control,
+                                   rpt1_treatment_minus_control,
+                                   rpt2_treatment_minus_control)
 
 #Function for contrasts and popn params
 
@@ -1455,7 +1481,7 @@ mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == beh
     treatment_male <- mod$B2_treatment + treatment_female
     rpt_control <- mod$rpt_control
     rpt_treatment <- mod$rpt_treatment
-    rpt_control_minus_rpt_treatment <- rpt_control - rpt_treatment
+    rpt_treatment_minus_rpt_control <- rpt_treatment - rpt_control
     correlation_control <- mod$cor_control
     correlation_treatment <- mod$cor_treatment
     correlation_control_minus_correlation_treatment <- correlation_control - correlation_treatment
@@ -1464,7 +1490,7 @@ mod <- mod_processed %>% mutate(B0_control = case_when(behaviour1_control == beh
     
   
     
-df_pop <- data.frame (control_female, control_male,  control_male_minus_control_female, treatment_female, treatment_male, treatment_male_minus_treatment_female,rpt_control, rpt_treatment, rpt_control_minus_rpt_treatment,correlation_control, correlation_treatment, correlation_control_minus_correlation_treatment)
+df_pop <- data.frame (control_female, control_male,  control_male_minus_control_female, treatment_female, treatment_male, treatment_male_minus_treatment_female,rpt_control, rpt_treatment, rpt_treatment_minus_rpt_control,correlation_control, correlation_treatment, correlation_control_minus_correlation_treatment)
 
 
 
@@ -1478,7 +1504,7 @@ data <- cbind(
 names(data) <- c("mean.post", "ci.lb", "ci.ub")
 data$coef <- (row.names(data))
 data$behavior <- behav
-data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female", "treatment_female", "treatment_male",  "treatment_male_minus_treatment_female","rpt_control", "rpt_treatment", "rpt_control_minus_rpt_treatment","correlation_control", "correlation_treatment", "correlation_control_minus_corelation_treatment"))
+data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "control_male_minus_control_female", "treatment_female", "treatment_male",  "treatment_male_minus_treatment_female","rpt_control", "rpt_treatment", "rpt_treatment_minus_rpt_control","correlation_control", "correlation_treatment", "correlation_control_minus_corelation_treatment"))
 
 
     
@@ -1492,8 +1518,6 @@ bivar_behavs_results_control_treatment_contrast <- bind_rows(lapply(behaviors, f
 
 #Plotting
 
-ggplot(subset(bivar_behavs_results,coef %in% c("treatment_male", "control_male", "treatment_female", "control_female")))
-
 Contrasts_personality_plots <- 
   ggplot(subset(bivar_behavs_results_control_treatment_contrast, coef %in% c("correlation_treatment", "correlation_control", "rpt_control", "rpt_treatment")),
   aes(x = coef, y = mean.post, colour = behavior)) +
@@ -1506,12 +1530,37 @@ Contrasts_personality_plots <-
 Contrasts_personality_plots
 ```
 
+#Improved plot
+```{r}
+#Contrasts behavioral syndromes
+
+contrasts_var %>% dplyr::group_by(mod_id) %>% summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control))
+
+df <- bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x) data.frame(est=mean(x$cor_ID1_ID2_treatment_minus_control),
+lower_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.975))))
+
+df$mod_id <- unique(contrasts_var$mod_id)
+
+ggplot(df) + 
+geom_pointrange(aes(x = mod_id, y = est, ymin = lower_bounds, ymax = upper_bounds))+
+geom_hline(yintercept=0, linetype="dotted")+
+coord_flip()
+
+#Contrasts repeatabilites per behaviour
+
+Contrasts_rpt <- 
+  ggplot(subset(bivar_behavs_results_control_treatment_contrast, coef %in% c(	
+"rpt_treatment_minus_rpt_control")),
+  aes(x = coef, y = mean.post, colour = behavior)) +
+  geom_errorbar(aes(ymin = ci.lb, ymax = ci.ub),width = 0.4,position = position_dodge(0.3),size = 0.8) +
+  geom_point(aes(x = coef, y = mean.post),
+  position = position_dodge(0.3),size = 3) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  coord_flip()
+
+Contrasts_rpt
 
 
-
-
-
-
-
-
+```
 
