@@ -953,7 +953,7 @@ coord_flip()
 
 #Function and contrasts for repeatabilities contrasts
 ```{r}
-#Function for contrasts and popn params
+#Function for contrasts 
 
 func_rpt_contrasts <- function(behav = "Aggression", mod_processed = bivar_control_treatment){
 mod <- mod_processed %>% mutate(rpt_control = case_when(behaviour1_control == behav ~ rpt1_control,
@@ -994,38 +994,6 @@ behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
 rpt_behav_contrasts <- bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
 
-# ROSE: alternative
-contrasts1 <- contrasts_var[,c("behaviour1",
-                 "sigma_ID1_treatment_minus_control",
-                 "sigma_e1_treatment_minus_control",
-                 "rpt1_treatment_minus_control")]
-contrasts2 <- contrasts_var[,c("behaviour2",
-                 "sigma_ID2_treatment_minus_control",
-                 "sigma_e2_treatment_minus_control",
-                 "rpt2_treatment_minus_control")]
-names(contrasts1) <- gsub("1","",names(contrasts1))
-names(contrasts2) <- gsub("2","",names(contrasts2))
-Rpt_behav_contrasts <- rbind(contrasts1, contrasts2) %>% dplyr::arrange(behaviour)
-
-Rpt_behav_contrasts %>% dplyr::group_by(behaviour) %>% 
-  dplyr::summarise(is.numeric, mean) 
-
-func <- function(df){
-  
-  est <- apply(df[,2:4], 2, function(x) mean(x))
-  lb <- apply(df[,2:4], 2, function(x) quantile(x, 0.025))
-  ub <- apply(df[,2:4], 2, function(x) quantile(x, 0.975))
-  
-  names(est) <- paste0(names(est), ".est")
-  names(lb) <- paste0(names(est), ".lb")
-  names(ub) <- paste0(names(est), ".ub")
-  df2 <- data.frame(cbind(est, lb, ub))
-  df2$parameter <- gsub("\\.est", "", rownames(df2))
-  df2$behaviour <- df[1,1]
-  return(df2)
-  
-}
-
 var_contrasts_est <- bind_rows(lapply(split(Rpt_behav_contrasts, Rpt_behav_contrasts$behaviour),
       function(x)
         func(x))) 
@@ -1036,18 +1004,7 @@ geom_pointrange(aes(x = behavior, y = mean.post, ymin = ci.lb, ymax = ci.ub))+
 geom_hline(yintercept=0, linetype="dotted")+
 coord_flip()
 
-ggplot(var_contrasts_est[var_contrasts_est$parameter=="rpt_treatment_minus_control",]) + 
-geom_pointrange(aes(x = behaviour, y = est, ymin = lb, ymax = ub))+
-geom_hline(yintercept=0, linetype="dotted")+
-coord_flip()
 
-# ROSE: these are the same so code is working
-
-ggplot(var_contrasts_est) + 
-geom_pointrange(aes(x = behaviour, y = est, ymin = lb, ymax = ub))+
-geom_hline(yintercept=0, linetype="dotted")+
-coord_flip() +
-  facet_wrap(~parameter, scales = "free_x") # ROSE: CIs much be so much wider for activity because of the different scale of the data. You might want to standardize the response variables before analysis.
 
 ```
 

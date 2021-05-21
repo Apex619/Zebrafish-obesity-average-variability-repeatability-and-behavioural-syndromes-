@@ -1524,3 +1524,40 @@ write.csv(t1, file="t1.csv", row.names=FALSE, na="")
 
 ```
 
+```{r}
+# ROSE: alternative
+contrasts1 <- contrasts_var[,c("behaviour1",
+                 "sigma_ID1_treatment_minus_control",
+                 "sigma_e1_treatment_minus_control",
+                 "rpt1_treatment_minus_control")]
+contrasts2 <- contrasts_var[,c("behaviour2",
+                 "sigma_ID2_treatment_minus_control",
+                 "sigma_e2_treatment_minus_control",
+                 "rpt2_treatment_minus_control")]
+names(contrasts1) <- gsub("1","",names(contrasts1))
+names(contrasts2) <- gsub("2","",names(contrasts2))
+Rpt_behav_contrasts <- rbind(contrasts1, contrasts2) %>% dplyr::arrange(behaviour)
+
+Rpt_behav_contrasts %>% dplyr::group_by(behaviour) %>% 
+  dplyr::summarise(is.numeric, mean) 
+
+func <- function(df){
+  
+  est <- apply(df[,2:4], 2, function(x) mean(x))
+  lb <- apply(df[,2:4], 2, function(x) quantile(x, 0.025))
+  ub <- apply(df[,2:4], 2, function(x) quantile(x, 0.975))
+  
+  names(est) <- paste0(names(est), ".est")
+  names(lb) <- paste0(names(est), ".lb")
+  names(ub) <- paste0(names(est), ".ub")
+  df2 <- data.frame(cbind(est, lb, ub))
+  df2$parameter <- gsub("\\.est", "", rownames(df2))
+  df2$behaviour <- df[1,1]
+  return(df2)
+  
+}
+
+#for rprt contrasts
+```
+
+
