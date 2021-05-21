@@ -1539,7 +1539,11 @@ names(contrasts2) <- gsub("2","",names(contrasts2))
 Rpt_behav_contrasts <- rbind(contrasts1, contrasts2) %>% dplyr::arrange(behaviour)
 
 Rpt_behav_contrasts %>% dplyr::group_by(behaviour) %>% 
-  dplyr::summarise(is.numeric, mean) 
+  dplyr::summarise(is.numeric, mean)
+
+var_contrasts_est <- dplyr::bind_rows(lapply(split(Rpt_behav_contrasts, Rpt_behav_contrasts$behaviour),
+      function(x)
+        func(x))) 
 
 func <- function(df){
   
@@ -1560,4 +1564,151 @@ func <- function(df){
 #for rprt contrasts
 ```
 
+Using Shapiro-Wilk normality test\
+See ?shapiro.test More normal = higher W value and smaller p value
 
+```{r}
+func_behav_raw <- function(behav = behavs[1]){
+  
+  func_var <- function(var = vars[1]){
+    mod <- lmer(Personality_wide[,paste(var,behav,sep="_")] ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
+    residuals <- resid(mod)
+    VC <- data.frame(VarCorr(mod))
+    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
+    sw <- shapiro.test(residuals)
+    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
+    return(df)
+  } # raw general linear model to determine whether transformations are required
+  
+
+  
+ rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
+ return(rpt_vals)
+}
+
+func_behav_sqrt <- function(behav = behavs[1]){
+  
+  func_var <- function(var = vars[1]){
+    mod <- lmer(sqrt(Personality_wide[,paste(var,behav,sep="_")]) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) # added a square root transformation here to the model
+    residuals <- resid(mod)
+    VC <- data.frame(VarCorr(mod))
+    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
+    sw <- shapiro.test(residuals)
+    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
+    return(df)
+  } # same general linear model as above but with a square root transformation
+  
+
+  
+ rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
+ return(rpt_vals)
+}
+
+# RUNNING MODELS 
+
+rpt_resids <- bind_rows(lapply(behavs, function(x) func_behav_raw(x))) # not transformed
+
+rpt_resids_sqrt <- bind_rows(lapply(behavs, function(x) func_behav_sqrt(x))) # sqrt transformed
+
+# CHECKING TO SEE WHICH VARIABLES ARE NORMAL AND WHICH REQUIRE TRANSFORMATION
+
+# restricting to just values of W > 0.9 and seeing which variables are represented for all behaviors
+
+rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
+
+
+# only mean_speed and tot_dist are there for everything
+
+
+filter(rpt_resids, var == "mean_speed") # all looks good, except p-val for Aggression?
+
+filter(rpt_resids, var == "tot_dist") # similar to above?
+
+# zone_near_dur there for 4/5, so we want to check which phase would need to be transformed 
+
+filter(rpt_resids, var == "zone_near_dur") 
+
+#this shows that the "Social" phase needs a transformation for the variable zone_near_dur, so we'll see if a square root transformation helps
+
+rpt_resids_sqrt %>% filter(W>0.9) %>% group_by(var) %>% tally()
+
+filter(rpt_resids_sqrt, var == "zone_near_dur")
+
+# The square root transformation doesn't help for the variable zone_near_dur for the Social phase, so will try to identify another variable that can be used for all 5 phases as long as transformations work
+
+rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
+
+#Will try to see tot_dist_05
+ 
+filter(rpt_resids, var == "tot_dist_05")
+
+#Social and Aggression require transformations, will see if the sqrt transformations helped
+
+filter(rpt_resids_sqrt, var == "tot_dist_05")
+
+#Aggression phase is good with a square root transformation, Social phase improved, possibility it can be used?
+
+# Will now check zone_05_dur
+
+filter(rpt_resids, var == "zone_05_dur")
+
+#Not too fussed with Activity phase as we will use a distance variable, however, Novel phase needs to be transformed. Will see if the transformation helps with normality
+
+filter(rpt_resids_sqrt, var == "zone_05_dur")
+
+#A square root transformation appears to have done the job.
+
+# To summarize, we can use the following variables for analysis
+
+# Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
+```
+
+### Residual distributions and repeatability values for each variable
+
+
+
+
+#Plotting density distributions
+
+```{r}
+bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
+
+col_behav_syndrome <- bivar_combined$behav_syndrome 
+unique(col_behav_syndrome, incomparables = FALSE)
+
+
+
+Aggression_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Activity")
+Aggression_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Novel")
+Aggression_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Predator")
+Novel_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Activity")
+Novel_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Predator")
+Predator_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Predator vs. Activity")
+Social_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Activity")
+Social_Aggression <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Aggression")
+Social_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Novel")
+Social_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Predator")
+
+behav_syndromes <- list(Aggression_Activity,Aggression_Novel, Aggression_Predator,Novel_Activity,Novel_Predator, Predator_Activity ,Social_Activity, Social_Aggression, Social_Novel,Social_Predator)
+
+density_plot_bivar <- function(df){
+  heading = df$behav_syndrome
+plot <- ggplot(df) + 
+  theme_classic() +
+  geom_density(aes(cor_ID1_ID2)) +
+  geom_vline(xintercept = 0, color = "red") +
+  geom_vline(xintercept = mean(df$cor_ID1_ID2),col="black",lwd=2) +
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[1],col="black",lty=2)+
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[2],col="black",lty=2)+
+  labs(title = heading)
+  return(plot)
+}
+
+
+bivar_density_plots <- lapply(behav_syndromes, function(x) density_plot_bivar(x)) #applying function to all bivar model outputs
+names(bivar_density_plots) <- behav_syndromes #naming the elements of the list
+
+bivar_density_plots
+
+
+```

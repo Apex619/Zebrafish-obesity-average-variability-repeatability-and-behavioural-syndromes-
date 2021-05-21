@@ -15,9 +15,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 
 #checks for installation and loads packages
-pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
-               sjPlot,sjstats, ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
-               stargazer, brms, MCMCglmm, cowplot)
+pacman::p_load(dplyr, brms, stringr, ggplot2)
 
 ```
 
@@ -43,10 +41,10 @@ func_phase <- function(phase = 1){
 
 # applying function, returning a list of four dataframes
 Personality_list <- lapply(1:4, function(x) func_phase(x))
-Personality_df <- bind_rows(Personality_list) # stakes dataframe on top of each other
+Personality_df <- dplyr::bind_rows(Personality_list) # stakes dataframe on top of each other
 
 # making an ID for the tank info (four phases in a session)
-Personality_df <- Personality_df %>% mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% arrange(fish_session_ID) 
+Personality_df <- Personality_df %>% dplyr::mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% dplyr::arrange(fish_session_ID) 
 
 # turning from wide to long
 vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
@@ -69,7 +67,7 @@ func_variable_behav <- function(behav = behavs[1]){
 # applying function to each behaviour
 vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
 # putting the four behaviour columns next to each other
-vars_behavs <- bind_cols(vars_behavs_list) 
+vars_behavs <- dplyr::bind_cols(vars_behavs_list) 
 
 # adding info
 Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
@@ -77,112 +75,15 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 
 ### Adding in activity data (post-assay) to Personality_wide
 
-Personality_wide <- left_join(Post_assay, Personality_wide)
+Personality_wide <- dplyr::left_join(Post_assay, Personality_wide)
 
 # five behaviours
 behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
 ```
 
-### Residual distributions and repeatability values for each variable
-
-Using Shapiro-Wilk normality test\
-See ?shapiro.test More normal = higher W value and smaller p value
-
-```{r}
-func_behav_raw <- function(behav = behavs[1]){
-  
-  func_var <- function(var = vars[1]){
-    mod <- lmer(Personality_wide[,paste(var,behav,sep="_")] ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) 
-    residuals <- resid(mod)
-    VC <- data.frame(VarCorr(mod))
-    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
-    sw <- shapiro.test(residuals)
-    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
-    return(df)
-  } # raw general linear model to determine whether transformations are required
-  
-
-  
- rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
- return(rpt_vals)
-}
-
-func_behav_sqrt <- function(behav = behavs[1]){
-  
-  func_var <- function(var = vars[1]){
-    mod <- lmer(sqrt(Personality_wide[,paste(var,behav,sep="_")]) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) # added a square root transformation here to the model
-    residuals <- resid(mod)
-    VC <- data.frame(VarCorr(mod))
-    rpt <- round(VC$vcov[1]/sum(VC$vcov),2)
-    sw <- shapiro.test(residuals)
-    df <- data.frame(behav, var, rpt, W = round(sw$statistic,3), p = round(sw$p.value,3))
-    return(df)
-  } # same general linear model as above but with a square root transformation
-  
-
-  
- rpt_vals <- bind_rows(lapply(vars, function(x) func_var(x)))
- return(rpt_vals)
-}
-
-# RUNNING MODELS 
-
-rpt_resids <- bind_rows(lapply(behavs, function(x) func_behav_raw(x))) # not transformed
-
-rpt_resids_sqrt <- bind_rows(lapply(behavs, function(x) func_behav_sqrt(x))) # sqrt transformed
-
-# CHECKING TO SEE WHICH VARIABLES ARE NORMAL AND WHICH REQUIRE TRANSFORMATION
-
-# restricting to just values of W > 0.9 and seeing which variables are represented for all behaviors
-
-rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
 
 
-# only mean_speed and tot_dist are there for everything
 
-
-filter(rpt_resids, var == "mean_speed") # all looks good, except p-val for Aggression?
-
-filter(rpt_resids, var == "tot_dist") # similar to above?
-
-# zone_near_dur there for 4/5, so we want to check which phase would need to be transformed 
-
-filter(rpt_resids, var == "zone_near_dur") 
-
-#this shows that the "Social" phase needs a transformation for the variable zone_near_dur, so we'll see if a square root transformation helps
-
-rpt_resids_sqrt %>% filter(W>0.9) %>% group_by(var) %>% tally()
-
-filter(rpt_resids_sqrt, var == "zone_near_dur")
-
-# The square root transformation doesn't help for the variable zone_near_dur for the Social phase, so will try to identify another variable that can be used for all 5 phases as long as transformations work
-
-rpt_resids %>% filter(W>0.9) %>% group_by(var) %>% tally()
-
-#Will try to see tot_dist_05
- 
-filter(rpt_resids, var == "tot_dist_05")
-
-#Social and Aggression require transformations, will see if the sqrt transformations helped
-
-filter(rpt_resids_sqrt, var == "tot_dist_05")
-
-#Aggression phase is good with a square root transformation, Social phase improved, possibility it can be used?
-
-# Will now check zone_05_dur
-
-filter(rpt_resids, var == "zone_05_dur")
-
-#Not too fussed with Activity phase as we will use a distance variable, however, Novel phase needs to be transformed. Will see if the transformation helps with normality
-
-filter(rpt_resids_sqrt, var == "zone_05_dur")
-
-#A square root transformation appears to have done the job.
-
-# To summarize, we can use the following variables for analysis
-
-# Mean speed (all 5 phases), total distance (all 5 phases), zone_05_dur (Novel phases requires a square root transformation)
-```
 
 #Function for Bivar Models and Dataframe
 
@@ -372,8 +273,8 @@ bivar_brm_func <- function(mod_char){
 mod <- get(mod_char)
 post <- as.data.frame(mod)
 # getting names of behav1 and behav2
-# use str_split for this
-inter_key <- str_split(mod_char, "_")[[1]] 
+# use stringr::str_split for this
+inter_key <- stringr::str_split(mod_char, "_")[[1]] 
 
 
 behaviour1 <- inter_key[2]
@@ -391,20 +292,20 @@ cols <- names(post)
 cols
 
 
-B0_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
-B1_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
-B2_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
-B3_1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
-B0_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Intercept") & ! str_detect(cols,"Fish")] 
-B1_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "GroupTreatment") & ! str_detect(cols,"Fish") & ! str_detect(cols, "Sex")] 
-B2_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & ! str_detect(cols, "GroupTreatment")] 
-B3_2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "Sex") & ! str_detect(cols,"Fish") & str_detect(cols, "GroupTreatment")]
-sigma_ID1 <- post[,str_detect(cols, behav1)  & str_detect(cols, "sd_Fish")]
-sigma_ID2 <- post[,str_detect(cols, behav2)  & str_detect(cols, "sd_Fish")]
-cor_ID1_ID2 <- post[,str_detect(cols, behav1)  & str_detect(cols, behav2) & str_detect(cols, "cor_Fish")]
-sigma_e1 <- post[,str_detect(cols, behav1) & str_detect(cols, "sigma_")]
-sigma_e2 <- post[,str_detect(cols, behav2) & str_detect(cols, "sigma_")]
-cor_e1_e2 <- post[,str_detect(cols, behav1) & str_detect(cols, behav2) & str_detect(cols, "rescor_")]
+B0_1 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, "Intercept") & ! stringr::str_detect(cols,"Fish")] 
+B1_1 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, "GroupTreatment") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "Sex")] 
+B2_1 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "GroupTreatment")] 
+B3_1 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & stringr::str_detect(cols, "GroupTreatment")]
+B0_2 <- post[,stringr::str_detect(cols, behav2)  & stringr::str_detect(cols, "Intercept") & ! stringr::str_detect(cols,"Fish")] 
+B1_2 <- post[,stringr::str_detect(cols, behav2)  & stringr::str_detect(cols, "GroupTreatment") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "Sex")] 
+B2_2 <- post[,stringr::str_detect(cols, behav2)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "GroupTreatment")] 
+B3_2 <- post[,stringr::str_detect(cols, behav2)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & stringr::str_detect(cols, "GroupTreatment")]
+sigma_ID1 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, "sd_Fish")]
+sigma_ID2 <- post[,stringr::str_detect(cols, behav2)  & stringr::str_detect(cols, "sd_Fish")]
+cor_ID1_ID2 <- post[,stringr::str_detect(cols, behav1)  & stringr::str_detect(cols, behav2) & stringr::str_detect(cols, "cor_Fish")]
+sigma_e1 <- post[,stringr::str_detect(cols, behav1) & stringr::str_detect(cols, "sigma_")]
+sigma_e2 <- post[,stringr::str_detect(cols, behav2) & stringr::str_detect(cols, "sigma_")]
+cor_e1_e2 <- post[,stringr::str_detect(cols, behav1) & stringr::str_detect(cols, behav2) & stringr::str_detect(cols, "rescor_")]
 tot_var1 <- sigma_ID1 + sigma_e1
 tot_var2 <- sigma_ID2 + sigma_e2
 rpt1 <- sigma_ID1/tot_var1
@@ -417,7 +318,7 @@ return(df)
 
 bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
 
-bivar_combined <- bind_rows(bivar_processed)
+bivar_combined <- dplyr::bind_rows(bivar_processed)
 ```
 
 #Function for population parameters
@@ -427,21 +328,21 @@ bivar_combined <- bind_rows(bivar_processed)
 
 
 func_pop_bivar <- function(behav = "Aggression", mod_processed = bivar_combined){
-mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+mod <- mod_processed %>% dplyr::mutate(B0 = dplyr::case_when(behaviour1 == behav ~ B0_1,
                                                 behaviour2 == behav ~ B0_2 ),
-                                 B1 = case_when(behaviour1 == behav ~ B1_1,
+                                 B1 = dplyr::case_when(behaviour1 == behav ~ B1_1,
                                                 behaviour2 == behav ~ B1_2),
-                                 B2 = case_when(behaviour1 == behav ~ B2_1,
+                                 B2 = dplyr::case_when(behaviour1 == behav ~ B2_1,
                                                 behaviour2 == behav ~ B2_2),
-                                 B3 = case_when(behaviour1 == behav ~ B3_1,
+                                 B3 = dplyr::case_when(behaviour1 == behav ~ B3_1,
                                                 behaviour2 == behav ~ B3_2),
-                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                 sigma_ID = dplyr::case_when(behaviour1 == behav ~ sigma_ID1,
                                                 behaviour2 == behav ~ sigma_ID2),
-                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                 sigma_e = dplyr::case_when(behaviour1 == behav ~ sigma_e1,
                                                 behaviour2 == behav ~ sigma_e2),
-                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                 rpt = dplyr::case_when(behaviour1 == behav ~ rpt1,
                                                 behaviour2 == behav ~ rpt2)) %>%
-  filter(!is.na(B0))
+  dplyr::filter(!is.na(B0))
   
     control_female <- mod$B0
     treatment_female_minus_control_female <- mod$B1 
@@ -477,53 +378,11 @@ data$coef <- factor(data$coef, levels = c("control_female", "treatment_female", 
 
 behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
-bivar_behavs_results <- bind_rows(lapply(behaviors, function(x) func_pop_bivar(x)))
+bivar_behavs_results <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar(x)))
 
 ```
 
-#Plotting density distributions
 
-```{r}
-bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
-
-col_behav_syndrome <- bivar_combined$behav_syndrome 
-unique(col_behav_syndrome, incomparables = FALSE)
-
-behav_syndromes <- list(Aggression_Activity,Aggression_Novel, Aggression_Predator,Novel_Activity,Novel_Predator, Predator_Activity ,Social_Activity, Social_Aggression, Social_Novel,Social_Predator)
-
-Aggression_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Activity")
-Aggression_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Novel")
-Aggression_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Aggression vs. Predator")
-Novel_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Activity")
-Novel_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Novel vs. Predator")
-Predator_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Predator vs. Activity")
-Social_Activity <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Activity")
-Social_Aggression <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Aggression")
-Social_Novel <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Novel")
-Social_Predator <- subset(bivar_combined, bivar_combined$behav_syndrome == "Social vs. Predator")
-
-
-density_plot_bivar <- function(df){
-  heading = df$behav_syndrome
-plot <- ggplot(df) + 
-  theme_classic() +
-  geom_density(aes(cor_ID1_ID2)) +
-  geom_vline(xintercept = 0, color = "red") +
-  geom_vline(xintercept = mean(df$cor_ID1_ID2),col="black",lwd=2) +
-  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[1],col="black",lty=2)+
-  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[2],col="black",lty=2)+
-  labs(title = heading)
-  return(plot)
-}
-
-
-bivar_density_plots <- lapply(behav_syndromes, function(x) density_plot_bivar(x)) #applying function to all bivar model outputs
-names(bivar_density_plots) <- behav_syndromes #naming the elements of the list
-
-bivar_density_plots
-
-
-```
 
 
 
@@ -577,7 +436,7 @@ return(bivar)
 
 bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
 
-bivar_combined <- bind_rows(bivar_processed)
+bivar_combined <- dplyr::bind_rows(bivar_processed)
 ```
 
 #Bivariate models CONTROL
@@ -672,24 +531,24 @@ bivar_models_names_control <- c("example_Aggression_Activity_control",
 #Applying brm_func
 bivar_processed_control <- lapply(bivar_models_names_control, function(x) bivar_brm_func(x))
 
-bivar_combined_control <- bind_rows(bivar_processed_control)
+bivar_combined_control <- dplyr::bind_rows(bivar_processed_control)
 
 #Population parameters 
 
-#HAMZA: What I did here was just remove the treatment components from the formula so keeping the sex as B2...I did this rather than changing bivar_brm_func, although am not sure if this is correct :/
+
 
 func_pop_bivar_control <- function(behav = "Aggression", mod_processed = bivar_combined_control){
-mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+mod <- mod_processed %>% dplyr::mutate(B0 = dplyr::case_when(behaviour1 == behav ~ B0_1,
                                                 behaviour2 == behav ~ B0_2 ),
-                                B2 = case_when(behaviour1 == behav ~ B2_1,
+                                B2 = dplyr::case_when(behaviour1 == behav ~ B2_1,
                                                 behaviour2 == behav ~ B2_2),
-                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                 sigma_ID = dplyr::case_when(behaviour1 == behav ~ sigma_ID1,
                                                 behaviour2 == behav ~ sigma_ID2),
-                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                 sigma_e = dplyr::case_when(behaviour1 == behav ~ sigma_e1,
                                                 behaviour2 == behav ~ sigma_e2),
-                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                 rpt = dplyr::case_when(behaviour1 == behav ~ rpt1,
                                                 behaviour2 == behav ~ rpt2)) %>%
-  filter(!is.na(B0))
+  dplyr::filter(!is.na(B0))
   
     control_female <- mod$B0
     control_male_minus_control_female <- mod$B2
@@ -721,8 +580,8 @@ data$coef <- factor(data$coef, levels = c("control_female", "control_male",  "co
 
 behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
-bivar_behavs_results_control <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_control(x)))
-#It seemed to work although am not sure this is correct, please double check!
+bivar_behavs_results_control <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar_control(x)))
+
 
 
 #Plots
@@ -826,24 +685,24 @@ bivar_models_names_treatment <- c("example_Aggression_Activity_treatment",
 #Applying brm_func
 bivar_processed_treatment <- lapply(bivar_models_names_treatment, function(x) bivar_brm_func(x))
 
-bivar_combined_treatment <- bind_rows(bivar_processed_treatment)
+bivar_combined_treatment <- dplyr::bind_rows(bivar_processed_treatment)
 
 #Population parameters 
 
-#HAMZA: What I did here was just remove the treatment components from the formula so keeping the sex as B2...I did this rather than changing bivar_brm_func, although am not sure if this is correct :/
+
 
 func_pop_bivar_treatment <- function(behav = "Aggression", mod_processed = bivar_combined_treatment){
-mod <- mod_processed %>% mutate(B0 = case_when(behaviour1 == behav ~ B0_1,
+mod <- mod_processed %>% dplyr::mutate(B0 = dplyr::case_when(behaviour1 == behav ~ B0_1,
                                                 behaviour2 == behav ~ B0_2 ),
-                                B2 = case_when(behaviour1 == behav ~ B2_1,
+                                B2 = dplyr::case_when(behaviour1 == behav ~ B2_1,
                                                 behaviour2 == behav ~ B2_2),
-                                 sigma_ID = case_when(behaviour1 == behav ~ sigma_ID1,
+                                 sigma_ID = dplyr::case_when(behaviour1 == behav ~ sigma_ID1,
                                                 behaviour2 == behav ~ sigma_ID2),
-                                 sigma_e = case_when(behaviour1 == behav ~ sigma_e1,
+                                 sigma_e = dplyr::case_when(behaviour1 == behav ~ sigma_e1,
                                                 behaviour2 == behav ~ sigma_e2),
-                                 rpt = case_when(behaviour1 == behav ~ rpt1,
+                                 rpt = dplyr::case_when(behaviour1 == behav ~ rpt1,
                                                 behaviour2 == behav ~ rpt2)) %>%
-  filter(!is.na(B0))
+  dplyr::filter(!is.na(B0))
   
     treatment_female <- mod$B0
     treatment_male_minus_treatment_female <- mod$B2
@@ -875,7 +734,7 @@ data$coef <- factor(data$coef, levels = c("treatment_female", "treatment_male", 
 
 behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
-bivar_behavs_results_treatment <- bind_rows(lapply(behaviors, function(x) func_pop_bivar_treatment(x)))
+bivar_behavs_results_treatment <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar_treatment(x)))
 #It seemed to work although am not sure this is correct, please double check!
 
 #Density plots
@@ -902,7 +761,7 @@ colnames(bivar_combined_treatment) <- c("behaviour1_treatment", "behaviour2_trea
 
 #Add columns together to create a new wide data frame
 
-bivar_control_treatment <- bind_cols(bivar_combined_control, bivar_combined_treatment)
+bivar_control_treatment <- dplyr::bind_cols(bivar_combined_control, bivar_combined_treatment)
 
 #Checking model results same order
 paste0(bivar_control_treatment$behaviour1_control, bivar_control_treatment$behaviour2_control) == paste0(bivar_control_treatment$behaviour1_treatment, bivar_control_treatment$behaviour2_treatment)
@@ -913,7 +772,7 @@ paste0(bivar_control_treatment$behaviour1_control, bivar_control_treatment$behav
 
 names(bivar_control_treatment)
 
-contrasts_var <- bivar_control_treatment %>% mutate(sigma_ID1_treatment_minus_control=sigma_ID1_treatment-sigma_ID1_control,
+contrasts_var <- bivar_control_treatment %>% dplyr::mutate(sigma_ID1_treatment_minus_control=sigma_ID1_treatment-sigma_ID1_control,
                                    sigma_ID2_treatment_minus_control=sigma_ID2_treatment-sigma_ID2_control,
                                    cor_ID1_ID2_treatment_minus_control=cor_ID1_ID2_treatment-cor_ID1_ID2_control,
                                    sigma_e1_treatment_minus_control=sigma_e1_treatment-sigma_e1_control,
@@ -923,7 +782,7 @@ contrasts_var <- bivar_control_treatment %>% mutate(sigma_ID1_treatment_minus_co
                                    rpt2_treatment_minus_control=rpt2_treatment-rpt2_control,
                                    mod_id=paste0(behaviour1_control, " vs ",behaviour2_control)) %>%
   dplyr::rename(behaviour1=behaviour1_control, behaviour2=behaviour2_control) %>%
-  select(behaviour1, behaviour2,mod_id,
+  dplyr::select(behaviour1, behaviour2,mod_id,
          sigma_ID1_treatment_minus_control,
                                    sigma_ID2_treatment_minus_control,
                                    cor_ID1_ID2_treatment_minus_control,
@@ -936,9 +795,9 @@ contrasts_var <- bivar_control_treatment %>% mutate(sigma_ID1_treatment_minus_co
 
 #Contrasts behavioral syndromes
 
-contrasts_var %>% dplyr::group_by(mod_id) %>% summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control))
+contrasts_var %>% dplyr::group_by(mod_id) %>% dplyr::summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control))
 
-df <- bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x) data.frame(est=mean(x$cor_ID1_ID2_treatment_minus_control),
+df <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x) data.frame(est=mean(x$cor_ID1_ID2_treatment_minus_control),
 lower_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.025),
 upper_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.975))))
 
@@ -956,9 +815,9 @@ coord_flip()
 #Function for contrasts 
 
 func_rpt_contrasts <- function(behav = "Aggression", mod_processed = bivar_control_treatment){
-mod <- mod_processed %>% mutate(rpt_control = case_when(behaviour1_control == behav ~ rpt1_control,
+mod <- mod_processed %>% dplyr::mutate(rpt_control = dplyr::case_when(behaviour1_control == behav ~ rpt1_control,
                                                 behaviour2_control == behav ~ rpt2_control),
-                                 rpt_treatment = case_when(behaviour1_treatment == behav ~ rpt1_treatment,
+                                 rpt_treatment = dplyr::case_when(behaviour1_treatment == behav ~ rpt1_treatment,
                                                 behaviour2_treatment == behav ~ rpt2_treatment))
     rpt_control <- mod$rpt_control
     rpt_treatment <- mod$rpt_treatment
@@ -992,11 +851,9 @@ data$coef <- factor(data$coef, levels = c("rpt_treatment_minus_rpt_control"))
 
 behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
-rpt_behav_contrasts <- bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
+rpt_behav_contrasts <- dplyr::bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
 
-var_contrasts_est <- bind_rows(lapply(split(Rpt_behav_contrasts, Rpt_behav_contrasts$behaviour),
-      function(x)
-        func(x))) 
+
 #plot
 
 ggplot(rpt_behav_contrasts) + 
