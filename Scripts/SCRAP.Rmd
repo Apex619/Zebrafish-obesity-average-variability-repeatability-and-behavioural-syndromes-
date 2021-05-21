@@ -859,3 +859,668 @@ var.dist <- posterior_samples(m4_brm)[,10]^2
 
 Social_Distance_slope <- cov.social_dist / var.dist
 ```
+
+
+### Run lmer models for chosen behaviour
+
+```{r}
+# Chosen variables: total distance for activity, zone_05_dur for stimulus phases
+
+# ROSE: you could modify the function so you can do it all at once:
+func_mod_behav_vars  <- function(var,df = Personality_wide){
+  mod <- lmer(df[,var] ~ Group*Sex + (1 | Fish_ID), data = df)
+  if(str_detect(var, "Novel")){ # if the variable = Novel, we will square-root the variable
+    mod <- lmer(sqrt(df[,var]) ~ Group*Sex + (1 | Fish_ID), data = df) 
+  }
+
+  return(mod) 
+  
+}
+
+behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") # including novel and changing activity from zone_05_dur to tot_dist_Activity
+mod_list_5behav <- lapply(behav_vars, function(x) func_mod_behav_vars(x)) 
+names(mod_list_5behav) <- behav_vars
+
+lmer_zone_05_dur_Social <- lmer(zone_05_dur_Social ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) #Extra model to check
+
+fixef(lmer_zone_05_dur_Social) == fixef(mod_list_5behav$zone_05_dur_Social) # they're the same
+
+#lmer_zone_05_dur_Novel <- lmer(sqrt(zone_05_dur_Novel) ~ Group*Sex + (1 | Fish_ID), data = Personality_wide) # Extra model to check
+
+```
+
+### Extract BLUPs from lmer models and plot fitted versus. predicted
+
+-   make a dataframe with the model parameters\
+-   fitted = the actual measured behaviors
+-   predicted = the model predictions, calculated according to the below equation:
+
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
+
+$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$ $$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
+
+```{r}
+
+func_fitted_predicted_lmer <- function(variable = behav_vars[1]){ 
+  mod <- mod_list_5behav[[variable]] # using the variable name to get the model
+  #getting population parameters
+  betas <- fixef(mod)
+b0 <- betas[1]
+b1 <- betas[2]
+b2 <- betas[3]
+b3 <- betas[4]
+# getting blups
+blups <- data.frame(ranef(mod))
+round(mean(blups$condval)) # average of blups = 0
+# finding the treatment and male value for each fish_ID
+fish_ID <- as.character(blups$grp)
+# need to match fish_ID ID with their info
+pos <- match(fish_ID, Personality_wide$Fish_ID)
+mod_pars <- data.frame(fish_ID, b0, ID = blups$condval, b1, b2, b3, treatment = ifelse(Personality_wide$Group[pos] == "Treatment",1,0), male = ifelse(Personality_wide$Sex[pos]=="male",1,0)) %>% mutate(predicted = b0 + ID + b1*treatment + b2*male + b3*(treatment*male))
+(Personality_wide$Fish_ID[pos] == fish_ID) # all TRUE
+# finding predicted values
+pos <- match(Personality_wide$Fish_ID, mod_pars$fish_ID)
+(mod_pars$fish_ID[pos]==Personality_wide$Fish_ID) # all TRUE
+fitted_predicted <- mod_pars[pos,] 
+fitted_predicted$fitted<- Personality_wide[,variable]
+str_detect(variable, "Novel") #test
+if(str_detect(variable, "Novel")){
+  fitted_predicted$fitted <- sqrt(fitted_predicted$fitted)
+}
+
+fitted_predicted$variable_name <- variable
+fitted_predicted$residuals <- fitted_predicted$fitted - fitted_predicted$predicted
+return(fitted_predicted) 
+}
+
+# plot(resid(mod), fitted_predicted$residuals) Checking
+
+
+# applying this function to our variables
+fitted_predicted_lmer_list <- lapply(behav_vars, function(x) func_fitted_predicted_lmer(variable = x))
+names(fitted_predicted_lmer_list) <- behav_vars
+
+fitted_predicted_lmer_list$zone_05_dur_Novel$predicted <- sqrt(fitted_predicted_lmer_list$zone_05_dur_Novel$predicted) #HAMZA: Or I can do this after we have run lapply? Is an extra step which is not ideal 
+
+# Function to plot fitted vs. predicted and calculate R2
+func_fitted_predicted_plots <- function(df =
+                                          fitted_predicted_lmer_list[[2]]){
+  behav<- gsub(".*dur\\_|.*dist\\_", "", df$variable_name[1]) 
+  
+  R2<- cor(df$fitted, df$predicted)^2 %>% round(3)
+  
+  plot<- ggplot(df)+
+    theme_classic()+
+    geom_point(aes(x=fitted, y=predicted))+
+    labs(x=df$variable_name[1],
+         title=behav,subtitle=paste0("R2 = ", R2))
+  
+  return(plot)
+}
+
+plot_list_behavs <- lapply(fitted_predicted_lmer_list, function(x) func_fitted_predicted_plots(x))
+
+plot_list_behavs[[1]]
+plot_list_behavs[[2]]
+plot_list_behavs[[3]]
+plot_list_behavs[[4]]
+plot_list_behavs[[5]]
+
+```
+
+### Repeat the above steps in brm (which uses stan), and compare the results to the lmer models
+
+```{r}
+#Here To-do:
+
+# - Write a function that will input your brm model object, and output two things: (1) the posterior distributions of population parameters; (2) the fitted and predicted values for posterior means.
+behav_vars <- c("zone_05_dur_Social", "zone_05_dur_Predator", "zone_05_dur_Novel", "zone_05_dur_Aggression", "tot_dist_Activity") 
+
+
+load("./Models/mod_list_brms.Rdata")
+
+options(mc.scores = parallel::detectCores())
+
+
+func_brm_mod <- function(var, df = Personality_wide){
+  df$response <- df[,var] # formula argument relies entirely on the data argument, so you can't just call the columns directly
+
+  if(str_detect(var, "Novel")){ 
+    brm <- brm(formula = sqrt(response) ~ Group*Sex + (1 | Fish_ID), 
+                                  data = df,
+                                  family = gaussian(),
+                                  chains = 3,
+                                 iter = 2000, warmup = 1000)
+  }else{ # ROSE TIP: before, for novel, you had to run two models. Now, you only run one (one of the other). Because baysian models take a while to run, this will speed up the function.
+      brm <- brm(formula = response ~ Group*Sex + (1 | Fish_ID), 
+                                  data = df,
+                                  family = gaussian(),
+                                  chains = 3,
+                                 iter = 2000, warmup = 1000)
+  }
+
+  return(brm)
+}
+
+
+# mod_list_brms <- lapply(behav_vars, function(x) func_brm_mod(x))
+# names(mod_list_brms) <- behav_vars
+# save(mod_list_brms, file = "./Models/mod_list_brms.Rdata")
+
+# Rose's tips:
+
+func_process_mod_brm <- function(variable = behav_vars[1]){
+    mod <- mod_list_brms[[variable]]
+    
+  mod_posterior <- as.data.frame(mod)
+  pop_posterior <- select(mod_posterior,!contains(c("r_Fish_ID", "lp"))) #We don't want to get rid of the variance component ! Hence why "r_Fish_ID" and not "Fish_ID"
+  
+  b0 <- pop_posterior[,"b_Intercept"] 
+  b1 <- pop_posterior[, "b_GroupTreatment"]
+  b2 <- pop_posterior[, "b_Sexmale"]
+ # b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] # ROSE: this is an error
+  b3 <- pop_posterior[, "b_GroupTreatment.Sexmale"] #I had to change it back as there's no ":", only a "."
+  sigma_e <- pop_posterior[, "sigma"]
+
+  sigma_ID <- pop_posterior[, "sd_Fish_ID__Intercept"]
+  
+  pop_posterior <- data.frame(b0, b1, b2, b3, sigma_e, sigma_ID)
+  
+  # next, get the posterior means, as you did above
+   post_means <- apply(mod_posterior, 2, function(x) mean(x)) # except we don't round because we're using these in subsequent calculations
+  
+  # to make fitted_predicted, the logic is as follows:
+   
+   # we have:
+   fitted <- Personality_wide[,c("Fish_ID", "Sex", "Group", variable)]
+   names(fitted)[names(fitted)==variable] <- "fitted" 
+   if(str_detect(variable, "Novel")){
+     fitted$fitted <- sqrt(fitted$fitted)
+   }
+   
+   
+ 
+  
+   
+   # and we need to get what the model predicted. So you need to solve the model equation from line 219, predicted = B0 + individual_difference + B1*treatment + B2*male + B3*treatment*male.
+   
+   # to do this calculation, make three more columns from 'fitted': a column of 1s and 0s for treatment,a column of 1s and 0s for male, and a column of individual_difference, which you will get by matching the Fish_ID in each row to the mean BLUP from post_means
+
+   # ROSE:
+   blups <- post_means[str_detect(names(post_means), "r_Fish_ID")] # here are your individual differences
+   # now use gsub to rename them so the name is just the fish_ID
+   names(blups) # see how these are all in the format r_Fish_ID[aXXXX,Intercept]? You need to get them to all be aXXXX, then you can match them up with the fish_IDs in the fitted dataframe.
+   
+names(blups) <- gsub(".*Fish_ID.", "",  names(blups))
+names(blups) <- gsub(".Intercept.", "", names(blups))
+# I did this in two steps because I'm not sure how to keep the middle of the string without ruining the entire thing :/ 
+names(blups) # Double checking to make sure we have renamed correctly
+
+fish_ID <- names(blups) 
+  
+  
+  # ROSE tip: when you get stuck doing something complicated, it's always best to break it down into little steps (rather than the one line below)
+  
+  # step one: get the order of fish in the fitted dataset
+  fitted_fish <- fitted$Fish_ID
+  
+  # step two: get an indexing vector to put the indiv differences in the same order as fish in the fitted dataset
+  pos <- match(fitted_fish, fish_ID) # for match, the first argument is the reference, and the second argument is the one you are retrieving an index for. Double check the output and if it correct ! Is it working in the direction we want !
+  
+  # always check that the matching is correct
+  fish_ID[pos] == fitted_fish # all TRUE
+  # you can also check like this:
+  sum(fish_ID[pos] == fitted_fish) == length(fitted_fish)
+  
+  # step three: get a vector of the individual differences
+  ID <- blups[pos]
+  # checking this is right
+  names(ID) == fitted_fish
+  
+  # step four: get columns for the categorical variables of 'male', 'treatment', and 'treatment*male'
+  male <- ifelse(fitted$Sex=="male",1,0) #Has to be lower case
+  treatment <- ifelse(fitted$Group=="Treatment",1,0)
+  treatment.male <- ifelse(fitted$Group=="Treatment"&fitted$Sex=="male",1,0) #Changed to lower case
+  
+  # step five: get the posterior mean estimates for your model coefficients: intercept male contrast treatment contrast and male + treatment interaction
+  b0 <- post_means["b_Intercept"] 
+  b1 <- post_means["b_GroupTreatment"]
+  b2 <- post_means["b_Sexmale"]
+  b3 <- post_means["b_GroupTreatment.Sexmale"] #Only works with "."
+  
+  # step six: do the maths to get your predicted values
+  predicted <- b0 + ID + b1*treatment + b2*male + b3*treatment.male
+  
+  # step seven: make your dataframe for export
+  fitted_predicted <- data.frame(fish_ID = fitted_fish, 
+                                 fitted = fitted$fitted,
+                                 b0, ID, b1, b2, b3,
+                                 treatment, male, 
+                                 predicted, 
+                                 variable_name = variable, residuals = fitted$fitted - predicted
+                                 )
+
+   
+  return(list(pop_posterior, fitted_predicted))
+  
+}
+
+
+# Next: apply func_process_mod() to all your variables 
+fitted_process_brm_list <- lapply(behav_vars, function(x) func_process_mod_brm(variable = x))
+names(fitted_process_brm_list) <- behav_vars
+
+# note that each item in the list is, itself, a list. If you want to get the first element of each list (pop_posterior), you can go lapply(fitted_process_brm_list, function(x) x[[1]])
+```
+
+\#\#\#Plotting
+
+```{r}
+
+# Function to plot fitted vs. predicted and calculate R2
+func_fit_pred_plots_brms <- function(df1 = fitted_process_brm_list[[2]]){
+  
+  behav<- gsub(".*dur\\_|.*dist\\_", "", df1[[2]]$variable_name[1]) 
+  
+  R2<- cor(df1[[2]]$fitted, df1[[2]]$predicted)^2 %>% round(3)
+  
+  plot<- ggplot(df1[[2]])+
+    theme_classic()+
+    geom_point(aes(x=fitted, y=predicted, color='brms'))+ #
+    theme(legend.position = "none")+
+    labs(x=df1[[2]]$variable_name[1],
+         title=behav,subtitle=paste0("R2 = ", R2))
+  
+  return(plot)
+}
+
+plot_list_behavs_brms <- lapply(fitted_process_brm_list, function(x) func_fit_pred_plots_brms(x))
+
+plot_list_behavs_brms[[1]]
+plot_list_behavs_brms[[2]]
+plot_list_behavs_brms[[3]]
+plot_list_behavs_brms[[4]]
+plot_list_behavs_brms[[5]]
+
+
+```
+
+\#\#\#Repeatability of BRM models
+
+```{r}
+# TASK TWO: calculate repeatability for all behaviors from the brm models. 
+
+ func_var_rpt_brms <- function(variable = behav_vars[1]){
+    mod <- fitted_process_brm_list[[variable]]
+    
+   post <-  mod[[1]]
+    names(post)
+    indiv_var <- post$sigma_ID^2
+    resid_var <- post$sigma_e^2
+    total_var <- indiv_var + resid_var
+    rpt <- indiv_var/total_var
+    mean_rpt <- mean(rpt) #mean repeatability
+    ci.lb <- quantile(rpt,0.025) 
+    ci.ub <- quantile(rpt, 0.975) 
+    #95% CI
+   df2 <- data.frame(variable, mean_rpt, ci.lb, ci.ub, rpt)
+    return(df2)
+ }
+ 
+fitted_process_brm_list_rpt <- lapply(behav_vars, function(x) func_var_rpt_brms(variable = x)) 
+names(fitted_process_brm_list_rpt) <- behav_vars
+
+fitted_process_brm_list_rpt
+
+
+# Function to plot repeatability estimates
+
+df= fitted_process_brm_list_rpt[[1]]
+
+
+
+rpt_density_plot <- function(df){p <- ggplot()+
+  theme_classic()+
+  geom_density(data = df, aes(x=rpt))+
+  labs(title=df$variable[1], x= "repeatability")+
+  scale_y_continuous(expand=c(0,0))+
+  scale_x_continuous(expand=c(0,0), breaks=seq(0,0.5,0.1), lim= c(0,0.5))+
+  geom_vline(xintercept = df$mean_rpt[1])+
+  geom_rect(data = df, aes(xmin = ci.lb[1], xmax = ci.ub[1], ymin=0, ymax=7), alpha=0.005)
+return(p)}
+
+rpt_plots <- lapply(fitted_process_brm_list_rpt, function(x) rpt_density_plot(x))
+
+plot_grid(plotlist = rpt_plots)
+```
+###Plotting population effects
+
+$$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{treatment})+ \beta_2(\text{male}) + \beta_3(\text{treatment}\cdot\text{male}) + e_i$$
+
+$$\text{ID} \sim \text{N}(0,\sigma^2_{\text{ID}})$$
+
+$$e \sim \text{N}(0,\sigma^2_{\text{e}})$$
+
+```{r}
+
+
+func_pop <- function(variable = behav_vars[1]){
+    mod <- fitted_process_brm_list[[variable]]
+    
+   post <-  mod[[1]]
+    names(post)
+    control_female <- post$b0
+    treatment_female_minus_control_female <- post$b1 
+    treatment_female <- post$b1 + control_female
+    control_male_minus_control_female <- post$b2
+    control_male <- post$b2 + control_female
+    treatment_male <- post$b0 + post$b1 + post$b2 + post$b3
+    treatment_male_minus_treatment_female <- treatment_male - treatment_female
+    treatment_male_minus_control_male <- treatment_male - control_male
+df_pop <- data.frame (control_female,treatment_female,treatment_female_minus_control_female,control_male,treatment_male,control_male_minus_control_female,treatment_male_minus_control_male, treatment_male_minus_treatment_female)
+
+str(df_pop)
+data <- cbind(
+    apply(df_pop,2,function(x) mean(x)),
+    apply(df_pop, 2, function(x) quantile(x, 0.025)),
+    apply(df_pop, 2, function(x) quantile(x, 0.975))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$variable <- variable
+data$coef <- factor(data$coef, levels = c("control_female", "treatment_female", "control_male", "treatment_male","treatment_female_minus_control_female", "treatment_male_minus_control_male", "control_male_minus_control_female", "treatment_male_minus_treatment_female"))
+    
+   return(data)
+}
+
+fitted_process_brm_list_pop <- lapply(behav_vars, function(x) func_pop(variable = x)) 
+names(fitted_process_brm_list_pop) <- behav_vars
+
+fitted_process_brm_list_pop
+
+d<- fitted_process_brm_list_pop[[1]]
+
+#Attempt at doing basic forest plots (use geom_pointrange !!! Takes x, ymin, ymax and y to make the points and errorbar in one go; one of the arguements for making the point bigger without the line getting "fatten=5")
+
+func_forest_plots <- function (variable = behav_vars[1]){
+    mod <- fitted_process_brm_list_pop[[variable]]
+    
+   post <-  mod
+    names(post)
+forest <-
+  ggplot(post,
+         aes(x = coef, y = mean.post)) + 
+  geom_errorbar(
+    aes(ymin = ci.lb, ymax = ci.ub),
+    width = 0.4,
+    position = position_dodge(0.3),
+    size = 0.8)+
+  coord_flip()+
+  geom_point(aes(x = coef, y = mean.post), 
+             position = position_dodge(0.3),
+             size = 3) 
+return(forest)
+}
+
+forest_plots_pop <- lapply(behav_vars, function(x) func_forest_plots(variable = x)) 
+
+names(forest_plots_pop) <- behav_vars
+
+forest_plots_pop[1]
+forest_plots_pop[2]
+forest_plots_pop[3]
+forest_plots_pop[4]
+forest_plots_pop[5]
+
+```
+
+\#Function for Bivar Models and Dataframe
+
+```{r}
+#Function for running the bivar model 
+
+
+
+bivar_model <- function(var1,var2, df = Personality_wide){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Group*Sex + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Group*Sex + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+
+
+
+
+# formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID))
+# formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID))
+# bivar_formula <- mvbrmsformula(formula1, formula2)
+# example_Social_Predator <- brm(formula = bivar_formula,
+#                      data = Personality_wide,
+#                      family = gaussian(),
+#                      chains = 1,#note this is just a test model that we need to run fast, real should have more chains
+#                      iter = 2000, warmup = 1000)#and more iterations and more warmup
+# save(example_Social_Predator, file = "./Models/example_bivar.Rdata")
+
+load("./Models/example_bivar.Rdata")
+
+
+#Function to handle bivariate model outputs
+mod_char
+
+
+
+
+Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models
+
+
+# Combinations required for bivar models
+
+# Social Predator
+# Social Novel
+# Social Aggression
+# Social Activity
+# Aggression Novel
+# Aggression Predator
+# Aggression Activity
+# Novel Predator
+# Novel Activity
+# Predator Activity
+```
+#Bivariate models and dataframes
+
+```{r}
+
+#Social Predator Bivariate Model
+
+example_Social_Predator <- bivar_model("zone_05_dur_Social", "zone_05_dur_Predator")
+save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata")
+
+
+social_predator_bivar <- bivar_brm_func("example_Social_Predator")
+
+#Social_Novel Bivariate model
+
+example_Social_Novel <- bivar_model("zone_05_dur_Social", "zone_05_dur_Novel")
+save(example_Social_Novel, file = "./Models/social_novel_bivar.Rdata")
+
+
+social_novel_bivar <- bivar_brm_func("example_Social_Novel")
+
+
+#Social_Aggression Bivariate model
+
+example_Social_Aggression <- bivar_model("zone_05_dur_Social", "zone_05_dur_Aggression")
+save(example_Social_Aggression, file = "./Models/social_aggression_bivar.Rdata")
+
+
+social_aggression_bivar <- bivar_brm_func("example_Social_Aggression")
+
+
+
+
+#Social_Activity Bivariate Model
+
+example_Social_Activity <- bivar_model("zone_05_dur_Social", "tot_dist_Activity")
+save(example_Social_Activity, file = "./Models/social_activity_bivar.Rdata")
+
+
+social_activity_bivar <- bivar_brm_func("example_Social_Activity")
+
+
+#Agression Novel Bivariate Model
+
+example_Aggression_Novel <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Novel")
+save(example_Aggression_Novel, file = "./Models/aggression_novel_bivar.Rdata")
+
+
+aggression_novel_bivar <- bivar_brm_func("example_Aggression_Novel")
+
+#Agression Predator Bivariate Model
+
+example_Aggression_Predator <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Predator")
+save(example_Aggression_Predator, file = "./Models/aggression_predator_bivar.Rdata")
+
+
+aggression_predator_bivar <- bivar_brm_func("example_Aggression_Predator")
+
+
+#Aggression Activity Bivariate Model
+
+example_Aggression_Activity <- bivar_model("zone_05_dur_Aggression", "tot_dist_Activity")
+save(example_Aggression_Activity, file = "./Models/aggression_activity_bivar.Rdata")
+
+aggression_activity_bivar <- bivar_brm_func("example_Aggression_Activity")
+
+
+#Novel Predator Bivariate Model
+
+example_Novel_Predator <- bivar_model("zone_05_dur_Novel", "zone_05_dur_Predator")
+save(example_Novel_Predator, file = "./Models/novel_predator_bivar.Rdata")
+
+
+novel_predator_bivar <- bivar_brm_func("example_Novel_Predator")
+
+
+
+#Novel Activity Bivariate Model
+
+example_Novel_Activity <- bivar_model("zone_05_dur_Novel", "tot_dist_Activity")
+save(example_Novel_Activity, file = "./Models/novel_activity_bivar.Rdata")
+
+novel_activity_bivar <- bivar_brm_func("example_Novel_Activity")
+
+
+#Predator Activity Bivariate Model
+
+example_Predator_Activity <- bivar_model("zone_05_dur_Predator", "tot_dist_Activity")
+save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
+
+predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
+
+
+```
+
+#Practice I cannot remember what this chunk was for?
+
+```{r}
+bivar_combined$behav_syndrome <- paste0(bivar_combined$behaviour1, " vs. ", bivar_combined$behaviour2)
+
+splt <- split(bivar_combined, bivar_combined$behav_syndrome)
+
+df=splt[[1]]
+
+sapply(3:18, function(x) mean(df[,x]))
+
+mean_df <- apply(df[,3:18],2,function(x) mean(x))
+
+ci.lower <- apply(df[,3:18],2, function(x) quantile(x, 0.025))
+
+ci.upper <- apply(df[,3:18],2, function(x) quantile(x, 0.975))
+
+test_df_plot <- data.frame(mean_df,ci.lower,ci.upper)
+
+row.names(test_df_plot)
+
+test_df_plot$param <- row.names(test_df_plot)
+
+test_df_plot$behav_syndrome <- df$behav_syndrome[1]
+
+#I can't remember what this chunk was for, I remmeber you said I will need to do this for something, can't remember what
+
+```
+
+Example plots and tables
+
+```{r}
+
+#Creating multiple plots and subsetting to remove contrasts
+ggplot(subset(bivar_behavs_results,coef %in% c("treatment_male", "control_male", "treatment_female", "control_female"))) + 
+geom_pointrange(mapping=aes(x=coef, y=mean.post, ymin=ci.lb, ymax=ci.ub, color=behavior))+
+  coord_flip()+
+  facet_wrap(~behavior, scales = "free_x")
+#Issues with error bars though :/ Some of the ranges are too small too see
+
+#tab_model() in sJplot actually can create html tables from Bayesian outputs, which can be exported into an html file and then copied and edited manually in word; however this doesn't include correlation analysis :/ however I can add this information manually in word, not sure how else to create a table output atm :/
+
+tab_model(example_Social_Aggression, show.hdi50 = FALSE, bpe = "mean") #bpe calculates mean of posterior, otherwise would be median
+
+
+```
+
+#Tables - importing
+
+```{r}
+t1 <- read_excel("Table1.xlsx", sheet = "Table 1", skip = 2)
+
+#Note: We going to use bivar_behavs_results to get our results for the table, we need to find information in right order to import into table
+
+#which coef do we want? See order:
+
+# female control
+# female treatment
+# male control
+# male treatment
+# treatment - control (female)
+# treatment - control (male)
+# male - female (control)
+# male - female (treatment)
+
+#ROSE R LESSON ! INDEXING
+unique(bivar_behavs_results$coef)
+
+coef_names <- c("control_female", "treatment_female", "control_male", "treatment_male", "treatment_female_minus_control_female", "treatment_male_minus_control_male", "control_male_minus_control_female", "treatment_male_minus_treatment_female")
+
+df <- bivar_behavs_results[bivar_behavs_results$behavior=="Activity",]
+
+x=coef_names[1]
+
+df[df$coef==x,c("mean.post", "ci.lb", "ci.ub")]
+
+lapply(coef_names, function(x) df[df$coef==x,c("mean.post", "ci.lb", "ci.ub")])
+
+table_example <- bind_rows(lapply(coef_names, function(x) df[df$coef==x,c("mean.post", "ci.lb", "ci.ub")])) 
+
+t1[2:9,3:5] <- round(table_example, 3)
+
+dim(table_example)
+
+dim(t1[2:9,3:5])
+
+write.csv(t1, file="t1.csv", row.names=FALSE, na="")
+
+# 
+# df[c(2,6),]
+# 
+# which(bivar_behavs_results$behavior=="Activity")
+
+```
+
