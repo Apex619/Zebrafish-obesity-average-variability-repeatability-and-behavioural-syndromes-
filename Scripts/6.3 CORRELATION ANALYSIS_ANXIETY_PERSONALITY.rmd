@@ -102,9 +102,11 @@ return(bivar)
 example_anxiety_predator_low <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety")
 
 #Combinations required for bivar models
-anxiety_personality_vars <- c("tot_dist_Anxiety", "low_dur_Anxiety", "tot_dist_Activity", "zone_05_dur_Aggression", "zone_05_dur_Predator", "zone_05_dur_Social", "zone_05_dur_Novel")
-
-combinatons <- combn(anxiety_personality_vars, 2) 
+# low dur vs. zone_05_dur_aggression
+# low dur vs. zone_05_dur_predator
+# low_dur vs. zone_05_dur_social
+# low_dur vs. zone_05_dur_novel
+# low_dur vs. tot_dist_activity
 ```
 
 
