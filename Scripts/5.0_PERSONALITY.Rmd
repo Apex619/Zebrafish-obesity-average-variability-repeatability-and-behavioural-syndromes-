@@ -78,7 +78,7 @@ Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression
 Personality_wide <- dplyr::left_join(Post_assay, Personality_wide)
 
 # five behaviours
-behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") #modified to include activity so we can run functions below
+behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") 
 ```
 
 
@@ -121,10 +121,6 @@ return(bivar)
 # save(example_Social_Predator, file = "./Models/example_bivar.Rdata")
 
 load("./Models/example_bivar.Rdata")
-
-
-#Function to handle bivariate model outputs
-mod_char
 
 
 

@@ -1,0 +1,112 @@
+---
+title: "CORRELATION ANALYSIS"
+author: "Hamza"
+date: "28/01/2021"
+output: html_document
+---
+
+### Load packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(dplyr, brms, stringr, ggplot2,readxl)
+
+```
+
+STEPS
+1. Join dataframes to make a new wide data frame of anxiety and personality (matched depending on weeks of measurement)
+2. Exploratory analysis with mixed models to decide which behaviors are repeatable and can be used in analysis
+3. Correlation analysis using brms and stan
+
+### Import Data - Anxiety
+```{r, include=FALSE}
+Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data_cor.xlsx")
+
+str(Anxiety_Joined)
+
+#Convert characters into factors
+
+Anxiety_Joined$Sex <- as.factor(Anxiety_Joined$Sex)
+Anxiety_Joined$Group <- as.factor(Anxiety_Joined$Group)
+Anxiety_Joined$Fish_ID <- as.factor(Anxiety_Joined$Fish_ID)
+Anxiety_Joined$Day_Anxiety <- as.factor(Anxiety_Joined$Day_Anxiety)
+Anxiety_Joined$Tank <- as.factor(Anxiety_Joined$Tank)
+Anxiety_Joined$M.ID <- as.factor(Anxiety_Joined$M.ID)
+
+```
+
+#Joining personality and anxiety data frame
+```{r}
+#Filtering to mutate new columns to add "M.ID" for personality dataset
+
+df <- Personality_wide %>% filter(Date == "29/07/2019") %>% mutate(M.ID = "1")
+df2 <- Personality_wide %>% filter(Date == "30/07/2019") %>% mutate(M.ID = "1")
+df3 <- Personality_wide %>% filter(Date == "20/08/2019") %>% mutate(M.ID = "2")
+df4 <- Personality_wide %>% filter(Date == "21/08/2019") %>% mutate(M.ID = "2")
+df5 <- Personality_wide %>% filter(Date == "12/09/2019") %>% mutate(M.ID = "3")
+df6 <- Personality_wide %>% filter(Date == "13/09/2019") %>% mutate(M.ID = "3")
+
+Personality_wide_new <- bind_rows(df, df2, df3, df4, df5, df6)
+
+dplyr::rename(Personality_wide_new, Day_Personality = Day, Date_Personality = Date)
+
+#Joining anxiety and personality data frames
+
+anxiety_personality_wide <- left_join(Anxiety_Joined, Personality_wide_new, by = c("Fish_ID", "Group", "M.ID", "Sex", "Mark"))
+
+str(anxiety_personality_wide)
+
+# Change all character columns into factors
+anxiety_personality_wide %>% type.convert() -> anxiety_personality_wide 
+
+```
+
+
+
+
+#Function for running bivar model
+```{r}
+# We will only be using one anxiety variable, that is time spent in the low zone (repeatbable and most relevant in zebrafish anxiet literature)
+
+
+#Example model
+options(mc.scores = parallel::detectCores())
+
+formula1 <- bf(tot_dist_Anxiety ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
+formula2 <- bf(tot_dist_Predator ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+example_anxiety_predator_dist <- brm(formula = bivar_formula,
+                  data = anxiety_personality_wide,
+                    family = gaussian(),
+                   chains = 1,
+                    iter = 2000, warmup = 1000)
+
+
+#Function for other models
+bivar_model <- function(var1,var2, df = anxiety_personality_wide){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+example_anxiety_predator_low <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety")
+
+#Combinations required for bivar models
+anxiety_personality_vars <- c("tot_dist_Anxiety", "low_dur_Anxiety", "tot_dist_Activity", "zone_05_dur_Aggression", "zone_05_dur_Predator", "zone_05_dur_Social", "zone_05_dur_Novel")
+
+combinatons <- combn(anxiety_personality_vars, 2) 
+```
+
+
+
+

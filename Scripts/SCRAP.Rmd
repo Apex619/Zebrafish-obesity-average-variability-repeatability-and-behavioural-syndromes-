@@ -1113,7 +1113,7 @@ names(fitted_process_brm_list) <- behav_vars
 # note that each item in the list is, itself, a list. If you want to get the first element of each list (pop_posterior), you can go lapply(fitted_process_brm_list, function(x) x[[1]])
 ```
 
-\#\#\#Plotting
+###Plotting
 
 ```{r}
 
@@ -1145,7 +1145,7 @@ plot_list_behavs_brms[[5]]
 
 ```
 
-\#\#\#Repeatability of BRM models
+###Repeatability of BRM models
 
 ```{r}
 # TASK TWO: calculate repeatability for all behaviors from the brm models. 
@@ -1275,7 +1275,7 @@ forest_plots_pop[5]
 
 ```
 
-\#Function for Bivar Models and Dataframe
+#Function for Bivar Models and Dataframe
 
 ```{r}
 #Function for running the bivar model 
@@ -1564,7 +1564,7 @@ func <- function(df){
 #for rprt contrasts
 ```
 
-Using Shapiro-Wilk normality test\
+###Using Shapiro-Wilk normality test\
 See ?shapiro.test More normal = higher W value and smaller p value
 
 ```{r}
