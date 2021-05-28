@@ -1712,3 +1712,63 @@ bivar_density_plots
 
 
 ```
+
+
+
+
+#Rpt contrasts - anxiety
+```{r}
+#Function for contrasts 
+
+func_rpt_contrasts <- function(behav = "aggression", mod_processed = bivar_control_treatment){
+mod <- mod_processed %>% dplyr::mutate(rpt_control = dplyr::case_when(behaviour1_control == behav ~ rpt1_control,
+                                                behaviour2_control == behav ~ rpt2_control),
+                                 rpt_treatment = dplyr::case_when(behaviour1_treatment == behav ~ rpt1_treatment,
+                                                behaviour2_treatment == behav ~ rpt2_treatment))
+    rpt_control <- mod$rpt_control
+    rpt_treatment <- mod$rpt_treatment
+    rpt_treatment_minus_rpt_control <- rpt_treatment - rpt_control # ROSE: you've already done this above
+
+    
+
+    
+  
+    
+df <- data.frame(rpt_treatment_minus_rpt_control)
+
+
+
+str(df)
+data <- cbind(
+    apply(df,2,function(x) mean(x,na.rm = TRUE)),
+    apply(df, 2, function(x) quantile(x, 0.025,na.rm = TRUE)),
+    apply(df, 2, function(x) quantile(x, 0.975,na.rm = TRUE))
+) %>% as.data.frame()
+
+names(data) <- c("mean.post", "ci.lb", "ci.ub")
+data$coef <- (row.names(data))
+data$behavior <- behav
+data$coef <- factor(data$coef, levels = c("rpt_treatment_minus_rpt_control"))
+
+
+    
+   return(data)
+}
+
+behaviors <- c("activity", "novel", "social", "predator", "aggression")
+
+rpt_behav_contrasts <- dplyr::bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
+
+
+#plot
+
+ggplot(rpt_behav_contrasts) + 
+geom_pointrange(aes(x = behavior, y = mean.post, ymin = ci.lb, ymax = ci.ub))+
+geom_hline(yintercept=0, linetype="dotted")+
+coord_flip()
+
+#This should essentially be the same as "social vs anxiety", "predator vs anxiety" etc.
+
+#Basically what this plot means, is that repeatabilities between control and treatments differ (or not) between the two behaviors (anxiety response and behavioral trait) ?
+
+```

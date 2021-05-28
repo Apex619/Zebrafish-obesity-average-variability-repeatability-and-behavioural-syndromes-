@@ -10,9 +10,13 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-#checks for installation and loads packages
-pacman::p_load(dplyr, brms, stringr, ggplot2,readxl)
-
+#loads packages
+library(brms)
+library(stringr)
+library(ggplot2)
+library(dplyr)
+library(ggpubr)
+library(readxl)
 ```
 
 STEPS
@@ -61,35 +65,26 @@ str(anxiety_personality_wide)
 # Change all character columns into factors
 anxiety_personality_wide %>% type.convert() -> anxiety_personality_wide 
 
+anxiety_personality_wide <- as.data.frame(anxiety_personality_wide) #convert to data frame
+
 ```
 
 
 
 
-#Function for running bivar model
+#Function for running bivar models (both control and treatment combined)
 ```{r}
-# We will only be using one anxiety variable, that is time spent in the low zone (repeatbable and most relevant in zebrafish anxiet literature)
-
-
-#Example model
-options(mc.scores = parallel::detectCores())
-
-formula1 <- bf(tot_dist_Anxiety ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
-formula2 <- bf(tot_dist_Predator ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
-bivar_formula <- mvbrmsformula(formula1, formula2)
-example_anxiety_predator_dist <- brm(formula = bivar_formula,
-                  data = anxiety_personality_wide,
-                    family = gaussian(),
-                   chains = 1,
-                    iter = 2000, warmup = 1000)
+# We will only be using one anxiety variable, that is time spent in the low zone (repeatbable and most relevant in zebrafish anxiety literature)
 
 
 #Function for other models
+#NOTE: Need to increase chains and iterations once prelim analysis complete
+
 bivar_model <- function(var1,var2, df = anxiety_personality_wide){
   df$response1 <- df[,var1]
   df$response2 <- df[,var2]
-formula1 <- bf(response1 ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
-formula2 <- bf(response2 ~ Group*Sex + M.ID + (1 | 2 |Fish_ID))
+formula1 <- bf(response1 ~ Group*Sex  + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Group*Sex  + (1 | 2 |Fish_ID))
 bivar_formula <- mvbrmsformula(formula1, formula2)
 bivar <- brm(formula = bivar_formula,
                      data = df,
@@ -99,15 +94,326 @@ bivar <- brm(formula = bivar_formula,
 return(bivar)
 }
 
-example_anxiety_predator_low <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety")
-
 #Combinations required for bivar models
 # low dur vs. zone_05_dur_aggression
-# low dur vs. zone_05_dur_predator
+# low dur vs. zone_05_dur_predator 
 # low_dur vs. zone_05_dur_social
 # low_dur vs. zone_05_dur_novel
 # low_dur vs. tot_dist_activity
+
+#run and save bivar models
+anxiety_predator <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety") 
+save(anxiety_predator, file = "../Models/anxiety_predator.Rdata")
+
+anxiety_aggression <- bivar_model("zone_05_dur_Aggression", "low_dur_Anxiety") 
+save(anxiety_aggression, file = "../Models/anxiety_aggression.Rdata")
+
+anxiety_social <- bivar_model("zone_05_dur_Social", "low_dur_Anxiety") 
+save(anxiety_social, file = "../Models/anxiety_social.Rdata")
+
+anxiety_novel <- bivar_model("zone_05_dur_Novel", "low_dur_Anxiety") 
+save(anxiety_novel, file = "../Models/anxiety_novel.Rdata")
+
+anxiety_activity <- bivar_model("tot_dist_Activity", "low_dur_Anxiety") 
+save(anxiety_activity, file = "../Models/anxiety_activity.Rdata")
+
+
+
+
 ```
+
+#Running bivar models for treatment and control groups separately
+```{r}
+
+anxiety_personality_wide_control <- subset(anxiety_personality_wide, anxiety_personality_wide$Group == "Control")
+anxiety_personality_wide_treatment <- subset(anxiety_personality_wide, anxiety_personality_wide$Group == "Treatment")
+
+
+bivar_model_control <- function(var1,var2, df = anxiety_personality_wide_control){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex  + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Sex  + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+bivar_model_treatment <- function(var1,var2, df = anxiety_personality_wide_treatment){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex  + (1 | 2 |Fish_ID))
+formula2 <- bf(response2 ~ Sex  + (1 | 2 |Fish_ID))
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+```
+
+
+#Control bivar models
+```{r}
+#Combinations required for bivar models
+# low dur vs. zone_05_dur_aggression
+# low dur vs. zone_05_dur_predator 
+# low_dur vs. zone_05_dur_social
+# low_dur vs. zone_05_dur_novel
+# low_dur vs. tot_dist_activity
+
+#NOTE: RESPONSE 1 IS ALWAYS THE FIRST TERM IN THE MODEL NAME EG. "PREDATOR_ANXIETY" RESPONSE 1 IS ANXIETY, RESPONSE 2 IS CONTROL
+
+#run and save bivar models
+predator_anxiety_control <- bivar_model_control("zone_05_dur_Predator", "low_dur_Anxiety") 
+save(predator_anxiety_control, file = "../Models/predator_anxiety_control.Rdata")
+
+aggression_anxiety_control <- bivar_model_control("zone_05_dur_Aggression", "low_dur_Anxiety") 
+save(aggression_anxiety_control, file = "../Models/aggression_anxiety_control.Rdata")
+
+social_anxiety_control <- bivar_model_control("zone_05_dur_Social", "low_dur_Anxiety") 
+save(social_anxiety_control, file = "../Models/social_anxiety_control.Rdata")
+
+novel_anxiety_control <- bivar_model_control("zone_05_dur_Novel", "low_dur_Anxiety") 
+save(novel_anxiety_control, file = "../Models/novel_anxiety_control.Rdata")
+
+activity_anxiety_control <- bivar_model_control("tot_dist_Activity", "low_dur_Anxiety") 
+save(activity_anxiety_control, file = "../Models/activity_anxiety_control.Rdata")
+```
+
+Treatment bivar models
+```{r}
+predator_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Predator", "low_dur_Anxiety") 
+save(predator_anxiety_treatment, file = "../Models/predator_anxiety_treatment.Rdata")
+
+aggression_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "low_dur_Anxiety") 
+save(aggression_anxiety_treatment, file = "../Models/aggression_anxiety_treatment.Rdata")
+
+social_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Social", "low_dur_Anxiety") 
+save(social_anxiety_treatment, file = "../Models/social_anxiety_treatment.Rdata")
+
+novel_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Novel", "low_dur_Anxiety") 
+save(novel_anxiety_treatment, file = "../Models/novel_anxiety_treatment.Rdata")
+
+activity_anxiety_treatment <- bivar_model_treatment("tot_dist_Activity", "low_dur_Anxiety") 
+save(activity_anxiety_treatment, file = "../Models/activity_anxiety_treatment.Rdata")
+```
+
+#load bivar models
+```{r}
+load("../Models/predator_anxiety_control.Rdata")
+load("../Models/aggression_anxiety_control.Rdata")
+load("../Models/social_anxiety_control.Rdata")
+load("../Models/novel_anxiety_control.Rdata")
+load("../Models/activity_anxiety_control.Rdata")
+
+load("../Models/predator_anxiety_treatment.Rdata")
+load("../Models/aggression_anxiety_treatment.Rdata")
+load("../Models/social_anxiety_treatment.Rdata")
+load("../Models/novel_anxiety_treatment.Rdata")
+load("../Models/activity_anxiety_treatment.Rdata")
+
+```
+
+
+#Population parameters control
+```{r}
+#Vector of model names to be able to use with lapply
+bivar_models_anxiety_control <- c("predator_anxiety_control", "aggression_anxiety_control","social_anxiety_control", "novel_anxiety_control","activity_anxiety_control")
+
+bivar_brm_func <- function(mod_char){
+mod <- get(mod_char)
+post <- as.data.frame(mod)
+
+# use stringr::str_split for this
+inter_key <- stringr::str_split(mod_char, "_")[[1]] 
+
+
+behaviour1 <- inter_key[1]
+behaviour2 <- inter_key[2]
+response1 <- "response1"
+response2 <- "response2"
+
+# understand the parameters in the bivariate model:
+names(post)
+#what do we want to get?
+#y = B0 + fish_ID + B1*treatment + B2*male+ B3*treatment*male 
+cols <- names(post)
+cols
+
+B0_1 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, "Intercept") & ! stringr::str_detect(cols,"Fish")] 
+B1_1 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, "GroupTreatment") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "Sex")] 
+B2_1 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "GroupTreatment")] 
+B3_1 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & stringr::str_detect(cols, "GroupTreatment")]
+B0_2 <- post[,stringr::str_detect(cols, response2)  & stringr::str_detect(cols, "Intercept") & ! stringr::str_detect(cols,"Fish")] 
+B1_2 <- post[,stringr::str_detect(cols, response2)  & stringr::str_detect(cols, "GroupTreatment") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "Sex")] 
+B2_2 <- post[,stringr::str_detect(cols, response2)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & ! stringr::str_detect(cols, "GroupTreatment")] 
+B3_2 <- post[,stringr::str_detect(cols, response2)  & stringr::str_detect(cols, "Sex") & ! stringr::str_detect(cols,"Fish") & stringr::str_detect(cols, "GroupTreatment")]
+sigma_ID1 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, "sd_Fish")]
+sigma_ID2 <- post[,stringr::str_detect(cols, response2)  & stringr::str_detect(cols, "sd_Fish")]
+cor_ID1_ID2 <- post[,stringr::str_detect(cols, response1)  & stringr::str_detect(cols, response2) & stringr::str_detect(cols, "cor_Fish")]
+sigma_e1 <- post[,stringr::str_detect(cols, response1) & stringr::str_detect(cols, "sigma_")]
+sigma_e2 <- post[,stringr::str_detect(cols, response2) & stringr::str_detect(cols, "sigma_")]
+cor_e1_e2 <- post[,stringr::str_detect(cols, response1) & stringr::str_detect(cols, response2) & stringr::str_detect(cols, "rescor_")]
+tot_var1 <- sigma_ID1 + sigma_e1
+tot_var2 <- sigma_ID2 + sigma_e2
+rpt1 <- sigma_ID1/tot_var1
+rpt2 <- sigma_ID2/tot_var2
+
+
+df <- data.frame(behaviour1,behaviour2, B0_1, B1_1, B2_1, B3_1, B0_2,B1_2,B2_2,B3_2,sigma_ID1,sigma_ID2,cor_ID1_ID2,sigma_e1,sigma_e2,cor_e1_e2,rpt1,rpt2)
+return(df)
+}
+
+bivar_processed_control <- lapply(bivar_models_anxiety_control, function(x) bivar_brm_func(x))
+
+bivar_combined_control <- dplyr::bind_rows(bivar_processed_control)
+
+
+```
+
+#Population parameters treatment
+```{r}
+#Vector of model names to be able to use with lapply
+bivar_models_anxiety_treatment <- c("predator_anxiety_treatment", "aggression_anxiety_treatment","social_anxiety_treatment", "novel_anxiety_treatment","activity_anxiety_treatment")
+
+bivar_processed_treatment <- lapply(bivar_models_anxiety_treatment, function(x) bivar_brm_func(x))
+
+bivar_combined_treatment <- dplyr::bind_rows(bivar_processed_treatment)
+```
+
+#Contrast analysis between control and treatment
+```{r}
+#Rename columns
+
+colnames(bivar_combined_control) <- c("behaviour1_control", "behaviour2_control","B0_1_control","B2_1_control","B0_2_control", "B2_2_control", "sigma_ID1_control", "sigma_ID2_control","cor_ID1_ID2_control","sigma_e1_control","sigma_e2_control","cor_e1_e2_control","rpt1_control","rpt2_control")
+
+colnames(bivar_combined_treatment) <- c("behaviour1_treatment", "behaviour2_treatment","B0_1_treatment","B2_1_treatment","B0_2_treatment", "B2_2_treatment", "sigma_ID1_treatment", "sigma_ID2_treatment","cor_ID1_ID2_treatment","sigma_e1_treatment","sigma_e2_treatment","cor_e1_e2_treatment","rpt1_treatment","rpt2_treatment")
+
+#Add columns together to create a new wide data frame
+
+bivar_control_treatment <- dplyr::bind_cols(bivar_combined_control, bivar_combined_treatment)
+
+#Checking model results same order
+paste0(bivar_control_treatment$behaviour1_control, bivar_control_treatment$behaviour2_control) == paste0(bivar_control_treatment$behaviour1_treatment, bivar_control_treatment$behaviour2_treatment)
+
+#All TRUE
+
+
+#Getting treatment difference in variance components
+
+names(bivar_control_treatment)
+
+contrasts_var <- bivar_control_treatment %>% dplyr::mutate(sigma_ID1_treatment_minus_control=sigma_ID1_treatment-sigma_ID1_control,
+                                   sigma_ID2_treatment_minus_control=sigma_ID2_treatment-sigma_ID2_control,
+                                   cor_ID1_ID2_treatment_minus_control=cor_ID1_ID2_treatment-cor_ID1_ID2_control,
+                                   sigma_e1_treatment_minus_control=sigma_e1_treatment-sigma_e1_control,
+                                   sigma_e2_treatment_minus_control=sigma_e2_treatment-sigma_e2_control,
+                                   cor_e1_e2_treatment_minus_control=cor_e1_e2_treatment-cor_e1_e2_control,
+                                   rpt1_treatment_minus_control=rpt1_treatment-rpt1_control,
+                                   rpt2_treatment_minus_control=rpt2_treatment-rpt2_control,
+                                   mod_id=paste0(behaviour1_control, " vs ",behaviour2_control)) %>%
+  dplyr::rename(behaviour1=behaviour1_control, behaviour2=behaviour2_control) %>%
+  dplyr::select(behaviour1, behaviour2,mod_id,
+         sigma_ID1_treatment_minus_control,
+                                   sigma_ID2_treatment_minus_control,
+                                   cor_ID1_ID2_treatment_minus_control,
+                                   sigma_e1_treatment_minus_control,
+                                   sigma_e2_treatment_minus_control,
+                                   cor_e1_e2_treatment_minus_control,
+                                   rpt1_treatment_minus_control,
+                                   rpt2_treatment_minus_control,
+         cor_ID1_ID2_treatment,
+         cor_ID1_ID2_control)
+
+#Contrasts 
+
+contrasts_var %>% dplyr::group_by(mod_id) %>% dplyr::summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control), cor_control = mean(cor_ID1_ID2_control),cor_treatment = mean(cor_ID1_ID2_treatment))
+
+#need to do separate data frames and then join 
+df <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x)
+  
+data.frame(est=mean(x$cor_ID1_ID2_treatment_minus_control),
+lower_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.975))))
+
+df$mod_id <- unique(contrasts_var$mod_id)
+
+df2 <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x)
+  
+data.frame(est=mean(x$cor_ID1_ID2_treatment),
+lower_bounds=quantile(x$cor_ID1_ID2_treatment, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_treatment, 0.975))))
+
+df2$mod_id <- unique(contrasts_var$mod_id)
+
+rownames(df2) <- c("predator vs anxiety", "aggression vs anxiety", "social vs anxiety", "novel vs anxiety", "activity vs anxiety")
+
+df2 <- df2 %>% mutate(mod_id = rownames(df2))
+
+df3 <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x)
+  
+data.frame(est=mean(x$cor_ID1_ID2_control),
+lower_bounds=quantile(x$cor_ID1_ID2_control, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_control, 0.975))))
+
+df3$mod_id <- unique(contrasts_var$mod_id)
+
+rownames(df3) <- c("predator vs anxiety", "aggression vs anxiety", "social vs anxiety", "novel vs anxiety", "activity vs anxiety")
+
+df3 <- df3 %>% mutate(mod_id = rownames(df3))
+
+df_joined <- bind_rows(df, df2, df3)
+
+df_joined <- df_joined %>% mutate(condition = c("contrast", "contrast", "contrast", "contrast", "contrast", "treatment", "treatment","treatment", "treatment","treatment","control","control","control","control","control"))
+
+#plot
+
+#just for contrasts
+ggplot(df) + 
+geom_pointrange(aes(x = mod_id, y = est, ymin = lower_bounds, ymax = upper_bounds))+
+geom_hline(yintercept=0, linetype="dotted")+
+coord_flip()
+
+#means and contrasts
+
+anxiety_behav_plot <- ggplot(df_joined, aes(x=mod_id, y=est, colour=condition)) +
+geom_errorbar(aes(ymin=lower_bounds, ymax=upper_bounds), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = mod_id, y = est), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+   theme(axis.title.y=element_blank())+
+  theme_classic()+
+  scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+  theme(axis.title.y=element_blank())+
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())+
+  ggtitle("Behavioral Syndrome - (Anxiety & Personality)")
+ 
+anxiety_behav_plot
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

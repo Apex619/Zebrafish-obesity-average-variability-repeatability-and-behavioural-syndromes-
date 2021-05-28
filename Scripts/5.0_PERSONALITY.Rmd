@@ -382,7 +382,13 @@ bivar_behavs_results <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_
 
 
 
-#Comparing Control and Treatment groups To do this, we want to subset by control and treatment groups and then run the 2x10 models again without "group" as a fixed effect
+#Comparing Control and Treatment groups 
+
+To do this, we want to subset by control and treatment groups and then run the 2x10 models again without "group" as a fixed effect
+
+we looked for a treatment effect in BETWEEN-INDIVIDUAL CORRELATION  (between traits)
+
+and we looked for a treatment effect in repeatability (within traits)
 
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{male})+ e_i$$
 
@@ -786,12 +792,13 @@ contrasts_var <- bivar_control_treatment %>% dplyr::mutate(sigma_ID1_treatment_m
                                    sigma_e2_treatment_minus_control,
                                    cor_e1_e2_treatment_minus_control,
                                    rpt1_treatment_minus_control,
-                                   rpt2_treatment_minus_control)
+                                   rpt2_treatment_minus_control, cor_ID1_ID2_treatment,
+         cor_ID1_ID2_control)
 
 
 #Contrasts behavioral syndromes
 
-contrasts_var %>% dplyr::group_by(mod_id) %>% dplyr::summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control))
+contrasts_var %>% dplyr::group_by(mod_id) %>% dplyr::summarise(behav_syn_mean = mean(cor_ID1_ID2_treatment_minus_control), cor_control = mean(cor_ID1_ID2_control),cor_treatment = mean(cor_ID1_ID2_treatment))
 
 df <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x) data.frame(est=mean(x$cor_ID1_ID2_treatment_minus_control),
 lower_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.025),
@@ -799,11 +806,49 @@ upper_bounds=quantile(x$cor_ID1_ID2_treatment_minus_control, 0.975))))
 
 df$mod_id <- unique(contrasts_var$mod_id)
 
+df2 <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x)
+  
+data.frame(est=mean(x$cor_ID1_ID2_treatment),
+lower_bounds=quantile(x$cor_ID1_ID2_treatment, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_treatment, 0.975))))
+
+df2$mod_id <- unique(contrasts_var$mod_id)
+
+df3 <- dplyr::bind_rows(lapply(split(contrasts_var, contrasts_var$mod_id), function(x)
+  
+data.frame(est=mean(x$cor_ID1_ID2_control),
+lower_bounds=quantile(x$cor_ID1_ID2_control, 0.025),
+upper_bounds=quantile(x$cor_ID1_ID2_control, 0.975))))
+
+df3$mod_id <- unique(contrasts_var$mod_id)
+
+df_joined <- bind_rows(df, df2, df3)
+
+df_joined <- df_joined %>% mutate(condition = c("contrast", "contrast", "contrast", "contrast", "contrast","contrast", "contrast", "contrast", "contrast", "contrast", "treatment", "treatment","treatment", "treatment","treatment","treatment", "treatment","treatment", "treatment","treatment","control","control","control","control","control","control","control","control","control","control"))
+
+#plots
+#just for contrasts
 ggplot(df) + 
 geom_pointrange(aes(x = mod_id, y = est, ymin = lower_bounds, ymax = upper_bounds))+
 geom_hline(yintercept=0, linetype="dotted")+
 coord_flip()
 
+#means for both control and treatment as well as contrast
+behav_syndrome_personality_plot <- ggplot(df_joined, aes(x=mod_id, y=est, colour=condition)) +
+geom_errorbar(aes(ymin=lower_bounds, ymax=upper_bounds), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = mod_id, y = est), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+   theme(axis.title.y=element_blank())+
+  theme_classic()+
+  scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+  theme(axis.title.y=element_blank())+
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())+
+  ggtitle("Behavioral Syndrome - Personality")
+ 
+behav_syndrome_personality_plot
 ```
 
 #Function and contrasts for repeatabilities contrasts
@@ -824,7 +869,7 @@ mod <- mod_processed %>% dplyr::mutate(rpt_control = dplyr::case_when(behaviour1
     
   
     
-df <- data.frame(rpt_treatment_minus_rpt_control)
+df <- data.frame(rpt_treatment_minus_rpt_control, rpt_control, rpt_treatment)
 
 
 
@@ -849,14 +894,28 @@ behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
 rpt_behav_contrasts <- dplyr::bind_rows(lapply(behaviors, function(x) func_rpt_contrasts(x)))
 
+rpt_behav_contrasts <- rpt_behav_contrasts %>% select(-coef)
+
+rpt_behav_contrasts <- rpt_behav_contrasts %>% mutate(condition = c("contrast", "control", "treatment","contrast", "control", "treatment","contrast", "control", "treatment","contrast", "control", "treatment","contrast", "control", "treatment"))
+
 
 #plot
 
-ggplot(rpt_behav_contrasts) + 
-geom_pointrange(aes(x = behavior, y = mean.post, ymin = ci.lb, ymax = ci.ub))+
-geom_hline(yintercept=0, linetype="dotted")+
-coord_flip()
-
+rpt_behavs_plot <- ggplot(rpt_behav_contrasts, aes(x=behavior, y=mean.post, colour=condition)) +
+geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = behavior, y = mean.post), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+   theme(axis.title.y=element_blank())+
+  theme_classic()+
+  scale_color_manual(values=c("#000000", "#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+  theme(axis.title.y=element_blank())+
+   theme(legend.position = "bottom")+
+    theme(legend.title=element_blank())+
+  ggtitle("Repeatability differences between control and treatment groups")
+ 
+rpt_behavs_plot
 
 
 ```
