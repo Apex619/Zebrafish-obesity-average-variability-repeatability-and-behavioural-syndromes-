@@ -749,7 +749,7 @@ ggplot(bivar_combined_treatment) + theme_classic() +
 ```
 
 
-#Contrast Analysis
+#Contrast Analysis and plot
 
 ```{r}
 
