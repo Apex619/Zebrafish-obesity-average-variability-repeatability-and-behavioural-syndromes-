@@ -15,7 +15,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 
 #checks for installation and loads packages
-pacman::p_load(dplyr, brms, stringr, ggplot2)
+pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr)
 
 ```
 

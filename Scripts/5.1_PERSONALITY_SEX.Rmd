@@ -49,7 +49,66 @@ Personality_Control_Male_Predator <- subset(Predator_Control, Predator_Control$S
 Personality_Control_Female_Predator <- subset(Predator_Control, Predator_Control$Sex == "female")
 Personality_Treatment_Male_Predator <- subset(Predator_Treatment, Predator_Treatment$Sex == "male")
 Personality_Treatment_Female_Predator <- subset(Predator_Treatment, Predator_Treatment$Sex == "female")
+
+#Control and treatment males and females for Activity phase
+Personality_Control_Male_Activity <- subset(Post_assay_Control, Post_assay_Control$Sex == "male")
+Personality_Control_Female_Activity <- subset(Post_assay_Control, Post_assay_Control$Sex == "female")
+Personality_Treatment_Male_Activity <- subset(Post_assay_Treatment, Post_assay_Treatment$Sex == "male")
+Personality_Treatment_Female_Activity <- subset(Post_assay_Treatment, Post_assay_Treatment$Sex == "female")
 ```
+
+
+#Activity analysis
+```{r}
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_tot_dist_Activity(Personality_Control_Male_Activity) -> rpt_post_assay_control_male
+rpt_post_assay_control_male
+rpt_tot_dist_Activity(Personality_Treatment_Male_Activity) -> rpt_post_assay_treatment_male
+rpt_post_assay_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_tot_dist_Activity(Personality_Control_Female_Activity) -> rpt_post_assay_control_female
+rpt_post_assay_control_female
+rpt_tot_dist_Activity(Personality_Treatment_Female_Activity) -> rpt_post_assay_treatment_female
+rpt_post_assay_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_tot_dist_Activity(Personality_Control_Male_Activity) -> within_between_activity_control_male
+within_between_activity_control_male
+rpt_within_tot_dist_Activity(Personality_Treatment_Male_Activity) -> within_between_activity_treatment_male
+within_between_activity_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_tot_dist_Activity(Personality_Control_Female_Activity) -> within_between_activity_control_female
+within_between_activity_control_female
+rpt_within_tot_dist_Activity(Personality_Treatment_Female_Activity) -> within_between_activity_treatment_female
+within_between_activity_treatment_female
+
+
+
+#Obtaining differences between repeatabilities of males and females in the control group
+Control_activity_boot_male <- unlist_rptr(rpt_post_assay_control_male) #unlisting from the males
+Control_activity_boot_female <- unlist_rptr(rpt_post_assay_control_female) #unlisting from the females
+activity_diff_control <- difference_boot(Control_activity_boot_male,Control_activity_boot_female) #calculating the difference between males and females in the control group
+q_post_assay_control <- quantiles_diff_boot(activity_diff_control) #obtaining 95% CI
+m_post_assay_control <- mean(activity_diff_control) #Obtaining mean
+m_post_assay_control
+q_post_assay_control
+
+#Obtaining differences between repeatabilities of males and females in the treatment group
+treatment_activity_boot_male <- unlist_rptr(rpt_post_assay_treatment_male) #unlisting from the males
+treatment_activity_boot_female <- unlist_rptr(rpt_post_assay_treatment_female) #unlisting from the females
+activity_diff_treatment <- difference_boot(treatment_activity_boot_male,treatment_activity_boot_female) #calculating the difference between males and females in the treatment group
+q_post_assay_treatment <- quantiles_diff_boot(activity_diff_treatment) #obtaining 95% CI
+m_post_assay_treatment <- mean(activity_diff_treatment) #Obtaining mean
+m_post_assay_treatment
+q_post_assay_treatment
+```
+
+
 
 ### Time spent near the stimulus screen analysis
 

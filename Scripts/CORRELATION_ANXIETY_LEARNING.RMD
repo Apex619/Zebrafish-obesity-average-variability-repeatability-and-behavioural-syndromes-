@@ -1,0 +1,169 @@
+---
+title: "CORRELATION_ANXIEYTY_LEARNING"
+author: "Hamza"
+date: "09/06/2021"
+output: html_document
+---
+#Load Packages
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr, purr, sjPlot, emmeans)
+
+# Load custom function to extract data 
+source("../Scripts/functions_learning.R")
+```
+
+#Load data, collapse into single means and join
+```{r}
+### Learning
+
+
+## importing csv's & transforming data
+path <- paste0("../Data/Learning/Day", 1:8, "/")
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x))
+
+dat <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble() %>% group_by(filepath, date, marking, type, test, unit, variable, arena) %>% summarise(total = sum(number), mean = mean(number)) %>% filter(variable == "ZONE_TIMERS") %>% group_by(type, marking, test, unit, filepath, date) %>% summarise(sum_time = sum(total), arena = unique(arena)) %>% arrange(filepath, marking, type, test) %>% mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% add_day %>% add_exp %>% add_zone %>% add_tod %>% add_set %>% mutate(day = as.numeric(day)) %>% rename(fishID = marking)
+
+dat
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2probe #We will use this dataset as it takes into acocunt the first 2 mins of the probe period, which the literature says is the most important as fish tend to forget after 2 mins, however we have options below for analysis also
+
+dat %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2base
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2","PROBE3", "PROBE4", "PROBE5")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_5probe
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_1probe
+
+sex <- read.csv("../Data/Learning/ID_Sex.csv") %>% rename(fishID = Fish_ID) %>% rename(sex = Sex)
+
+left_join(sex, dat_2probe, by = "fishID") -> p2
+left_join(sex, dat_2base, by = "fishID") -> b2
+left_join(sex, dat_5probe, by = "fishID") -> p5
+left_join(sex, dat_1probe, by = "fishID") -> p1
+
+
+p2 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p2cs
+b2%>% add_set %>% add_tod %>% filter(test == "BLUCS") -> b2cs
+p5 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p5cs
+p1 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p1cs
+
+#Collapsing learning data into single mean per fish ID
+
+individual_means_learning <- p2cs %>%
+    group_by(fishID, set, sex) %>%
+    dplyr::summarize(mean_diff = mean(difference, na.rm=TRUE)) %>% dplyr::rename(Fish_ID = fishID) %>% dplyr::rename(Group = set) %>% 
+  dplyr::rename(Sex = sex)
+
+individual_means_learning$Group <- str_to_title(individual_means_learning$Group) #changing case to be compatible with matching
+
+### Anxiety
+
+Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data_cor.xlsx")
+
+str(Anxiety_Joined)
+
+#Convert characters into factors
+
+Anxiety_Joined$Sex <- as.factor(Anxiety_Joined$Sex)
+Anxiety_Joined$Group <- as.factor(Anxiety_Joined$Group)
+Anxiety_Joined$Fish_ID <- as.factor(Anxiety_Joined$Fish_ID)
+Anxiety_Joined$Day_Anxiety <- as.factor(Anxiety_Joined$Day_Anxiety)
+Anxiety_Joined$Tank <- as.factor(Anxiety_Joined$Tank)
+Anxiety_Joined$M.ID <- as.factor(Anxiety_Joined$M.ID)
+
+#Collapsing anxiety data into single mean per fish (time spent in low zone)
+
+individual_means_anxiety <- Anxiety_Joined %>%
+    group_by(Fish_ID, Group, Sex) %>%
+    dplyr::summarize(mean_low_dur = mean(low_dur_Anxiety, na.rm=TRUE)) 
+
+#Joining anxiety and learning data frame
+
+anxiety_learning <- left_join(individual_means_anxiety, individual_means_learning)
+
+# Change all character columns into factors
+anxiety_learning %>% type.convert() -> anxiety_learning 
+
+anxiety_learning <- as.data.frame(anxiety_learning) #convert to data frame
+
+anxiety_learning_control <- subset(anxiety_learning, anxiety_learning$Group == "Control")
+anxiety_learning_treatment <- subset(anxiety_learning, anxiety_learning$Group == "Treatment")
+```
+
+#Bivar model functions for treatment and control groups separately
+```{r}
+#Need to remove Fish_ID as we have collpased their results into means
+
+#You cannot get between-individual correlation with single measurements for individuals, because there is no variance in individual measurements to correlate
+
+bivar_model_control <- function(var1,var2, df = anxiety_learning_control){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex)
+formula2 <- bf(response2 ~ Sex)
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+bivar_model_treatment <- function(var1,var2, df = anxiety_learning_treatment){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex)
+formula2 <- bf(response2 ~ Sex)
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+```
+
+#Bivar models control and treatment
+```{r}
+#run and save bivar models
+anxiety_learning_control <- bivar_model_control("mean_low_dur", "mean_diff") 
+save(anxiety_learning_control, file = "../Models/anxiety_learning_control.Rdata")
+
+
+
+anxiety_learning_treatment <- bivar_model_treatment("mean_low_dur", "mean_diff") 
+save(anxiety_learning_treatment, file = "../Models/anxiety_learning_treatment.Rdata")
+```
+
+#Linear model
+
+```{r}
+
+anxiety_learning_lm <- lm(mean_diff ~ Group*Sex + mean_low_dur, data = anxiety_learning) 
+summary(anxiety_learning_lm)
+tab_model(anxiety_learning_lm)
+hist(residuals(anxiety_learning_lm)) 
+
+ggplot(anxiety_learning, aes(x=mean_low_dur, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+```
+
+

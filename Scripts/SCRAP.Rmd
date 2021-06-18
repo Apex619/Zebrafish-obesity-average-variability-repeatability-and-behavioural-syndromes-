@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 First, we select a stimulus, which we want all the data for. Then with the function, we filter which videos have that stimulus in the first, second, third and fourth phase (via the time). Then we join all to create one dataset of that stimulus.
 ```{r}
-Personality <- read.csv("./Data/Personality/ALL.csv")
+Personality <- read.csv("../Data/Personality/ALL.csv")
 
 # ROSE Q: have you tidied personality data to remove trials that were affected by covers falling down, etc.?
 to_check <- Personality[Personality$Notes!="",] # check these ones

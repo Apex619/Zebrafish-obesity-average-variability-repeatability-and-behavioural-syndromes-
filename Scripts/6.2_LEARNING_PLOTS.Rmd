@@ -108,8 +108,63 @@ Sex_New_plot_personality
 ```{r}
 
 
-learning_violin <- violin_plot_custom_hamza3(p2cs,p2cs$difference,"Difference between baseline and probe period for CS+", "Seconds")
+learning_violin <- violin_plot_custom_hamza3(p2cs,p2cs$difference,"Difference between baseline and probe period for CS+", "Seconds") 
 
 learning_violin
 ```
+
+Within_Between plots
+```{r}
+learning_within_between <- subset(Learning_rptr_F0, Learning_rptr_F0$Group %in% c("Within-Individual Variance (Control Group)","Within-Individual Variance (Treatment Group)", "Between-Individual Variance (Control Group)", "Between-Individual Variance (Treatment Group)")) #Will be used for plotting within-and between individual variance
+
+#Creating a new column
+learning_within_between$Tank <- c("Control", "Control", "Treatment", "Treatment")
+
+
+#Renaming to plot within and between individual variances
+learning_within_between$Condition <- c("Between-Individual Variance", "Within-Individual Variance", "Between-Individual Variance","Within-Individual Variance")
+
+
+
+learning_within_between_personality <- ggplot(learning_within_between, aes(x=Endpoint, y=r, colour=Tank)) +
+geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0.4, position = position_dodge(0.3), size=0.8) +
+geom_point(aes(x = Endpoint, y = r), position = position_dodge(0.3), size=3)+
+geom_hline(yintercept = 0, lty = "dotted") +
+coord_flip()+
+ylim(0, 1.3)+
+   theme(axis.title.y=element_blank())+
+   theme(legend.title=element_blank())+
+  theme_classic()+
+    scale_color_manual(values=c("#DD8D29", "#E2D200"))+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +
+    theme(legend.position = "bottom")+
+  theme(axis.title.y=element_blank())+
+  facet_grid(~Condition)+
+  labs(y = "Variance component")
+ 
+learning_within_between_personality
+```
+Individual means and plotting
+```{r}
+individual_means_learning <- p2cs %>%
+    group_by(fishID, set, sex) %>%
+    dplyr::summarize(Mean = mean(difference, na.rm=TRUE))
+
+individual_means_learning
+
+indiv_learning <-ggplot(individual_means_learning, aes(set, Mean, fill=set)) + 
+   geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+    theme_classic()+
+  theme(axis.ticks.x=element_blank(),
+       axis.title.x=element_blank())+
+  labs(y="Mean difference")+
+   labs(title = "Aversive Learning")+
+  theme(legend.position="none")+
+  facet_grid(~sex)
+
+indiv_learning
+```
+
+
 

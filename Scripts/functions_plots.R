@@ -47,6 +47,7 @@ violin_plot_custom_hamza3 <- function(df,param,lab1,lab2) { #only need to add da
     theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
     scale_x_discrete(labels=c("control" = "Control", "treatment" = "Treatment"))+#formatting 
     theme(legend.position = "none")+
-    theme(axis.title.x=element_blank())
+    theme(axis.title.x=element_blank())+
+    facet_grid(~sex)
   
 }

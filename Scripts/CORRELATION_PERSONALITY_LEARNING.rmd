@@ -1,0 +1,312 @@
+---
+title: "CORRELATION_PERSONALITY_LEARNING"
+author: "Hamza Anwer"
+date: "08/06/2021"
+output: html_document
+---
+
+#Load Packages
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+#checks for installation and loads packages
+pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr, purr, sjPlot, emmeans)
+
+# Load custom function to extract data 
+source("../Scripts/functions_learning.R")
+```
+
+
+#Import Personality and Learning Data
+```{r}
+
+### Personality
+
+
+Personality <- read.csv("../Data/Personality/ALL.csv")
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
+
+# making a column with a factor where the four levels correspond to the four phases
+Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
+
+# making a list where each level of the list is a different phase
+phases <- split(Personality, Personality$phase)
+
+# function to apply to the four phases: 1, 2, 3, and 4
+func_phase <- function(phase = 1){
+    df <- phases[[phase]] # getting phase dataframe based on index (1-4)
+    df$Behaviour <- df[,paste0("Phase",phase)] # getting columns that says which behaviour was in that phase
+    df <- df[,!(names(df) %in% paste0("Phase", 1:4))] # removing the now-redundant Phase1,...,Phase4 columns
+    return(df) # return dataframe
+}
+
+# applying function, returning a list of four dataframes
+Personality_list <- lapply(1:4, function(x) func_phase(x))
+Personality_df <- dplyr::bind_rows(Personality_list) # stakes dataframe on top of each other
+
+# making an ID for the tank info (four phases in a session)
+Personality_df <- Personality_df %>% dplyr::mutate(fish_session_ID = paste(Fish_ID, Date, Session, Camera)) %>% dplyr::arrange(fish_session_ID) 
+
+# turning from wide to long
+vars <- c("tot_dist", "mean_speed", "mean_dist_05",  
+          "tot_dist_05", "freeze_dur", "zone_510_dur",  
+          "zone_05_dur",  "zone_2025_dur","zone_1520_dur", 
+          "zone_3035_dur", "zone_1015_dur", "zone_3540_dur", 
+          "zone_2530_dur", "zone_near_dur", "zone_middle_dur", 
+          "zone_far_dur",  "arena_dur",  "moving_dur")
+info <- c("Time", "Day", "Date",  "Arena",   "Sex", "Mark", "Session", "Camera",  "Group",  "Fish_ID", "Notes")
+
+# four behaviours
+behavs <- c("Aggression", "Novel", "Predator", "Social")
+
+# function to rename variables for each behaviour
+func_variable_behav <- function(behav = behavs[1]){
+    behav_vars <- Personality_df[Personality_df$Behaviour == behav,vars] # getting just the variables for that behaviour
+    names(behav_vars) <- paste(names(behav_vars), behav, sep = "_") # renaming variables so they say which behaviour they relate to
+    return(behav_vars)
+}
+# applying function to each behaviour
+vars_behavs_list <- lapply(behavs, function(x) func_variable_behav(x))
+# putting the four behaviour columns next to each other
+vars_behavs <- dplyr::bind_cols(vars_behavs_list) 
+
+# adding info
+Personality_wide <- cbind(Personality_df[Personality_df$Behaviour == "Aggression", info], vars_behavs)
+
+
+### Adding in activity data (post-assay) to Personality_wide
+
+Personality_wide <- dplyr::left_join(Post_assay, Personality_wide)
+
+# five behaviours
+behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity") 
+
+
+### Learning
+
+
+## importing csv's & transforming data
+path <- paste0("../Data/Learning/Day", 1:8, "/")
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x))
+
+dat <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble() %>% group_by(filepath, date, marking, type, test, unit, variable, arena) %>% summarise(total = sum(number), mean = mean(number)) %>% filter(variable == "ZONE_TIMERS") %>% group_by(type, marking, test, unit, filepath, date) %>% summarise(sum_time = sum(total), arena = unique(arena)) %>% arrange(filepath, marking, type, test) %>% mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% add_day %>% add_exp %>% add_zone %>% add_tod %>% add_set %>% mutate(day = as.numeric(day)) %>% rename(fishID = marking)
+
+dat
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2probe #We will use this dataset as it takes into acocunt the first 2 mins of the probe period, which the literature says is the most important as fish tend to forget after 2 mins, however we have options below for analysis also
+
+dat %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2base
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2","PROBE3", "PROBE4", "PROBE5")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_5probe
+
+dat %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1")) %>%
+  group_by(type, fishID, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_1probe
+
+sex <- read.csv("../Data/Learning/ID_Sex.csv") %>% rename(fishID = Fish_ID) %>% rename(sex = Sex)
+
+left_join(sex, dat_2probe, by = "fishID") -> p2
+left_join(sex, dat_2base, by = "fishID") -> b2
+left_join(sex, dat_5probe, by = "fishID") -> p5
+left_join(sex, dat_1probe, by = "fishID") -> p1
+
+
+p2 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p2cs
+b2%>% add_set %>% add_tod %>% filter(test == "BLUCS") -> b2cs
+p5 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p5cs
+p1 %>% add_set %>% add_tod %>% filter(test == "BLUCS") -> p1cs
+```
+
+#Collapsing data into means (for both learning and personality; confirm this is correct method !)
+```{r}
+#Collapsing learning data into single mean per fish ID
+
+individual_means_learning <- p2cs %>%
+    group_by(fishID, set, sex) %>%
+    dplyr::summarize(mean_diff = mean(difference, na.rm=TRUE)) %>% dplyr::rename(Fish_ID = fishID) %>% dplyr::rename(Group = set) %>% 
+  dplyr::rename(Sex = sex)
+
+individual_means_learning$Group <- str_to_title(individual_means_learning$Group) #changing case to be compatible with matching
+
+
+#Collapsing personality data in single mean per fish ID
+
+individual_means_personality <- Personality_wide %>%
+    group_by(Fish_ID, Group, Sex) %>%
+    dplyr::summarize(zone_05_dur_Predator = mean(zone_05_dur_Predator, na.rm=TRUE),zone_05_dur_Aggression =  mean(zone_05_dur_Aggression, na.rm=TRUE),zone_05_dur_Novel = mean(zone_05_dur_Novel, na.rm=TRUE),zone_05_dur_Social = mean(zone_05_dur_Social, na.rm=TRUE),tot_dist_Activity = mean(tot_dist_Activity, na.rm=TRUE))
+
+#Joining personality and learning to make a wide dataframe
+
+personality_learning <- left_join(individual_means_personality, individual_means_learning)
+
+# Change all character columns into factors
+personality_learning %>% type.convert() -> personality_learning 
+
+personality_learning <- as.data.frame(personality_learning) #convert to data frame
+
+personality_learning_control <- subset(personality_learning, personality_learning$Group == "Control")
+personality_learning_treatment <- subset(personality_learning, personality_learning$Group == "Treatment")
+
+```
+
+#Bivar models for treatment and control groups separately
+```{r}
+#Need to remove Fish_ID as we have collpased their results into means
+
+#You cannot get between-individual correlation with single measurements for individuals, because there is no variance in individual measurements to correlate
+
+bivar_model_control <- function(var1,var2, df = personality_learning_control){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex)
+formula2 <- bf(response2 ~ Sex)
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+
+bivar_model_treatment <- function(var1,var2, df = personality_learning_treatment){
+  df$response1 <- df[,var1]
+  df$response2 <- df[,var2]
+formula1 <- bf(response1 ~ Sex)
+formula2 <- bf(response2 ~ Sex)
+bivar_formula <- mvbrmsformula(formula1, formula2)
+bivar <- brm(formula = bivar_formula,
+                     data = df,
+                     family = gaussian(),
+                     chains = 1,
+                     iter = 2000, warmup = 1000)
+return(bivar)
+}
+```
+#Control bivar models
+```{r}
+#Combinations required for bivar models
+# mean_diff vs. zone_05_dur_aggression
+# mean_diff vs. zone_05_dur_predator 
+# mean_diff vs. zone_05_dur_social
+# mean_diff vs. zone_05_dur_novel
+# mean_diff vs. tot_dist_activity
+
+#NOTE: RESPONSE 1 IS ALWAYS THE FIRST TERM IN THE MODEL NAME EG. "PREDATOR_ANXIETY" RESPONSE 1 IS ANXIETY, RESPONSE 2 IS CONTROL
+
+#run and save bivar models
+predator_learning_control <- bivar_model_control("zone_05_dur_Predator", "mean_diff") 
+save(predator_learning_control, file = "../Models/predator_learning_control.Rdata")
+
+aggression_learning_control <- bivar_model_control("zone_05_dur_Aggression", "mean_diff") 
+save(aggression_learning_control, file = "../Models/aggression_learning_control.Rdata")
+
+social_learning_control <- bivar_model_control("zone_05_dur_Social", "mean_diff") 
+save(social_learning_control, file = "../Models/social_learning_control.Rdata")
+
+novel_learning_control <- bivar_model_control("zone_05_dur_Novel", "mean_diff") 
+save(novel_learning_control, file = "../Models/novel_learning_control.Rdata")
+
+activity_learning_control <- bivar_model_control("tot_dist_Activity", "mean_diff") 
+save(activity_learning_control, file = "../Models/activity_learning_control.Rdata")
+```
+
+#Treatment bivar models
+
+```{r}
+#Combinations required for bivar models
+# mean_diff vs. zone_05_dur_aggression
+# mean_diff vs. zone_05_dur_predator 
+# mean_diff vs. zone_05_dur_social
+# mean_diff vs. zone_05_dur_novel
+# mean_diff vs. tot_dist_activity
+
+#NOTE: RESPONSE 1 IS ALWAYS THE FIRST TERM IN THE MODEL NAME EG. "PREDATOR_ANXIETY" RESPONSE 1 IS ANXIETY, RESPONSE 2 IS CONTROL
+
+#run and save bivar models
+predator_learning_treatment <- bivar_model_treatment("zone_05_dur_Predator", "mean_diff") 
+save(predator_learning_treatment, file = "../Models/predator_learning_treatment.Rdata")
+
+aggression_learning_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "mean_diff") 
+save(aggression_learning_treatment, file = "../Models/aggression_learning_treatment.Rdata")
+
+social_learning_treatment <- bivar_model_treatment("zone_05_dur_Social", "mean_diff") 
+save(social_learning_treatment, file = "../Models/social_learning_treatment.Rdata")
+
+novel_learning_treatment <- bivar_model_treatment("zone_05_dur_Novel", "mean_diff") 
+save(novel_learning_treatment, file = "../Models/novel_learning_treatment.Rdata")
+
+activity_learning_treatment <- bivar_model_treatment("tot_dist_Activity", "mean_diff") 
+save(activity_learning_treatment, file = "../Models/activity_learning_treatment.Rdata")
+```
+
+#Linear modelling controlling for personality traits
+```{r}
+#Post assay aka Activity
+
+activity_learning <- lm(mean_diff ~ Group*Sex + tot_dist_Activity, data = personality_learning) 
+summary(activity_learning)
+tab_model(activity_learning)
+hist(residuals(activity_learning)) 
+
+ggplot(personality_learning, aes(x=tot_dist_Activity, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+
+#Aggression 
+
+aggression_learning <- lm(mean_diff ~ Group*Sex + zone_05_dur_Aggression, data = personality_learning) 
+tab_model(aggression_learning)
+hist(residuals(aggression_learning)) 
+
+ggplot(personality_learning, aes(x=zone_05_dur_Aggression, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+#Social
+
+social_learning <- lm(mean_diff ~ Group*Sex + zone_05_dur_Social, data = personality_learning) 
+tab_model(social_learning)
+hist(residuals(social_learning)) 
+
+ggplot(personality_learning, aes(x=zone_05_dur_Social, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+#Novel
+
+novel_learning <- lm(mean_diff ~ Group*Sex + zone_05_dur_Novel, data = personality_learning) 
+tab_model(novel_learning)
+hist(residuals(novel_learning)) 
+
+
+ggplot(personality_learning, aes(x=zone_05_dur_Novel, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+#Predator
+
+predator_learning <- lm(mean_diff ~ Group*Sex + zone_05_dur_Predator, data = personality_learning) 
+tab_model(predator_learning)
+hist(residuals(predator_learning))
+
+ggplot(personality_learning, aes(x=zone_05_dur_Predator, y=mean_diff)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+
+```
+
+
+
