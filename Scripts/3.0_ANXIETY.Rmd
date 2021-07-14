@@ -21,11 +21,38 @@ source("../Scripts/functions_repeatability.R")
 ```
 
 
-### Import Data
+### Import Data and models
 ```{r, include=FALSE}
 Anxiety_Joined <- read_xlsx("../Data/Anxiety/Anxiety_Data.xlsx")
 
-#Import new file updated with new params !!!!
+load("../Models/Control_Tot_Dist.Rdata")
+load("../Models/Treatment_Tot_Dist.Rdata")
+load("../Models/within_between_tot_dist_control.Rdata")
+load("../Models/within_between_tot_dist_treatment.Rdata")
+load("../Models/Control_low_dur.Rdata")
+load("../Models/Treatment_low_dur.Rdata")
+load("../Models/within_between_low_dur_control.Rdata")
+load("../Models/within_between_low_dur_treatment.Rdata")
+load("../Models/Control_mid_dur.Rdata")
+load("../Models/Treatment_mid_dur.Rdata")
+load("../Models/within_between_mid_dur_control.Rdata")
+load("../Models/within_between_mid_dur_treatment.Rdata")
+load("../Models/Control_high_dur.Rdata")
+load("../Models/Treatment_high_dur.Rdata")
+load("../Models/within_between_high_dur_control.Rdata")
+load("../Models/within_between_high_dur_treatment.Rdata")
+load("../Models/Control_freezing_dur.Rdata")
+load("../Models/Treatment_freezing_dur.Rdata")
+load("../Models/within_between_freezing_dur_control.Rdata")
+load("../Models/within_between_freezing_dur_treatment.Rdata")
+load("../Models/Control_latency_high.Rdata")
+load("../Models/Treatment_latency_high.Rdata")
+load("../Models/within_between_latency_high_control.Rdata")
+load("../Models/within_between_latency_high_treatment.Rdata")
+load("../Models/Control_freq_high.Rdata")
+load("../Models/Treatment_freq_high.Rdata")
+load("../Models/within_between_freq_high_control.Rdata")
+load("../Models/within_between_freq_high_treatment.Rdata")
 ```
 
 ### Examine Data
@@ -67,27 +94,27 @@ NEED TO EDIT COMMENTS !
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
 tab_model(Model_Tot_Dist)#mixed model 
 hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
 
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist(Anxiety_Control) -> Control_Tot_Dist 
-Control_Tot_Dist
-rpt_tot_dist(Anxiety_Treatment) -> Treatment_Tot_Dist 
-Treatment_Tot_Dist
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_tot_dist(Anxiety_Control) -> within_between_tot_dist_control 
-within_between_tot_dist_control
-rpt_within_between_tot_dist(Anxiety_Treatment)-> within_between_tot_dist_treatment 
-within_between_tot_dist_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_tot_dist(Anxiety_Control) -> Control_Tot_Dist 
+# Control_Tot_Dist
+# rpt_tot_dist(Anxiety_Treatment) -> Treatment_Tot_Dist 
+# Treatment_Tot_Dist
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_tot_dist(Anxiety_Control) -> within_between_tot_dist_control 
+# within_between_tot_dist_control
+# rpt_within_between_tot_dist(Anxiety_Treatment)-> within_between_tot_dist_treatment 
+# within_between_tot_dist_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_tot_dist_boot <- unlist_rptr(Control_Tot_Dist) #unlisting from the short tanks
-Treatment_tot_dist_boot <- unlist_rptr(Treatment_Tot_Dist) #unlisting from the tall tanks
+Control_tot_dist_boot <- unlist_rptr(Control_Tot_Dist) #unlisting 
+Treatment_tot_dist_boot <- unlist_rptr(Treatment_Tot_Dist) #unlisting 
 Tot_dist_diff <- difference_boot(Control_tot_dist_boot,Treatment_tot_dist_boot) #calculating the difference
 q1 <- quantiles_diff_boot(Tot_dist_diff) #obtaining 95% CI
 m1 <- mean(Tot_dist_diff) #Obtaining mean
@@ -95,10 +122,10 @@ m1 <- mean(Tot_dist_diff) #Obtaining mean
 q1
 m1
 
-# Calculating difference in variance between short tanks and tall tanks 
-Model_Tot_Dist1 <- lme(tot_dist ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Tot_Dist1)
-Model_Tot_Dist2 <- lme(tot_dist ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+# Calculating difference in variance between 
+Model_Tot_Dist1 <- lme(tot_dist ~ Group-1 + Sex + Water_ID, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+summary(Model_Tot_Dist1) 
+Model_Tot_Dist2 <- lme(tot_dist ~ Group-1 + Sex + Water_ID, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Tot_Dist2)
 anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two models to find difference in variance
 ```
@@ -109,26 +136,27 @@ anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two mode
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_low_dur <- lmer(low_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_low_dur <- lmer(low_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+summary(Model_low_dur)#mixed model 
 tab_model(Model_low_dur)
 hist(residuals(Model_low_dur)) #histogram of residuals reveals a transformation is needed ?
 
-#Calculating repeatabilities using custom made functions
-rpt_low_dur(Anxiety_Control) -> Control_low_dur 
-Control_low_dur 
-rpt_low_dur(Anxiety_Treatment) -> Treatment_low_dur 
-Treatment_low_dur
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_low_dur(Anxiety_Control) -> within_between_low_dur_control
-within_between_low_dur_control
-rpt_within_between_low_dur(Anxiety_Treatment)-> within_between_low_dur_treatment 
-within_between_low_dur_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_low_dur(Anxiety_Control) -> Control_low_dur 
+# Control_low_dur 
+# rpt_low_dur(Anxiety_Treatment) -> Treatment_low_dur 
+# Treatment_low_dur
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_low_dur(Anxiety_Control) -> within_between_low_dur_control
+# within_between_low_dur_control
+# rpt_within_between_low_dur(Anxiety_Treatment)-> within_between_low_dur_treatment 
+# within_between_low_dur_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_low_dur_boot <- unlist_rptr(Control_low_dur) #unlisting from the short tanks
-Treatment_low_dur_boot <- unlist_rptr(Treatment_low_dur) #unlisting from the tall tanks
+Control_low_dur_boot <- unlist_rptr(Control_low_dur) #unlisting from the 
+Treatment_low_dur_boot <- unlist_rptr(Treatment_low_dur) #unlisting from the 
 low_dur_diff <- difference_boot(Control_low_dur_boot,Treatment_low_dur_boot) #calculating the difference
 q2 <- quantiles_diff_boot(low_dur_diff) #obtaining 95% CI
 m2 <- mean(low_dur_diff) #Obtaining mean
@@ -136,7 +164,7 @@ m2 <- mean(low_dur_diff) #Obtaining mean
 q2
 m2
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_low_dur1 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_low_dur1)
 Model_low_dur2 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
@@ -150,29 +178,30 @@ anova(Model_low_dur1, Model_low_dur2) #calculating difference between two models
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_mid_dur <- lmer(mid_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_mid_dur <- lmer(mid_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+summary(Model_mid_dur)#mixed model 
 tab_model(Model_mid_dur)
 hist(residuals(Model_mid_dur)) #histogram of residuals - transformation ?
 
 
-#Calculating repeatabilities using custom made functions
-rpt_mid_dur(Anxiety_Control) -> Control_mid_dur 
-Control_mid_dur
-rpt_mid_dur(Anxiety_Treatment) -> Treatment_mid_dur 
-Treatment_mid_dur
-
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_mid_dur(Anxiety_Control) -> within_between_mid_dur_control
-within_between_mid_dur_control
-rpt_within_between_mid_dur(Anxiety_Treatment)-> within_between_mid_dur_treatment
-within_between_mid_dur_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_mid_dur(Anxiety_Control) -> Control_mid_dur 
+# Control_mid_dur
+# rpt_mid_dur(Anxiety_Treatment) -> Treatment_mid_dur 
+# Treatment_mid_dur
+# 
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_mid_dur(Anxiety_Control) -> within_between_mid_dur_control
+# within_between_mid_dur_control
+# rpt_within_between_mid_dur(Anxiety_Treatment)-> within_between_mid_dur_treatment
+# within_between_mid_dur_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_mid_dur_boot <- unlist_rptr(Control_mid_dur) #unlisting from the short tanks
-Treatment_mid_dur_boot <- unlist_rptr(Treatment_mid_dur) #unlisting from the tall tanks
+Control_mid_dur_boot <- unlist_rptr(Control_mid_dur) #unlisting from the 
+Treatment_mid_dur_boot <- unlist_rptr(Treatment_mid_dur) #unlisting from the 
 mid_dur_diff <- difference_boot(Control_mid_dur_boot,Treatment_mid_dur_boot) #calculating the difference
 q3 <- quantiles_diff_boot(mid_dur_diff) #obtaining 95% CI
 m3 <- mean(mid_dur_diff) #Obtaining mean
@@ -180,7 +209,7 @@ m3 <- mean(mid_dur_diff) #Obtaining mean
 q3
 m3
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_mid_dur1 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_mid_dur1)
 Model_mid_dur2 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
@@ -194,30 +223,32 @@ anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_high_dur <- lmer(high_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_high_dur <- lmer(high_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+tab_model(Model_high_dur)
 hist(residuals(Model_high_dur)) #histogram of residuals reveals transformation required
 
 Model_high_dur0 <- lmer(log(high_dur+1) ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+summary(Model_high_dur0)
 tab_model(Model_high_dur0)
 hist(residuals(Model_high_dur0)) #better normal distribution
 
-#Calculating repeatabilities using custom made functions
-rpt_high_dur2(Anxiety_Control) -> Control_high_dur 
-Control_high_dur
-rpt_high_dur2(Anxiety_Treatment) -> Treatment_high_dur 
-Treatment_high_dur
-
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_high_dur2(Anxiety_Control) -> within_between_high_dur_control 
-within_between_high_dur_control
-rpt_within_between_high_dur2(Anxiety_Treatment)-> within_between_high_dur_treatment 
-within_between_high_dur_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_high_dur2(Anxiety_Control) -> Control_high_dur 
+# Control_high_dur
+# rpt_high_dur2(Anxiety_Treatment) -> Treatment_high_dur 
+# Treatment_high_dur
+# 
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_high_dur2(Anxiety_Control) -> within_between_high_dur_control 
+# within_between_high_dur_control
+# rpt_within_between_high_dur2(Anxiety_Treatment)-> within_between_high_dur_treatment 
+# within_between_high_dur_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_high_dur_boot <- unlist_rptr(Control_high_dur) #unlisting from the short tanks
-Treatment_high_dur_boot <- unlist_rptr(Treatment_high_dur) #unlisting from the tall tanks
+Control_high_dur_boot <- unlist_rptr(Control_high_dur) #unlisting from the 
+Treatment_high_dur_boot <- unlist_rptr(Treatment_high_dur) #unlisting from the 
 high_dur_diff <- difference_boot(Control_high_dur_boot,Treatment_high_dur_boot) #calculating the difference
 q4 <- quantiles_diff_boot(high_dur_diff) #obtaining 95% CI
 m4 <- mean(high_dur_diff) #Obtaining mean
@@ -225,7 +256,7 @@ m4 <- mean(high_dur_diff) #Obtaining mean
 q4
 m4
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_high_dur1 <- lme(log(high_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_high_dur1)
 Model_high_dur2 <- lme(log(high_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
@@ -238,32 +269,33 @@ anova(Model_high_dur1, Model_high_dur2) #calculating difference between two mode
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_freezing_dur <- lmer(freezing_dur ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freezing_dur <- lmer(freezing_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+tab_model(Model_freezing_dur)
 hist(residuals(Model_freezing_dur)) #histogram of residuals reveals a transformation is required
 
-Model_freezing_dur0 <- lmer(log(freezing_dur+1) ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freezing_dur0 <- lmer(log(freezing_dur+1) ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_freezing_dur0)
 hist(residuals(Model_freezing_dur0))
 
 
-#Calculating repeatabilities using custom made functions
-rpt_freezing_dur(Anxiety_Control) -> Control_freezing_dur 
-Control_freezing_dur
-rpt_freezing_dur(Anxiety_Treatment) -> Treatment_freezing_dur 
-Treatment_freezing_dur
-
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_freezing_dur(Anxiety_Control) -> within_between_freezing_dur_control 
-within_between_freezing_dur_control
-rpt_within_between_freezing_dur(Anxiety_Treatment)-> within_between_freezing_dur_treatment 
-within_between_freezing_dur_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_freezing_dur(Anxiety_Control) -> Control_freezing_dur 
+# Control_freezing_dur
+# rpt_freezing_dur(Anxiety_Treatment) -> Treatment_freezing_dur 
+# Treatment_freezing_dur
+# 
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_freezing_dur(Anxiety_Control) -> within_between_freezing_dur_control 
+# within_between_freezing_dur_control
+# rpt_within_between_freezing_dur(Anxiety_Treatment)-> within_between_freezing_dur_treatment 
+# within_between_freezing_dur_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_freezing_dur_boot <- unlist_rptr(Control_freezing_dur) #unlisting from the short tanks
-Treatment_freezing_dur_boot <- unlist_rptr(Treatment_freezing_dur) #unlisting from the tall tanks
+Control_freezing_dur_boot <- unlist_rptr(Control_freezing_dur) #unlisting from the 
+Treatment_freezing_dur_boot <- unlist_rptr(Treatment_freezing_dur) #unlisting from the 
 freezing_dur_diff <- difference_boot(Control_freezing_dur_boot,Treatment_freezing_dur_boot) #calculating the difference
 q5 <- quantiles_diff_boot(freezing_dur_diff) #obtaining 95% CI
 m5 <- mean(freezing_dur_diff) #Obtaining mean
@@ -271,7 +303,7 @@ m5 <- mean(freezing_dur_diff) #Obtaining mean
 q5
 m5
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_freezing_dur1 <- lme(log(freezing_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_freezing_dur1)
 Model_freezing_dur2 <- lme(log(freezing_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
@@ -284,29 +316,29 @@ anova(Model_freezing_dur1, Model_freezing_dur2) #calculating difference between 
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_latency_high <- lmer(latency_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_latency_high <- lmer(latency_high ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_latency_high)
 hist(residuals(Model_latency_high)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
-
-#Calculating repeatabilities using custom made functions
-rpt_latency(Anxiety_Control) -> Control_latency_high
-Control_latency_high
-rpt_latency(Anxiety_Treatment) -> Treatment_latency_high 
-Treatment_latency_high
-
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_latency(Anxiety_Control) -> within_between_latency_high_control
-within_between_latency_high_control
-rpt_within_between_latency(Anxiety_Treatment)-> within_between_latency_high_treatment 
-within_between_latency_high_treatment
+# 
+# #Calculating repeatabilities using custom made functions
+# rpt_latency(Anxiety_Control) -> Control_latency_high
+# Control_latency_high
+# rpt_latency(Anxiety_Treatment) -> Treatment_latency_high 
+# Treatment_latency_high
+# 
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_latency(Anxiety_Control) -> within_between_latency_high_control
+# within_between_latency_high_control
+# rpt_within_between_latency(Anxiety_Treatment)-> within_between_latency_high_treatment 
+# within_between_latency_high_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_latency_high_boot <- unlist_rptr(Control_latency_high) #unlisting from the short tanks
-Treatment_latency_high_boot <- unlist_rptr(Treatment_latency_high) #unlisting from the tall tanks
+Control_latency_high_boot <- unlist_rptr(Control_latency_high) #unlisting from the 
+Treatment_latency_high_boot <- unlist_rptr(Treatment_latency_high) #unlisting from the 
 latency_high_diff <- difference_boot(Control_latency_high_boot,Treatment_latency_high_boot) #calculating the difference
 q6 <- quantiles_diff_boot(latency_high_diff) #obtaining 95% CI
 m6 <- mean(latency_high_diff) #Obtaining mean
@@ -314,7 +346,7 @@ m6 <- mean(latency_high_diff) #Obtaining mean
 q6
 m6
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_latency_high1 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_latency_high1)
 Model_latency_high2 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
@@ -328,30 +360,31 @@ anova(Model_latency_high1, Model_latency_high2) #calculating difference between 
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_freq_high <- lmer(freq_high ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freq_high <- lmer(freq_high ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 hist(residuals(Model_freq_high)) #histogram of residuals reveals a transformation is required
 
-Model_freq_high0 <- lmer(sqrt(freq_high) ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined)
+Model_freq_high0 <- lmer(sqrt(freq_high) ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+summary(Model_freq_high0)
 tab_model(Model_freq_high0)#mixed model 
 hist(residuals(Model_freq_high0))
 
-#Calculating repeatabilities using custom made functions
-rpt_freq(Anxiety_Control) -> Control_freq_high 
-Control_freq_high
-rpt_freq(Anxiety_Treatment) -> Treatment_freq_high 
-Treatment_freq_high
-
-
-#Obtaining within-individual and between-individual variance for total distace 
-
-rpt_within_between_freq_high(Anxiety_Control) -> within_between_freq_high_control 
-within_between_freq_high_control
-rpt_within_between_freq_high(Anxiety_Treatment)-> within_between_freq_high_treatment 
-within_between_freq_high_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_freq(Anxiety_Control) -> Control_freq_high 
+# Control_freq_high
+# rpt_freq(Anxiety_Treatment) -> Treatment_freq_high 
+# Treatment_freq_high
+# 
+# 
+# #Obtaining within-individual and between-individual variance for total distace 
+# 
+# rpt_within_between_freq_high(Anxiety_Control) -> within_between_freq_high_control 
+# within_between_freq_high_control
+# rpt_within_between_freq_high(Anxiety_Treatment)-> within_between_freq_high_treatment 
+# within_between_freq_high_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_freq_high_boot <- unlist_rptr(Control_freq_high) #unlisting from the short tanks
-Treatment_freq_high_boot <- unlist_rptr(Treatment_freq_high) #unlisting from the tall tanks
+Control_freq_high_boot <- unlist_rptr(Control_freq_high) #unlisting from the 
+Treatment_freq_high_boot <- unlist_rptr(Treatment_freq_high) #unlisting from the 
 freq_high_diff <- difference_boot(Control_freq_high_boot,Treatment_freq_high_boot) #calculating the difference
 q7 <- quantiles_diff_boot(freq_high_diff) #obtaining 95% CI
 m7 <- mean(freq_high_diff) #Obtaining mean
@@ -359,10 +392,139 @@ m7 <- mean(freq_high_diff) #Obtaining mean
 q7
 m7
 
-# Calculating difference in variance between short tanks and tall tanks 
+# Calculating difference in variance between  and  
 Model_freq_high1 <- lme(sqrt(freq_high) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_freq_high1)
 Model_freq_high2 <- lme(sqrt(freq_high) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_freq_high2)
 anova(Model_freq_high1, Model_freq_high2) #calculating difference between two models to find difference in variance
 ```
+
+<!-- #Running code all at once for repeatabilities -->
+<!-- ```{r} -->
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_tot_dist(Anxiety_Control) -> Control_Tot_Dist  -->
+<!-- Control_Tot_Dist -->
+<!-- save(Control_Tot_Dist, file = "../Models/Control_Tot_Dist.Rdata") -->
+<!-- rpt_tot_dist(Anxiety_Treatment) -> Treatment_Tot_Dist  -->
+<!-- save(Treatment_Tot_Dist, file = "../Models/Treatment_Tot_Dist.Rdata") -->
+<!-- Treatment_Tot_Dist -->
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_tot_dist(Anxiety_Control) -> within_between_tot_dist_control  -->
+<!-- save(within_between_tot_dist_control, file = "../Models/within_between_tot_dist_control.Rdata") -->
+<!-- within_between_tot_dist_control -->
+<!-- rpt_within_between_tot_dist(Anxiety_Treatment)-> within_between_tot_dist_treatment  -->
+<!-- save(within_between_tot_dist_treatment, file = "../Models/within_between_tot_dist_treatment.Rdata") -->
+<!-- within_between_tot_dist_treatment -->
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_low_dur(Anxiety_Control) -> Control_low_dur  -->
+<!-- save(Control_low_dur, file = "../Models/Control_low_dur.Rdata") -->
+<!-- Control_low_dur  -->
+<!-- rpt_low_dur(Anxiety_Treatment) -> Treatment_low_dur  -->
+<!-- save(Treatment_low_dur, file = "../Models/Treatment_low_dur.Rdata") -->
+<!-- Treatment_low_dur -->
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_low_dur(Anxiety_Control) -> within_between_low_dur_control -->
+<!-- save(within_between_low_dur_control, file = "../Models/within_between_low_dur_control.Rdata") -->
+<!-- within_between_low_dur_control -->
+<!-- rpt_within_between_low_dur(Anxiety_Treatment)-> within_between_low_dur_treatment  -->
+<!-- save(within_between_low_dur_treatment, file = "../Models/within_between_low_dur_treatment.Rdata") -->
+<!-- within_between_low_dur_treatment -->
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_mid_dur(Anxiety_Control) -> Control_mid_dur  -->
+<!-- save(Control_mid_dur, file = "../Models/Control_mid_dur.Rdata") -->
+<!-- Control_mid_dur -->
+<!-- rpt_mid_dur(Anxiety_Treatment) -> Treatment_mid_dur  -->
+<!-- save(Treatment_mid_dur, file = "../Models/Treatment_mid_dur.Rdata") -->
+<!-- Treatment_mid_dur -->
+
+
+<!-- #Obtaining within-individual and between-individual variance   -->
+
+<!-- rpt_within_between_mid_dur(Anxiety_Control) -> within_between_mid_dur_control -->
+<!-- save(within_between_mid_dur_control, file = "../Models/within_between_mid_dur_control.Rdata") -->
+<!-- within_between_mid_dur_control -->
+<!-- rpt_within_between_mid_dur(Anxiety_Treatment)-> within_between_mid_dur_treatment -->
+<!-- save(within_between_mid_dur_treatment, file = "../Models/within_between_mid_dur_treatment.Rdata") -->
+<!-- within_between_mid_dur_treatment -->
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_high_dur2(Anxiety_Control) -> Control_high_dur  -->
+<!-- save(Control_high_dur, file = "../Models/Control_high_dur.Rdata") -->
+<!-- Control_high_dur -->
+<!-- rpt_high_dur2(Anxiety_Treatment) -> Treatment_high_dur  -->
+<!-- save(Treatment_high_dur, file = "../Models/Treatment_high_dur.Rdata") -->
+<!-- Treatment_high_dur -->
+
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_high_dur2(Anxiety_Control) -> within_between_high_dur_control  -->
+<!-- save(within_between_high_dur_control, file = "../Models/within_between_high_dur_control.Rdata") -->
+<!-- within_between_high_dur_control -->
+<!-- rpt_within_between_high_dur2(Anxiety_Treatment)-> within_between_high_dur_treatment  -->
+<!-- save(within_between_high_dur_treatment, file = "../Models/within_between_high_dur_treatment.Rdata") -->
+<!-- within_between_high_dur_treatment -->
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_freezing_dur(Anxiety_Control) -> Control_freezing_dur  -->
+<!-- save(Control_freezing_dur, file = "../Models/Control_freezing_dur.Rdata") -->
+<!-- Control_freezing_dur -->
+<!-- rpt_freezing_dur(Anxiety_Treatment) -> Treatment_freezing_dur -->
+<!-- save(Treatment_freezing_dur, file = "../Models/Treatment_freezing_dur.Rdata") -->
+<!-- Treatment_freezing_dur -->
+
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_freezing_dur(Anxiety_Control) -> within_between_freezing_dur_control  -->
+<!-- save(within_between_freezing_dur_control, file = "../Models/within_between_freezing_dur_control.Rdata") -->
+<!-- within_between_freezing_dur_control -->
+<!-- rpt_within_between_freezing_dur(Anxiety_Treatment)-> within_between_freezing_dur_treatment  -->
+<!-- save(within_between_freezing_dur_treatment, file = "../Models/within_between_freezing_dur_treatment.Rdata") -->
+<!-- within_between_freezing_dur_treatment -->
+
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_latency(Anxiety_Control) -> Control_latency_high -->
+<!-- save(Control_latency_high, file = "../Models/Control_latency_high.Rdata") -->
+<!-- Control_latency_high -->
+<!-- rpt_latency(Anxiety_Treatment) -> Treatment_latency_high  -->
+<!-- save(Treatment_latency_high, file = "../Models/Treatment_latency_high.Rdata") -->
+<!-- Treatment_latency_high -->
+
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_latency(Anxiety_Control) -> within_between_latency_high_control -->
+<!-- save(within_between_latency_high_control, file = "../Models/within_between_latency_high_control.Rdata") -->
+<!-- within_between_latency_high_control -->
+<!-- rpt_within_between_latency(Anxiety_Treatment)-> within_between_latency_high_treatment  -->
+<!-- save(within_between_latency_high_treatment, file = "../Models/within_between_latency_high_treatment.Rdata") -->
+<!-- within_between_latency_high_treatment -->
+
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_freq(Anxiety_Control) -> Control_freq_high  -->
+<!-- save(Control_freq_high, file = "../Models/Control_freq_high.Rdata") -->
+<!-- Control_freq_high -->
+<!-- rpt_freq(Anxiety_Treatment) -> Treatment_freq_high  -->
+<!-- save(Treatment_freq_high, file = "../Models/Treatment_freq_high.Rdata") -->
+<!-- Treatment_freq_high -->
+
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_between_freq_high(Anxiety_Control) -> within_between_freq_high_control  -->
+<!-- save(within_between_freq_high_control, file = "../Models/within_between_freq_high_control.Rdata") -->
+<!-- within_between_freq_high_control -->
+<!-- rpt_within_between_freq_high(Anxiety_Treatment)-> within_between_freq_high_treatment  -->
+<!-- save(within_between_freq_high_treatment, file = "../Models/within_between_freq_high_treatment.Rdata") -->
+<!-- within_between_freq_high_treatment -->
+<!-- ``` -->
+
