@@ -25,8 +25,8 @@ Total distance F0
 Tot_Dist_rptr_F0 <- tibble(
   Group = c("Control", "Treatment", "Contrast", "Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_Tot_Dist$R$Fish_ID,Treatment_Tot_Dist$R$Fish_ID, m1, within_between_tot_dist_control$R[1], within_between_tot_dist_control$R[2],within_between_tot_dist_treatment$R[1], within_between_tot_dist_treatment$R[2]),
-  ci.lb = c(Control_Tot_Dist$CI_emp$`2.5%`,Treatment_Tot_Dist$CI_emp$`2.5%`,-0.10, within_between_tot_dist_control$CI_emp[1,1], within_between_tot_dist_control$CI_emp[2,1],within_between_tot_dist_treatment$CI_emp[1,1], within_between_tot_dist_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_Tot_Dist$CI_emp$`97.5%`,Treatment_Tot_Dist$CI_emp$`97.5%`, 0.24, within_between_tot_dist_control$CI_emp[1,2], within_between_tot_dist_control$CI_emp[2,2],within_between_tot_dist_treatment$CI_emp[1,2], within_between_tot_dist_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_Tot_Dist$CI_emp$`2.5%`,Treatment_Tot_Dist$CI_emp$`2.5%`,-0.06, within_between_tot_dist_control$CI_emp[1,1], within_between_tot_dist_control$CI_emp[2,1],within_between_tot_dist_treatment$CI_emp[1,1], within_between_tot_dist_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_Tot_Dist$CI_emp$`97.5%`,Treatment_Tot_Dist$CI_emp$`97.5%`, 0.28, within_between_tot_dist_control$CI_emp[1,2], within_between_tot_dist_control$CI_emp[2,2],within_between_tot_dist_treatment$CI_emp[1,2], within_between_tot_dist_treatment$CI_emp[2,2]),
 Endpoint = c("Total distance", "Total distance", "Total distance", "Total distance", "Total distance","Total distance","Total distance"))
   
 Tot_Dist_rptr_F0$r <- as.numeric(Tot_Dist_rptr_F0$r)
@@ -36,8 +36,8 @@ Tot_Dist_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_Tot_Dist_Male$R$Fish_ID,Control_Tot_Dist_Female$R$Fish_ID,Treatment_Tot_Dist_Male$R$Fish_ID,Treatment_Tot_Dist_Female$R$Fish_ID,mean_tot_Control, mean_tot_Treatment ),
-  ci.lb = c(Control_Tot_Dist_Male$CI_emp$`2.5%`,Control_Tot_Dist_Female$CI_emp$`2.5%`,Treatment_Tot_Dist_Male$CI_emp$`2.5%`,Treatment_Tot_Dist_Female$CI_emp$`2.5%`, -0.04, -0.10),
-  ci.ub = c(Control_Tot_Dist_Male$CI_emp$`97.5%`,Control_Tot_Dist_Female$CI_emp$`97.5%`,Treatment_Tot_Dist_Male$CI_emp$`97.5%`,Treatment_Tot_Dist_Female$CI_emp$`97.5%`, 0.40, 0.38),
+  ci.lb = c(Control_Tot_Dist_Male$CI_emp$`2.5%`,Control_Tot_Dist_Female$CI_emp$`2.5%`,Treatment_Tot_Dist_Male$CI_emp$`2.5%`,Treatment_Tot_Dist_Female$CI_emp$`2.5%`, -0.07, -0.13),
+  ci.ub = c(Control_Tot_Dist_Male$CI_emp$`97.5%`,Control_Tot_Dist_Female$CI_emp$`97.5%`,Treatment_Tot_Dist_Male$CI_emp$`97.5%`,Treatment_Tot_Dist_Female$CI_emp$`97.5%`, 0.40, 0.39),
 Endpoint = c("Total distance","Total distance","Total distance","Total distance","Total distance","Total distance"))
   
 Tot_Dist_rptr_sex
@@ -50,8 +50,8 @@ Tot_Dist_rptr_sex
 low_dur_rptr <- tibble(
   Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)" ),
   r = c(Control_low_dur$R$Fish_ID,Treatment_low_dur$R$Fish_ID, m2,within_between_low_dur_control$R[1], within_between_low_dur_control$R[2],within_between_low_dur_treatment$R[1], within_between_low_dur_treatment$R[2]),
-  ci.lb = c(Control_low_dur$CI_emp$`2.5%`,Treatment_low_dur$CI_emp$`2.5%`, -0.21,within_between_low_dur_control$CI_emp[1,1], within_between_low_dur_control$CI_emp[2,1],within_between_low_dur_treatment$CI_emp[1,1], within_between_low_dur_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_low_dur$CI_emp$`97.5%`,Treatment_low_dur$CI_emp$`97.5%`, 0.23,within_between_low_dur_control$CI_emp[1,2], within_between_low_dur_control$CI_emp[2,2],within_between_low_dur_treatment$CI_emp[1,2], within_between_low_dur_treatment$CI_emp[2,2] ),
+  ci.lb = c(Control_low_dur$CI_emp$`2.5%`,Treatment_low_dur$CI_emp$`2.5%`, -0.11,within_between_low_dur_control$CI_emp[1,1], within_between_low_dur_control$CI_emp[2,1],within_between_low_dur_treatment$CI_emp[1,1], within_between_low_dur_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_low_dur$CI_emp$`97.5%`,Treatment_low_dur$CI_emp$`97.5%`, 0.27,within_between_low_dur_control$CI_emp[1,2], within_between_low_dur_control$CI_emp[2,2],within_between_low_dur_treatment$CI_emp[1,2], within_between_low_dur_treatment$CI_emp[2,2] ),
 Endpoint = c("Time spent in low zone", "Time spent in low zone", "Time spent in low zone","Time spent in low zone","Time spent in low zone","Time spent in low zone","Time spent in low zone"))
 
 low_dur_rptr$r <- as.numeric(low_dur_rptr$r)
@@ -63,8 +63,8 @@ low_dur_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_low_dur_Male$R$Fish_ID,Control_low_dur_Female$R$Fish_ID,Treatment_low_dur_Male$R$Fish_ID,Treatment_low_dur_Female$R$Fish_ID,mean_low_dur_Control,mean_low_dur_Treatment),
-  ci.lb = c(Control_low_dur_Male$CI_emp$`2.5%`,Control_low_dur_Female$CI_emp$`2.5%`,Treatment_low_dur_Male$CI_emp$`2.5%`,Treatment_low_dur_Female$CI_emp$`2.5%`,-0.28,-0.04),
-  ci.ub = c(Control_low_dur_Male$CI_emp$`97.5%`,Control_low_dur_Female$CI_emp$`97.5%`,Treatment_low_dur_Male$CI_emp$`97.5%`,Treatment_low_dur_Female$CI_emp$`97.5%`,0.26,0.48),
+  ci.lb = c(Control_low_dur_Male$CI_emp$`2.5%`,Control_low_dur_Female$CI_emp$`2.5%`,Treatment_low_dur_Male$CI_emp$`2.5%`,Treatment_low_dur_Female$CI_emp$`2.5%`,-0.27,-0.02),
+  ci.ub = c(Control_low_dur_Male$CI_emp$`97.5%`,Control_low_dur_Female$CI_emp$`97.5%`,Treatment_low_dur_Male$CI_emp$`97.5%`,Treatment_low_dur_Female$CI_emp$`97.5%`,0.28,0.53),
 Endpoint = c("Time spent in low zone","Time spent in low zone","Time spent in low zone","Time spent in low zone","Time spent in low zone","Time spent in low zone"))
 
 low_dur_rptr_sex
@@ -75,8 +75,8 @@ Time spent in mid zone
 mid_dur_rptr <- tibble(
   Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)", "Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_mid_dur$R$Fish_ID,Treatment_mid_dur$R$Fish_ID, m3,within_between_mid_dur_control$R[1], within_between_mid_dur_control$R[2],within_between_mid_dur_treatment$R[1], within_between_mid_dur_treatment$R[2]),
-  ci.lb = c(Control_mid_dur$CI_emp$`2.5%`,Treatment_mid_dur$CI_emp$`2.5%`, -0.09,within_between_mid_dur_control$CI_emp[1,1], within_between_mid_dur_control$CI_emp[2,1],within_between_mid_dur_treatment$CI_emp[1,1], within_between_mid_dur_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_mid_dur$CI_emp$`97.5%`,Treatment_mid_dur$CI_emp$`97.5%`,0.29,within_between_mid_dur_control$CI_emp[1,2], within_between_mid_dur_control$CI_emp[2,2],within_between_mid_dur_treatment$CI_emp[1,2], within_between_mid_dur_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_mid_dur$CI_emp$`2.5%`,Treatment_mid_dur$CI_emp$`2.5%`, -0.06,within_between_mid_dur_control$CI_emp[1,1], within_between_mid_dur_control$CI_emp[2,1],within_between_mid_dur_treatment$CI_emp[1,1], within_between_mid_dur_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_mid_dur$CI_emp$`97.5%`,Treatment_mid_dur$CI_emp$`97.5%`,0.34,within_between_mid_dur_control$CI_emp[1,2], within_between_mid_dur_control$CI_emp[2,2],within_between_mid_dur_treatment$CI_emp[1,2], within_between_mid_dur_treatment$CI_emp[2,2]),
 Endpoint = c("Time spent in mid zone", "Time spent in mid zone", "Time spent in mid zone","Time spent in mid zone","Time spent in mid zone","Time spent in mid zone","Time spent in mid zone"))
 
 mid_dur_rptr$r <- as.numeric(mid_dur_rptr$r)  
@@ -88,8 +88,8 @@ mid_dur_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_mid_dur_Male$R$Fish_ID,Control_mid_dur_Female$R$Fish_ID,Treatment_mid_dur_Male$R$Fish_ID,Treatment_mid_dur_Female$R$Fish_ID,mean_mid_dur_control,mean_mid_dur_Treatment),
-  ci.lb = c(Control_mid_dur_Male$CI_emp$`2.5%`,Control_mid_dur_Female$CI_emp$`2.5%`,Treatment_mid_dur_Male$CI_emp$`2.5%`,Treatment_mid_dur_Female$CI_emp$`2.5%`,-0.11,-0.26),
-  ci.ub = c(Control_mid_dur_Male$CI_emp$`97.5%`,Control_mid_dur_Female$CI_emp$`97.5%`,Treatment_mid_dur_Male$CI_emp$`97.5%`,Treatment_mid_dur_Female$CI_emp$`97.5%`,0.37,0.30),
+  ci.lb = c(Control_mid_dur_Male$CI_emp$`2.5%`,Control_mid_dur_Female$CI_emp$`2.5%`,Treatment_mid_dur_Male$CI_emp$`2.5%`,Treatment_mid_dur_Female$CI_emp$`2.5%`,-0.11,-0.23),
+  ci.ub = c(Control_mid_dur_Male$CI_emp$`97.5%`,Control_mid_dur_Female$CI_emp$`97.5%`,Treatment_mid_dur_Male$CI_emp$`97.5%`,Treatment_mid_dur_Female$CI_emp$`97.5%`,0.45,0.33),
 Endpoint = c("Time spent in mid zone","Time spent in mid zone","Time spent in mid zone","Time spent in mid zone","Time spent in mid zone","Time spent in mid zone"))
 
 mid_dur_rptr_sex
@@ -100,8 +100,8 @@ Time spent in the high zone
 high_dur_rptr <- tibble(
   Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_high_dur$R$Fish_ID,Treatment_high_dur$R$Fish_ID, m4,within_between_high_dur_control$R[1], within_between_high_dur_control$R[2],within_between_high_dur_treatment$R[1], within_between_high_dur_treatment$R[2]),
-  ci.lb = c(Control_high_dur$CI_emp$`2.5%`,Treatment_high_dur$CI_emp$`2.5%`, -0.19,within_between_high_dur_control$CI_emp[1,1], within_between_high_dur_control$CI_emp[2,1],within_between_high_dur_treatment$CI_emp[1,1], within_between_high_dur_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_high_dur$CI_emp$`97.5%`,Treatment_high_dur$CI_emp$`97.5%`, 0.22, within_between_high_dur_control$CI_emp[1,2], within_between_high_dur_control$CI_emp[2,2],within_between_high_dur_treatment$CI_emp[1,2], within_between_high_dur_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_high_dur$CI_emp$`2.5%`,Treatment_high_dur$CI_emp$`2.5%`, -0.14,within_between_high_dur_control$CI_emp[1,1], within_between_high_dur_control$CI_emp[2,1],within_between_high_dur_treatment$CI_emp[1,1], within_between_high_dur_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_high_dur$CI_emp$`97.5%`,Treatment_high_dur$CI_emp$`97.5%`, 0.24, within_between_high_dur_control$CI_emp[1,2], within_between_high_dur_control$CI_emp[2,2],within_between_high_dur_treatment$CI_emp[1,2], within_between_high_dur_treatment$CI_emp[2,2]),
 Endpoint = c("Time spent in high zone", "Time spent in high zone", "Time spent in high zone","Time spent in high zone","Time spent in high zone","Time spent in high zone","Time spent in high zone"))
 
 high_dur_rptr$r <- as.numeric(high_dur_rptr$r)  
@@ -113,8 +113,8 @@ high_dur_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_high_dur_Male$R$Fish_ID,Control_high_dur_Female$R$Fish_ID,Treatment_high_dur_Male$R$Fish_ID,Treatment_high_dur_Female$R$Fish_ID,mean_high_dur_control,mean_high_dur_Treatment ),
-  ci.lb = c(Control_high_dur_Male$CI_emp$`2.5%`,Control_high_dur_Female$CI_emp$`2.5%`,Treatment_high_dur_Male$CI_emp$`2.5%`,Treatment_high_dur_Female$CI_emp$`2.5%`,-0.14,0.01),
-  ci.ub = c(Control_high_dur_Male$CI_emp$`97.5%`,Control_high_dur_Female$CI_emp$`97.5%`,Treatment_high_dur_Male$CI_emp$`97.5%`,Treatment_high_dur_Female$CI_emp$`97.5%`,0.32,0.53),
+  ci.lb = c(Control_high_dur_Male$CI_emp$`2.5%`,Control_high_dur_Female$CI_emp$`2.5%`,Treatment_high_dur_Male$CI_emp$`2.5%`,Treatment_high_dur_Female$CI_emp$`2.5%`,-0.23,-0.03),
+  ci.ub = c(Control_high_dur_Male$CI_emp$`97.5%`,Control_high_dur_Female$CI_emp$`97.5%`,Treatment_high_dur_Male$CI_emp$`97.5%`,Treatment_high_dur_Female$CI_emp$`97.5%`,0.33,0.50),
 Endpoint = c("Time spent in high zone","Time spent in high zone","Time spent in high zone","Time spent in high zone","Time spent in high zone","Time spent in high zone"))
 
 high_dur_rptr_sex
@@ -126,8 +126,8 @@ Freezing duration
 freezing_dur_rptr <- tibble(
   Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_freezing_dur$R$Fish_ID,Treatment_freezing_dur$R$Fish_ID, m5, within_between_freezing_dur_control$R[1], within_between_freezing_dur_control$R[2],within_between_freezing_dur_treatment$R[1], within_between_freezing_dur_treatment$R[2]),
-  ci.lb = c(Control_freezing_dur$CI_emp$`2.5%`,Treatment_freezing_dur$CI_emp$`2.5%`, -0.18, within_between_freezing_dur_control$CI_emp[1,1], within_between_freezing_dur_control$CI_emp[2,1],within_between_freezing_dur_treatment$CI_emp[1,1], within_between_freezing_dur_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_freezing_dur$CI_emp$`97.5%`,Treatment_freezing_dur$CI_emp$`97.5%`, 0.20,within_between_freezing_dur_control$CI_emp[1,2], within_between_freezing_dur_control$CI_emp[2,2],within_between_freezing_dur_treatment$CI_emp[1,2], within_between_freezing_dur_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_freezing_dur$CI_emp$`2.5%`,Treatment_freezing_dur$CI_emp$`2.5%`, -0.15, within_between_freezing_dur_control$CI_emp[1,1], within_between_freezing_dur_control$CI_emp[2,1],within_between_freezing_dur_treatment$CI_emp[1,1], within_between_freezing_dur_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_freezing_dur$CI_emp$`97.5%`,Treatment_freezing_dur$CI_emp$`97.5%`, 0.21,within_between_freezing_dur_control$CI_emp[1,2], within_between_freezing_dur_control$CI_emp[2,2],within_between_freezing_dur_treatment$CI_emp[1,2], within_between_freezing_dur_treatment$CI_emp[2,2]),
 Endpoint = c("Time spent freezing", "Time spent freezing", "Time spent freezing","Time spent freezing","Time spent freezing","Time spent freezing","Time spent freezing"))
   
 freezing_dur_rptr
@@ -138,8 +138,8 @@ freezing_dur_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_freezing_dur_Male$R$Fish_ID,Control_freezing_dur_Female$R$Fish_ID,Treatment_freezing_dur_Male$R$Fish_ID,Treatment_freezing_dur_Female$R$Fish_ID,mean_freezing_dur_control,mean_freezing_dur_Treatment),
-  ci.lb = c(Control_freezing_dur_Male$CI_emp$`2.5%`,Control_freezing_dur_Female$CI_emp$`2.5%`,Treatment_freezing_dur_Male$CI_emp$`2.5%`,Treatment_freezing_dur_Female$CI_emp$`2.5%`,-0.05,-0.22),
-  ci.ub = c(Control_freezing_dur_Male$CI_emp$`97.5%`,Control_freezing_dur_Female$CI_emp$`97.5%`,Treatment_freezing_dur_Male$CI_emp$`97.5%`,Treatment_freezing_dur_Female$CI_emp$`97.5%`,0.42,0.30),
+  ci.lb = c(Control_freezing_dur_Male$CI_emp$`2.5%`,Control_freezing_dur_Female$CI_emp$`2.5%`,Treatment_freezing_dur_Male$CI_emp$`2.5%`,Treatment_freezing_dur_Female$CI_emp$`2.5%`,-0.05,-0.19),
+  ci.ub = c(Control_freezing_dur_Male$CI_emp$`97.5%`,Control_freezing_dur_Female$CI_emp$`97.5%`,Treatment_freezing_dur_Male$CI_emp$`97.5%`,Treatment_freezing_dur_Female$CI_emp$`97.5%`,0.48,0.32),
 Endpoint = c("Time spent freezing","Time spent freezing","Time spent freezing","Time spent freezing","Time spent freezing","Time spent freezing"))
 
 freezing_dur_rptr_sex
@@ -150,8 +150,8 @@ Entries into high zone
 frequency_rptr <- tibble(
   Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_freq_high$R$Fish_ID,Treatment_freq_high$R$Fish_ID, m7,within_between_freq_high_control$R[1], within_between_freq_high_control$R[2],within_between_freq_high_treatment$R[1], within_between_freq_high_treatment$R[2]),
-  ci.lb = c(Control_freq_high$CI_emp$`2.5%`,Treatment_freq_high$CI_emp$`2.5%`, -0.12,within_between_freq_high_control$CI_emp[1,1], within_between_freq_high_control$CI_emp[2,1],within_between_freq_high_treatment$CI_emp[1,1], within_between_freq_high_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_freq_high$CI_emp$`97.5%`,Treatment_freq_high$CI_emp$`97.5%`, 0.23,within_between_freq_high_control$CI_emp[1,2], within_between_freq_high_control$CI_emp[2,2],within_between_freq_high_treatment$CI_emp[1,2], within_between_freq_high_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_freq_high$CI_emp$`2.5%`,Treatment_freq_high$CI_emp$`2.5%`, -0.13,within_between_freq_high_control$CI_emp[1,1], within_between_freq_high_control$CI_emp[2,1],within_between_freq_high_treatment$CI_emp[1,1], within_between_freq_high_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_freq_high$CI_emp$`97.5%`,Treatment_freq_high$CI_emp$`97.5%`, 0.26,within_between_freq_high_control$CI_emp[1,2], within_between_freq_high_control$CI_emp[2,2],within_between_freq_high_treatment$CI_emp[1,2], within_between_freq_high_treatment$CI_emp[2,2]),
 Endpoint = c("Entries into high zone", "Entries into high zone", "Entries into high zone","Entries into high zone","Entries into high zone","Entries into high zone","Entries into high zone"))
 
 frequency_rptr$r <- as.numeric(frequency_rptr$r)  
@@ -163,8 +163,8 @@ freq_high_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_freq_high_Male$R$Fish_ID,Control_freq_high_Female$R$Fish_ID,Treatment_freq_high_Male$R$Fish_ID,Treatment_freq_high_Female$R$Fish_ID,mean_freq_high_control,mean_freq_high_Treatment),
-  ci.lb = c(Control_freq_high_Male$CI_emp$`2.5%`,Control_freq_high_Female$CI_emp$`2.5%`,Treatment_freq_high_Male$CI_emp$`2.5%`,Treatment_freq_high_Female$CI_emp$`2.5%`,-0.28,-0.16),
-  ci.ub = c(Control_freq_high_Male$CI_emp$`97.5%`,Control_freq_high_Female$CI_emp$`97.5%`,Treatment_freq_high_Male$CI_emp$`97.5%`,Treatment_freq_high_Female$CI_emp$`97.5%`,0.37,0.40),
+  ci.lb = c(Control_freq_high_Male$CI_emp$`2.5%`,Control_freq_high_Female$CI_emp$`2.5%`,Treatment_freq_high_Male$CI_emp$`2.5%`,Treatment_freq_high_Female$CI_emp$`2.5%`,-0.24,-0.22),
+  ci.ub = c(Control_freq_high_Male$CI_emp$`97.5%`,Control_freq_high_Female$CI_emp$`97.5%`,Treatment_freq_high_Male$CI_emp$`97.5%`,Treatment_freq_high_Female$CI_emp$`97.5%`,0.33,0.35),
 Endpoint = c("Entries into high zone","Entries into high zone","Entries into high zone","Entries into high zone","Entries into high zone","Entries into high zone"))
 
 freq_high_rptr_sex
@@ -176,8 +176,8 @@ Latency to high
 latency_rptr <- tibble(
  Group = c("Control", "Treatment", "Contrast","Between-Individual Variance (Control Group)", "Within-Individual Variance (Control Group)","Between-Individual Variance (Treatment Group)", "Within-Individual Variance (Treatment Group)"),
   r = c(Control_latency_high$R$Fish_ID,Treatment_latency_high$R$Fish_ID, m6,within_between_latency_high_control$R[1], within_between_latency_high_control$R[2],within_between_latency_high_treatment$R[1], within_between_latency_high_treatment$R[2]),
-  ci.lb = c(Control_latency_high$CI_emp$`2.5%`,Treatment_latency_high$CI_emp$`2.5%`, 0.01,within_between_latency_high_control$CI_emp[1,1], within_between_latency_high_control$CI_emp[2,1],within_between_latency_high_treatment$CI_emp[1,1], within_between_latency_high_treatment$CI_emp[2,1]),
-  ci.ub = c(Control_latency_high$CI_emp$`97.5%`,Treatment_latency_high$CI_emp$`97.5%`, 0.57,within_between_latency_high_control$CI_emp[1,2], within_between_latency_high_control$CI_emp[2,2],within_between_latency_high_treatment$CI_emp[1,2], within_between_latency_high_treatment$CI_emp[2,2]),
+  ci.lb = c(Control_latency_high$CI_emp$`2.5%`,Treatment_latency_high$CI_emp$`2.5%`, 0.05,within_between_latency_high_control$CI_emp[1,1], within_between_latency_high_control$CI_emp[2,1],within_between_latency_high_treatment$CI_emp[1,1], within_between_latency_high_treatment$CI_emp[2,1]),
+  ci.ub = c(Control_latency_high$CI_emp$`97.5%`,Treatment_latency_high$CI_emp$`97.5%`, 0.63,within_between_latency_high_control$CI_emp[1,2], within_between_latency_high_control$CI_emp[2,2],within_between_latency_high_treatment$CI_emp[1,2], within_between_latency_high_treatment$CI_emp[2,2]),
 Endpoint = c("Latency to high zone", "Latency to high zone", "Latency to high zone","Latency to high zone","Latency to high zone","Latency to high zone","Latency to high zone"))
 
 
@@ -190,8 +190,8 @@ latency_high_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
   Condition = c("Male","Female","Male", "Female", "Contrast", "Contrast"),
   r = c(Control_latency_high_Male$R$Fish_ID,Control_latency_high_Female$R$Fish_ID,Treatment_latency_high_Male$R$Fish_ID,Treatment_latency_high_Female$R$Fish_ID,mean_latency_high_control,mean_latency_high_Treatment),
-  ci.lb = c(Control_latency_high_Male$CI_emp$`2.5%`,Control_latency_high_Female$CI_emp$`2.5%`,Treatment_latency_high_Male$CI_emp$`2.5%`,Treatment_latency_high_Female$CI_emp$`2.5%`,-0.35,-0.26),
-  ci.ub = c(Control_latency_high_Male$CI_emp$`97.5%`,Control_latency_high_Female$CI_emp$`97.5%`,Treatment_latency_high_Male$CI_emp$`97.5%`,Treatment_latency_high_Female$CI_emp$`97.5%`,0.63,0.39),
+  ci.lb = c(Control_latency_high_Male$CI_emp$`2.5%`,Control_latency_high_Female$CI_emp$`2.5%`,Treatment_latency_high_Male$CI_emp$`2.5%`,Treatment_latency_high_Female$CI_emp$`2.5%`,-0.49,-0.29),
+  ci.ub = c(Control_latency_high_Male$CI_emp$`97.5%`,Control_latency_high_Female$CI_emp$`97.5%`,Treatment_latency_high_Male$CI_emp$`97.5%`,Treatment_latency_high_Female$CI_emp$`97.5%`,0.51,0.41),
 Endpoint = c("Latency to high zone","Latency to high zone","Latency to high zone","Latency to high zone","Latency to high zone","Latency to high zone"))
 
 latency_high_rptr_sex
@@ -266,7 +266,7 @@ Sex_New_plot <-
              size = 3) +
   geom_hline(yintercept = 0, lty = "dotted") +
   coord_flip() +
-  ylim(-0.4, 0.9) +
+  ylim(-0.5, 0.9) +
   facet_grid( ~ Tank) +
   theme(axis.title.y = element_blank()) +
   scale_color_manual(values = c("#000000", "#f8766d", "#00bfc4")) +
@@ -291,36 +291,33 @@ ggsave(path = "../Plots", file = "Overall_plot_sex.jpeg", limitsize = FALSE)
 ```
 
 #Generating custom designed violin plots to display raw distributions of behavioral responses
+Note: For main text, only groups, for supp, add sex
 ```{r}
 
 
-low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone", "Seconds")%>% +facet_grid(~Sex)
+low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone *", "Seconds")
 
 
-tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")%>% +facet_grid(~Sex)
+tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")
 
 
 
-mid_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$mid_dur, "Time spent in mid zone", "Seconds")%>% +facet_grid(~Sex)
+mid_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$mid_dur, "Time spent in mid zone *", "Seconds")
 
 
-high_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$high_dur, "Time spent in high zone", "Seconds")%>% +facet_grid(~Sex)
+high_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$high_dur+1), "Time spent in high zone *", "Seconds")
 
 
-freezing_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$freezing_dur+1), "Time spent freezing", "Seconds")%>% +facet_grid(~Sex)
+freezing_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$freezing_dur+1), "Time spent freezing", "Seconds")
 
+freq_violin <- violin_plot_custom_hamza2(Anxiety_Joined, sqrt(Anxiety_Joined$freq_high), "Frequency of visits to high zone", "Visits")
 
-freq_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$freq_high, "Frequency of visits to high zone", "Visits")%>% +facet_grid(~Sex)
-
-
-latency_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$latency_high, "Latency to the high zone", "Seconds")%>% +facet_grid(~Sex)
+latency_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$latency_high, "Latency to the high zone", "Seconds")
 
 #Joining plots together using patchwork to create one main plot
 
 Joined_violins_new_design <- tot_dist_violin + low_dur_violin + mid_dur_violin + high_dur_violin + freezing_dur_violin + latency_violin+freq_violin + plot_layout(ncol = 2, nrow=4)
 Joined_violins_new_design
-
-
 ```
 
 #Obtaining individual means and plotting them (tank only)
