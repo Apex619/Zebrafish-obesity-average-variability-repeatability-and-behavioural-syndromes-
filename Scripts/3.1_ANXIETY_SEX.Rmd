@@ -18,13 +18,46 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 source("../Scripts/functions_repeatability.R") #load custom functions
 ```
 
-#Subset data by sex
+#Subset data by sex; load models
 ```{r}
 #Subset by sex
 Anxiety_Control_Male <- subset(Anxiety_Control, Anxiety_Control$Sex == "male")
 Anxiety_Control_Female <- subset(Anxiety_Control, Anxiety_Control$Sex == "female")
 Anxiety_Treatment_Male <- subset(Anxiety_Treatment, Anxiety_Treatment$Sex == "male")
 Anxiety_Treatment_Female <- subset(Anxiety_Treatment, Anxiety_Treatment$Sex == "female")
+
+#Loading rpt models
+
+load("../Models/Control_Tot_Dist_Male.Rdata")
+load("../Models/Treatment_Tot_Dist_Male.Rdata")
+load("../Models/Control_Tot_Dist_Female.Rdata")
+load("../Models/Treatment_Tot_Dist_Female.Rdata")
+load("../Models/Control_low_dur_Male.Rdata")
+load("../Models/Treatment_low_dur_Male.Rdata")
+load("../Models/Control_low_dur_Female.Rdata")
+load("../Models/Treatment_low_dur_Female.Rdata")
+load("../Models/Control_mid_dur_Male.Rdata")
+load("../Models/Treatment_mid_dur_Male.Rdata")
+load("../Models/Control_mid_dur_Female.Rdata")
+load("../Models/Treatment_mid_dur_Female.Rdata")
+load("../Models/Control_high_dur_Male.Rdata")
+load("../Models/Treatment_high_dur_Male.Rdata")
+load("../Models/Control_high_dur_Female.Rdata")
+load("../Models/Treatment_high_dur_Female.Rdata")
+load("../Models/Control_freezing_dur_Male.Rdata")
+load("../Models/Treatment_freezing_dur_Male.Rdata")
+load("../Models/Control_freezing_dur_Female.Rdata")
+load("../Models/Treatment_freezing_dur_Female.Rdata")
+load("../Models/Control_latency_high_Male.Rdata")
+load("../Models/Treatment_latency_high_Male.Rdata")
+load("../Models/Control_latency_high_Female.Rdata")
+load("../Models/Treatment_latency_high_Female.Rdata")
+load("../Models/Control_freq_high_Male.Rdata")
+load("../Models/Treatment_freq_high_Male.Rdata")
+load("../Models/Control_freq_high_Female.Rdata")
+load("../Models/Treatment_freq_high_Female.Rdata")
+
+
 ```
 
 ### MAIN ANALYSIS FOR ALL BEHAVIORAL PARAMETERS BY SEX AND TANK
@@ -41,17 +74,17 @@ Model_Tot_Dist_sex <- lmer(tot_dist ~ Tank + Sex + (1 | Fish_ID), data = Anxiety
 tab_model(Model_Tot_Dist)
 hist(residuals(Model_Tot_Dist_sex))
 
-#Repeatability analysis males
-rpt_tot_dist(Anxiety_Control_Male) -> Control_Tot_Dist_Male 
-Control_Tot_Dist_Male
-rpt_tot_dist(Anxiety_Treatment_Male) -> Treatment_Tot_Dist_Male 
-Treatment_Tot_Dist_Male
-
-#Repeatability analysis females
-rpt_tot_dist(Anxiety_Control_Female) -> Control_Tot_Dist_Female 
-Control_Tot_Dist_Female
-rpt_tot_dist(Anxiety_Treatment_Female) -> Treatment_Tot_Dist_Female
-Treatment_Tot_Dist_Female
+# #Repeatability analysis males
+# rpt_tot_dist(Anxiety_Control_Male) -> Control_Tot_Dist_Male 
+# Control_Tot_Dist_Male
+# rpt_tot_dist(Anxiety_Treatment_Male) -> Treatment_Tot_Dist_Male 
+# Treatment_Tot_Dist_Male
+# 
+# #Repeatability analysis females
+# rpt_tot_dist(Anxiety_Control_Female) -> Control_Tot_Dist_Female 
+# Control_Tot_Dist_Female
+# rpt_tot_dist(Anxiety_Treatment_Female) -> Treatment_Tot_Dist_Female
+# Treatment_Tot_Dist_Female
 
 
 
@@ -91,17 +124,17 @@ Model_low_dur_sex <- lmer(low_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_J
 tab_model(Model_low_dur)
 hist(residuals(Model_low_dur_sex))
 
-#Repeatability analysis males
-rpt_low_dur(Anxiety_Control_Male) -> Control_low_dur_Male 
-Control_low_dur_Male
-rpt_low_dur(Anxiety_Treatment_Male) -> Treatment_low_dur_Male 
-Treatment_low_dur_Male
-
-#Repeatability analysis females
-rpt_low_dur(Anxiety_Control_Female) -> Control_low_dur_Female 
-Control_low_dur_Female
-rpt_low_dur(Anxiety_Treatment_Female) -> Treatment_low_dur_Female
-Treatment_low_dur_Female
+# #Repeatability analysis males
+# rpt_low_dur(Anxiety_Control_Male) -> Control_low_dur_Male 
+# Control_low_dur_Male
+# rpt_low_dur(Anxiety_Treatment_Male) -> Treatment_low_dur_Male 
+# Treatment_low_dur_Male
+# 
+# #Repeatability analysis females
+# rpt_low_dur(Anxiety_Control_Female) -> Control_low_dur_Female 
+# Control_low_dur_Female
+# rpt_low_dur(Anxiety_Treatment_Female) -> Treatment_low_dur_Female
+# Treatment_low_dur_Female
 
 
 
@@ -140,17 +173,17 @@ Model_mid_dur_sex <- lmer(mid_dur ~ Tank + Sex + (1 | Fish_ID), data = Anxiety_J
 tab_model(Model_mid_dur)
 hist(residuals(Model_mid_dur_sex))
 
-#Repeatability analysis males
-rpt_mid_dur(Anxiety_Control_Male) -> Control_mid_dur_Male 
-Control_mid_dur_Male
-rpt_mid_dur(Anxiety_Treatment_Male) -> Treatment_mid_dur_Male 
-Treatment_mid_dur_Male
-
-#Repeatability analysis females
-rpt_mid_dur(Anxiety_Control_Female) -> Control_mid_dur_Female 
-Control_mid_dur_Female
-rpt_mid_dur(Anxiety_Treatment_Female) -> Treatment_mid_dur_Female
-Treatment_mid_dur_Female
+# #Repeatability analysis males
+# rpt_mid_dur(Anxiety_Control_Male) -> Control_mid_dur_Male 
+# Control_mid_dur_Male
+# rpt_mid_dur(Anxiety_Treatment_Male) -> Treatment_mid_dur_Male 
+# Treatment_mid_dur_Male
+# 
+# #Repeatability analysis females
+# rpt_mid_dur(Anxiety_Control_Female) -> Control_mid_dur_Female 
+# Control_mid_dur_Female
+# rpt_mid_dur(Anxiety_Treatment_Female) -> Treatment_mid_dur_Female
+# Treatment_mid_dur_Female
 
 
 
@@ -189,17 +222,17 @@ Model_high_dur_sex <- lmer(sqrt(high_dur) ~ Tank + Sex + (1 | Fish_ID), data = A
 tab_model(Model_high_dur)
 hist(residuals(Model_high_dur_sex))
 
-#Repeatability analysis males
-rpt_high_dur(Anxiety_Control_Male) -> Control_high_dur_Male 
-Control_high_dur_Male
-rpt_high_dur(Anxiety_Treatment_Male) -> Treatment_high_dur_Male 
-Treatment_high_dur_Male
-
-#Repeatability analysis females
-rpt_high_dur(Anxiety_Control_Female) -> Control_high_dur_Female 
-Control_high_dur_Female
-rpt_high_dur(Anxiety_Treatment_Female) -> Treatment_high_dur_Female
-Treatment_high_dur_Female
+# #Repeatability analysis males
+# rpt_high_dur(Anxiety_Control_Male) -> Control_high_dur_Male 
+# Control_high_dur_Male
+# rpt_high_dur(Anxiety_Treatment_Male) -> Treatment_high_dur_Male 
+# Treatment_high_dur_Male
+# 
+# #Repeatability analysis females
+# rpt_high_dur(Anxiety_Control_Female) -> Control_high_dur_Female 
+# Control_high_dur_Female
+# rpt_high_dur(Anxiety_Treatment_Female) -> Treatment_high_dur_Female
+# Treatment_high_dur_Female
 
 
 
@@ -239,17 +272,17 @@ Model_freezing_dur_sex <- lmer(log(freezing_dur+1) ~ Tank + Sex + (1 | Fish_ID),
 tab_model(Model_freezing_dur)
 hist(residuals(Model_freezing_dur_sex))
 
-#Repeatability analysis males
-rpt_freezing_dur(Anxiety_Control_Male) -> Control_freezing_dur_Male 
-Control_freezing_dur_Male
-rpt_freezing_dur(Anxiety_Treatment_Male) -> Treatment_freezing_dur_Male 
-Treatment_freezing_dur_Male
-
-#Repeatability analysis females
-rpt_freezing_dur(Anxiety_Control_Female) -> Control_freezing_dur_Female 
-Control_freezing_dur_Female
-rpt_freezing_dur(Anxiety_Treatment_Female) -> Treatment_freezing_dur_Female
-Treatment_freezing_dur_Female
+# #Repeatability analysis males
+# rpt_freezing_dur(Anxiety_Control_Male) -> Control_freezing_dur_Male 
+# Control_freezing_dur_Male
+# rpt_freezing_dur(Anxiety_Treatment_Male) -> Treatment_freezing_dur_Male 
+# Treatment_freezing_dur_Male
+# 
+# #Repeatability analysis females
+# rpt_freezing_dur(Anxiety_Control_Female) -> Control_freezing_dur_Female 
+# Control_freezing_dur_Female
+# rpt_freezing_dur(Anxiety_Treatment_Female) -> Treatment_freezing_dur_Female
+# Treatment_freezing_dur_Female
 
 
 
@@ -289,17 +322,17 @@ Model_latency_high_sex <- lmer(latency_high ~ Tank + Sex + (1 | Fish_ID), data =
 tab_model(Model_latency_high)
 hist(residuals(Model_latency_high_sex))
 
-#Repeatability analysis males
-rpt_latency(Anxiety_Control_Male) -> Control_latency_high_Male 
-Control_latency_high_Male
-rpt_latency(Anxiety_Treatment_Male) -> Treatment_latency_high_Male 
-Treatment_latency_high_Male
-
-#Repeatability analysis females
-rpt_latency(Anxiety_Control_Female) -> Control_latency_high_Female 
-Control_latency_high_Female
-rpt_latency(Anxiety_Treatment_Female) -> Treatment_latency_high_Female
-Treatment_latency_high_Female
+# #Repeatability analysis males
+# rpt_latency(Anxiety_Control_Male) -> Control_latency_high_Male 
+# Control_latency_high_Male
+# rpt_latency(Anxiety_Treatment_Male) -> Treatment_latency_high_Male 
+# Treatment_latency_high_Male
+# 
+# #Repeatability analysis females
+# rpt_latency(Anxiety_Control_Female) -> Control_latency_high_Female 
+# Control_latency_high_Female
+# rpt_latency(Anxiety_Treatment_Female) -> Treatment_latency_high_Female
+# Treatment_latency_high_Female
 
 
 
@@ -338,17 +371,17 @@ Model_freq_high_sex <- lmer(sqrt(freq_high) ~ Tank + Sex + (1 | Fish_ID), data =
 tab_model(Model_freq_high)
 hist(residuals(Model_freq_high_sex))
 
-#Repeatability analysis males
-rpt_freq(Anxiety_Control_Male) -> Control_freq_high_Male 
-Control_freq_high_Male
-rpt_freq(Anxiety_Treatment_Male) -> Treatment_freq_high_Male 
-Treatment_freq_high_Male
-
-#Repeatability analysis females
-rpt_freq(Anxiety_Control_Female) -> Control_freq_high_Female 
-Control_freq_high_Female
-rpt_freq(Anxiety_Treatment_Female) -> Treatment_freq_high_Female
-Treatment_freq_high_Female
+# #Repeatability analysis males
+# rpt_freq(Anxiety_Control_Male) -> Control_freq_high_Male 
+# Control_freq_high_Male
+# rpt_freq(Anxiety_Treatment_Male) -> Treatment_freq_high_Male 
+# Treatment_freq_high_Male
+# 
+# #Repeatability analysis females
+# rpt_freq(Anxiety_Control_Female) -> Control_freq_high_Female 
+# Control_freq_high_Female
+# rpt_freq(Anxiety_Treatment_Female) -> Treatment_freq_high_Female
+# Treatment_freq_high_Female
 
 
 
@@ -379,4 +412,121 @@ mean_freq_high_Treatment <- mean(Diff_boot_freq_high_Treatment)
 mean_freq_high_Treatment
 q_freq_high_Treatment
 ```
+
+<!-- Code to run everything at once -->
+<!-- ```{r} -->
+<!-- #Repeatability analysis males -->
+<!-- rpt_tot_dist(Anxiety_Control_Male) -> Control_Tot_Dist_Male  -->
+<!-- save(Control_Tot_Dist_Male, file = "../Models/Control_Tot_Dist_Male.Rdata") -->
+<!-- Control_Tot_Dist_Male -->
+<!-- rpt_tot_dist(Anxiety_Treatment_Male) -> Treatment_Tot_Dist_Male  -->
+<!-- save(Treatment_Tot_Dist_Male, file = "../Models/Treatment_Tot_Dist_Male.Rdata") -->
+<!-- Treatment_Tot_Dist_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_tot_dist(Anxiety_Control_Female) -> Control_Tot_Dist_Female  -->
+<!-- Control_Tot_Dist_Female -->
+<!-- save(Control_Tot_Dist_Female, file = "../Models/Control_Tot_Dist_Female.Rdata") -->
+<!-- rpt_tot_dist(Anxiety_Treatment_Female) -> Treatment_Tot_Dist_Female -->
+<!-- Treatment_Tot_Dist_Female -->
+<!-- save(Treatment_Tot_Dist_Female, file = "../Models/Treatment_Tot_Dist_Female.Rdata") -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_low_dur(Anxiety_Control_Male) -> Control_low_dur_Male  -->
+<!-- save(Control_low_dur_Male, file = "../Models/Control_low_dur_Male.Rdata") -->
+<!-- Control_low_dur_Male -->
+<!-- rpt_low_dur(Anxiety_Treatment_Male) -> Treatment_low_dur_Male  -->
+<!-- save(Treatment_low_dur_Male, file = "../Models/Treatment_low_dur_Male.Rdata") -->
+<!-- Treatment_low_dur_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_low_dur(Anxiety_Control_Female) -> Control_low_dur_Female  -->
+<!-- save(Control_low_dur_Female, file = "../Models/Control_low_dur_Female.Rdata") -->
+<!-- Control_low_dur_Female -->
+<!-- rpt_low_dur(Anxiety_Treatment_Female) -> Treatment_low_dur_Female -->
+<!-- save(Treatment_low_dur_Female, file = "../Models/Treatment_low_dur_Female.Rdata") -->
+<!-- Treatment_low_dur_Female -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_mid_dur(Anxiety_Control_Male) -> Control_mid_dur_Male  -->
+<!-- save(Control_mid_dur_Male, file = "../Models/Control_mid_dur_Male.Rdata") -->
+<!-- Control_mid_dur_Male -->
+<!-- rpt_mid_dur(Anxiety_Treatment_Male) -> Treatment_mid_dur_Male  -->
+<!-- save(Treatment_mid_dur_Male, file = "../Models/Treatment_mid_dur_Male.Rdata") -->
+<!-- Treatment_mid_dur_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_mid_dur(Anxiety_Control_Female) -> Control_mid_dur_Female  -->
+<!-- save(Control_mid_dur_Female, file = "../Models/Control_mid_dur_Female.Rdata") -->
+<!-- Control_mid_dur_Female -->
+<!-- rpt_mid_dur(Anxiety_Treatment_Female) -> Treatment_mid_dur_Female -->
+<!-- save(Treatment_mid_dur_Female, file = "../Models/Treatment_mid_dur_Female.Rdata") -->
+<!-- Treatment_mid_dur_Female -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_high_dur2(Anxiety_Control_Male) -> Control_high_dur_Male  -->
+<!-- save(Control_high_dur_Male, file = "../Models/Control_high_dur_Male.Rdata") -->
+<!-- Control_high_dur_Male -->
+<!-- rpt_high_dur2(Anxiety_Treatment_Male) -> Treatment_high_dur_Male  -->
+<!-- save(Treatment_high_dur_Male, file = "../Models/Treatment_high_dur_Male.Rdata") -->
+<!-- Treatment_high_dur_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_high_dur(Anxiety_Control_Female) -> Control_high_dur_Female  -->
+<!-- save(Control_high_dur_Female, file = "../Models/Control_high_dur_Female.Rdata") -->
+<!-- Control_high_dur_Female -->
+<!-- rpt_high_dur(Anxiety_Treatment_Female) -> Treatment_high_dur_Female -->
+<!-- save(Treatment_high_dur_Female, file = "../Models/Treatment_high_dur_Female.Rdata") -->
+<!-- Treatment_high_dur_Female -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_freezing_dur(Anxiety_Control_Male) -> Control_freezing_dur_Male  -->
+<!-- save(Control_freezing_dur_Male, file = "../Models/Control_freezing_dur_Male.Rdata") -->
+<!-- Control_freezing_dur_Male -->
+<!-- rpt_freezing_dur(Anxiety_Treatment_Male) -> Treatment_freezing_dur_Male  -->
+<!-- save(Treatment_freezing_dur_Male, file = "../Models/Treatment_freezing_dur_Male.Rdata") -->
+<!-- Treatment_freezing_dur_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_freezing_dur(Anxiety_Control_Female) -> Control_freezing_dur_Female  -->
+<!-- save(Control_freezing_dur_Female, file = "../Models/Control_freezing_dur_Female.Rdata") -->
+<!-- Control_freezing_dur_Female -->
+<!-- rpt_freezing_dur(Anxiety_Treatment_Female) -> Treatment_freezing_dur_Female -->
+<!-- save(Treatment_freezing_dur_Female, file = "../Models/Treatment_freezing_dur_Female.Rdata") -->
+<!-- Treatment_freezing_dur_Female -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_latency(Anxiety_Control_Male) -> Control_latency_high_Male  -->
+<!-- save(Control_latency_high_Male, file = "../Models/Control_latency_high_Male.Rdata") -->
+<!-- Control_latency_high_Male -->
+<!-- rpt_latency(Anxiety_Treatment_Male) -> Treatment_latency_high_Male  -->
+<!-- save(Treatment_latency_high_Male, file = "../Models/Treatment_latency_high_Male.Rdata") -->
+<!-- Treatment_latency_high_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_latency(Anxiety_Control_Female) -> Control_latency_high_Female  -->
+<!-- save(Control_latency_high_Female, file = "../Models/Control_latency_high_Female.Rdata") -->
+<!-- Control_latency_high_Female -->
+<!-- rpt_latency(Anxiety_Treatment_Female) -> Treatment_latency_high_Female -->
+<!-- save(Treatment_latency_high_Female, file = "../Models/Treatment_latency_high_Female.Rdata") -->
+<!-- Treatment_latency_high_Female -->
+
+<!-- #Repeatability analysis males -->
+<!-- rpt_freq(Anxiety_Control_Male) -> Control_freq_high_Male  -->
+<!-- save(Control_freq_high_Male, file = "../Models/Control_freq_high_Male.Rdata") -->
+<!-- Control_freq_high_Male -->
+<!-- rpt_freq(Anxiety_Treatment_Male) -> Treatment_freq_high_Male  -->
+<!-- save(Treatment_freq_high_Male, file = "../Models/Treatment_freq_high_Male.Rdata") -->
+<!-- Treatment_freq_high_Male -->
+
+<!-- #Repeatability analysis females -->
+<!-- rpt_freq(Anxiety_Control_Female) -> Control_freq_high_Female  -->
+<!-- save(Control_freq_high_Female, file = "../Models/Control_freq_high_Female.Rdata") -->
+<!-- Control_freq_high_Female -->
+<!-- rpt_freq(Anxiety_Treatment_Female) -> Treatment_freq_high_Female -->
+<!-- save(Treatment_freq_high_Female, file = "../Models/Treatment_freq_high_Female.Rdata") -->
+<!-- Treatment_freq_high_Female -->
+
+
+<!-- ``` -->
 

@@ -25,7 +25,7 @@ source("../Scripts/functions_repeatability.R")
 #load('myEnvironment.RData')
 ```
 
-#Import and filter data
+#Import and filter data; also load models
 ```{r, include = FALSE}
 #Master file with raw data
 Data <- read.csv("../Data/Weight_Length/Analysis.csv")
@@ -41,6 +41,12 @@ Week_22 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "22")
 #Subseting data by control and treatment
 Weight_Length_Control <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Control") 
 Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Treatment") 
+
+#Load models
+load("../Models/rpt_body_weight_control2.Rdata")
+load("../Models/rpt_body_weight_treatment2.Rdata")
+
+
 ```
 
 ### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH 
@@ -55,8 +61,9 @@ Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Treatme
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Body_Weight <- lmer(Weight.g. ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
+Model_Body_Weight <- lmer(Weight.g. ~ Sex-1 + Treatment_Tank + Week  + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
 tab_model(Model_Body_Weight)
+summary(Model_Body_Weight)
 hist(residuals(Model_Body_Weight))#histogram of residuals to check for normal distribution 
 
 Model_Body_Weight2 <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
@@ -67,22 +74,26 @@ hist(residuals(Model_Body_Weight2))
 
 
 #Calculating repeatabilities (without week and with week)
-rpt_weight(Weight_Length_Control) -> rpt_body_weight_control #without week factored in
-
-rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment #without week factored in
+# rpt_weight(Weight_Length_Control) -> rpt_body_weight_control #without week factored in
+# 
+# rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment #without week factored in
 
 rpt_weight2(Weight_Length_Control) -> rpt_body_weight_control2 #adjusted for week
+save(rpt_body_weight_control2, file = "../Models/rpt_body_weight_control2.Rdata")
 
 rpt_weight2(Weight_Length_Treatment) -> rpt_body_weight_treatment2 #adjusted for week
+save(rpt_body_weight_treatment2, file = "../Models/rpt_body_weight_treatment2.Rdata")
 
 
 #Obtaining within-individual and between-individual variance for body weight
-
-rpt_within_weight(Weight_Length_Control) -> within_between_body_weight_control
-rpt_within_weight(Weight_Length_Treatment) -> within_between_body_weight_treatment
-
-rpt_within_weight2(Weight_Length_Control) -> within_between_body_weight_control2 #adjusted for week
-rpt_within_weight2(Weight_Length_Treatment) -> within_between_body_weight_treatment2 #adjusted for week
+# 
+# rpt_within_weight(Weight_Length_Control) -> within_between_body_weight_control
+# rpt_within_weight(Weight_Length_Treatment) -> within_between_body_weight_treatment
+# 
+# rpt_within_weight2(Weight_Length_Control) -> within_between_body_weight_control2 #adjusted for week
+# save(within_between_body_weight_control2, file = "../Models/within_between_body_weight_control2.Rdata")
+# rpt_within_weight2(Weight_Length_Treatment) -> within_between_body_weight_treatment2 #adjusted for week
+# save(within_between_body_weight_treatment2, file = "../Models/within_between_body_weight_treatment2.Rdata")
 
 
 #Obtaining differences between repeatabilities using custom made functions
@@ -103,50 +114,50 @@ summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
 
-# Body Length 
-```{r, echo=FALSE}
+<!-- # Body Length (Not using body length data) -->
+<!-- ```{r, echo=FALSE} -->
 
-#Check Normality with mixed model and then histogram of residuals
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Model_Body_Length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
-tab_model(Model_Body_Length)
-hist(residuals(Model_Body_Length))#histogram of residuals to check for normal distribution 
+<!-- Model_Body_Length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model  -->
+<!-- tab_model(Model_Body_Length) -->
+<!-- hist(residuals(Model_Body_Length))#histogram of residuals to check for normal distribution  -->
 
-Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
-summary(Model_Body_Length2)
-tab_model(Model_Body_Length2)
-hist(residuals(Model_Body_Length2))
+<!-- Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data)  -->
+<!-- summary(Model_Body_Length2) -->
+<!-- tab_model(Model_Body_Length2) -->
+<!-- hist(residuals(Model_Body_Length2)) -->
 
 
 
-#Calculating repeatabilities using custom made functions
-rpt_length2(Weight_Length_Control) -> rpt_length_control
-rpt_length_control
-rpt_length2(Weight_Length_Treatment) -> rpt_length_treatment
-rpt_length_treatment
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_length2(Weight_Length_Control) -> rpt_length_control -->
+<!-- rpt_length_control -->
+<!-- rpt_length2(Weight_Length_Treatment) -> rpt_length_treatment -->
+<!-- rpt_length_treatment -->
 
-#Obtaining within-individual and between-individual variance for body weight
+<!-- #Obtaining within-individual and between-individual variance for body weight -->
 
-rpt_within_length(Weight_Length_Control) -> within_between_body_length_control
-rpt_within_length(Weight_Length_Treatment) -> within_between_body_length_treatment
+<!-- rpt_within_length(Weight_Length_Control) -> within_between_body_length_control -->
+<!-- rpt_within_length(Weight_Length_Treatment) -> within_between_body_length_treatment -->
 
-#Obtaining differences between repeatabilities using custom made functions
-Control_length_boot <- unlist_rptr(rpt_body_weight_control) 
-Treatment_length_boot <- unlist_rptr(rpt_body_weight_treatment) 
-body_length_diff <- difference_boot(Control_length_boot,Treatment_length_boot) #calculating the difference
-q_body_length <- quantiles_diff_boot(body_length_diff) #obtaining 95% CI
-m_mody_length <- mean(body_length_diff) #Obtaining mean
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_length_boot <- unlist_rptr(rpt_body_weight_control)  -->
+<!-- Treatment_length_boot <- unlist_rptr(rpt_body_weight_treatment)  -->
+<!-- body_length_diff <- difference_boot(Control_length_boot,Treatment_length_boot) #calculating the difference -->
+<!-- q_body_length <- quantiles_diff_boot(body_length_diff) #obtaining 95% CI -->
+<!-- m_mody_length <- mean(body_length_diff) #Obtaining mean -->
 
-q_body_length
-m_mody_length
+<!-- q_body_length -->
+<!-- m_mody_length -->
 
-# Calculating difference in variance between control and treatment group 
-Model_Length_1 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
-summary(Model_Length_1)
-Model_Length_2 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
-summary(Model_Length_2)
-anova(Model_Length_1, Model_Length_2) #calculating difference between two models to find difference in variance
-```
+<!-- # Calculating difference in variance between control and treatment group  -->
+<!-- Model_Length_1 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure -->
+<!-- summary(Model_Length_1) -->
+<!-- Model_Length_2 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Length_2) -->
+<!-- anova(Model_Length_1, Model_Length_2) #calculating difference between two models to find difference in variance -->
+<!-- ``` -->
 
 
 # Visualizations
@@ -216,7 +227,8 @@ pd <- position_dodge(0.1) # move them .05 to the left and right
 
 
 line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treatment_Tank)) + 
-    geom_errorbar(aes(ymin=Weight.g.-se, ymax=Weight.g.+se), colour="black", width=.1, position=pd) +
+    geom_errorbar(aes(ymin=Weight.g.-se, ymax=Weight.g.+se), colour="black", width=.3, position=pd) +
+      scale_colour_manual(values = wes_palette("FantasticFox1", n = 2))+
     geom_line(position=pd) +
     geom_point(position=pd, size=3) +
   labs(title = "Obesogenic vs. Control Diet",
@@ -226,7 +238,7 @@ line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treat
 line_plot_weight
 
 body_weight_violin <-  
-  ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank))+
+  ggplot(data = Week_22,aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank))+
     scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
     geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
@@ -235,6 +247,7 @@ body_weight_violin <-
     rremove("legend.title")+
     theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
     theme(legend.position = "none")+
+  labs(title = "Final week of body weight measurements")+
     theme(axis.title.x=element_blank())+
   facet_grid(~Sex)
 
@@ -249,61 +262,61 @@ body_weight_violin
 
 
 
-# plots (fish length) for tanks
+<!-- # plots (fish length) for tanks -->
 
-```{r, echo = FALSE}
-Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex"))
+<!-- ```{r, echo = FALSE} -->
+<!-- Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex")) -->
 
-# So error bars aren't overlapping, we can use this:
-pd <- position_dodge(0.1) # move them .05 to the left and right
+<!-- # So error bars aren't overlapping, we can use this: -->
+<!-- pd <- position_dodge(0.1) # move them .05 to the left and right -->
 
-plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, colour=Treatment_Tank)) + 
-  geom_errorbar(aes(ymin=Fish_Length_cm-se, ymax=Fish_Length_cm+se),colour="black", width=.1, position=pd) +
-  geom_line(position=pd) +
-  geom_point(position=pd)+
-  labs(title = "Obesogenic vs. Control Diet",
-              subtitle = "Fish lengths after 22 weeks") +
-  facet_grid(~Sex)
-          
-
-plot_fish_length_tanks
+<!-- plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, colour=Treatment_Tank)) +  -->
+<!--   geom_errorbar(aes(ymin=Fish_Length_cm-se, ymax=Fish_Length_cm+se),colour="black", width=.1, position=pd) + -->
+<!--   geom_line(position=pd) + -->
+<!--   geom_point(position=pd)+ -->
+<!--   labs(title = "Obesogenic vs. Control Diet", -->
+<!--               subtitle = "Fish lengths after 22 weeks") + -->
+<!--   facet_grid(~Sex) -->
 
 
-body_length_violin <-  
-  ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Fish_Length_cm, fill = Treatment_Tank))+
-    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
-    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
-    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
-    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+ 
-    theme_pubr()+
-    rremove("legend.title")+
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
-    theme(legend.position = "none")+
-    theme(axis.title.x=element_blank())+
-  facet_grid(~Sex)
-body_length_violin
-```
-
-#Summary (BMI)
-
-```{r, echo = FALSE}
-
-Summary_BMI <- summarySE(Weight_Length_Data, measurevar="BMI", groupvars=c("Week","Treatment_Tank", "Sex"))
+<!-- plot_fish_length_tanks -->
 
 
-plot_bmi <- ggplot(Summary_BMI, aes(x=Week, y=BMI, colour=Treatment_Tank)) + 
-  geom_errorbar(aes(ymin=BMI-se, ymax=BMI+se), width=.1,colour="black", position=pd) +
-  geom_line(position=pd) +
-  labs(title = "Obesogenic vs. Control Diet",
-              subtitle = "Fish BMI after 22 weeks (g/cm2)")+
-  facet_grid(~Sex)
+<!-- body_length_violin <-   -->
+<!--   ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Fish_Length_cm, fill = Treatment_Tank))+ -->
+<!--     scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+  -->
+<!--     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+ -->
+<!--     geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+  -->
+<!--     geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+  -->
+<!--     theme_pubr()+ -->
+<!--     rremove("legend.title")+ -->
+<!--     theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+ -->
+<!--     theme(legend.position = "none")+ -->
+<!--     theme(axis.title.x=element_blank())+ -->
+<!--   facet_grid(~Sex) -->
+<!-- body_length_violin -->
+<!-- ``` -->
 
-          
+<!-- #Summary (BMI) -->
 
-plot_bmi
+<!-- ```{r, echo = FALSE} -->
+
+<!-- Summary_BMI <- summarySE(Weight_Length_Data, measurevar="BMI", groupvars=c("Week","Treatment_Tank", "Sex")) -->
 
 
-```
+<!-- plot_bmi <- ggplot(Summary_BMI, aes(x=Week, y=BMI, colour=Treatment_Tank)) +  -->
+<!--   geom_errorbar(aes(ymin=BMI-se, ymax=BMI+se), width=.1,colour="black", position=pd) + -->
+<!--   geom_line(position=pd) + -->
+<!--   labs(title = "Obesogenic vs. Control Diet", -->
+<!--               subtitle = "Fish BMI after 22 weeks (g/cm2)")+ -->
+<!--   facet_grid(~Sex) -->
+
+
+
+<!-- plot_bmi -->
+
+
+<!-- ``` -->
 
 
 
@@ -317,8 +330,5 @@ Scatterplot <- ggplot(Weight_Length_Data, aes(Week, Weight.g., colour = Treatmen
   facet_grid(~Sex) +
   stat_smooth(method = "lm", formula = y ~ x + I(x^2), aes(fill = Treatment_Tank)) #try different formulas and compare against each other
 Scatterplot
-
-
-
 ```
 
