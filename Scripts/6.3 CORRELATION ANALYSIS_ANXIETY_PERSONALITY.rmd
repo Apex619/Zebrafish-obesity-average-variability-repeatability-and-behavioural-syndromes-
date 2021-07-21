@@ -43,6 +43,7 @@ Anxiety_Joined$M.ID <- as.factor(Anxiety_Joined$M.ID)
 
 #Joining personality and anxiety data frame
 ```{r}
+#Load "Personality_wide" from previous code
 #Filtering to mutate new columns to add "M.ID" for personality dataset
 
 df <- Personality_wide %>% filter(Date == "29/07/2019") %>% mutate(M.ID = "1")
@@ -90,7 +91,7 @@ bivar <- brm(formula = bivar_formula,
                      data = df,
                      family = gaussian(),
                      chains = 1,
-                     iter = 2000, warmup = 1000)
+                     iter = 6000, warmup = 2000)
 return(bivar)
 }
 
@@ -138,8 +139,8 @@ bivar_formula <- mvbrmsformula(formula1, formula2)
 bivar <- brm(formula = bivar_formula,
                      data = df,
                      family = gaussian(),
-                     chains = 1,
-                     iter = 2000, warmup = 1000)
+                     chains = 4,
+                     iter = 6000, warmup = 2000)
 return(bivar)
 }
 
@@ -152,8 +153,8 @@ bivar_formula <- mvbrmsformula(formula1, formula2)
 bivar <- brm(formula = bivar_formula,
                      data = df,
                      family = gaussian(),
-                     chains = 1,
-                     iter = 2000, warmup = 1000)
+                     chains = 4,
+                     iter = 6000, warmup = 2000)
 return(bivar)
 }
 ```

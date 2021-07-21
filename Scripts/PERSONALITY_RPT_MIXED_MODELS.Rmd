@@ -4,7 +4,7 @@ output: html_document
 ---
 
 
-### Load packages
+### Load packages, functions and models
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -14,11 +14,36 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
                stargazer)
 # Load custom functions
 source("../Scripts/functions_repeatability.R") #load custom functions
+
+load("../Models/rpt_social_control.Rdata")
+load("../Models/rpt_social_treatment.Rdata")
+load("../Models/within_between_social_control.Rdata")
+load("../Models/within_between_social_treatment.Rdata")
+load("../Models/rpt_predator_control_sqrt.Rdata")
+load("../Models/rpt_predator_treatment_sqrt.Rdata")
+load("../Models/within_between_predator_control.Rdata")
+load("../Models/within_between_predator_treatment.Rdata")
+load("../Models/rpt_novel_control_sqrt.Rdata")
+load("../Models/rpt_novel_treatment_sqrt.Rdata")
+load("../Models/within_between_novel_control.Rdata")
+load("../Models/within_between_novel_treatment.Rdata")
+load("../Models/rpt_aggression_control.Rdata")
+load("../Models/rpt_aggression_treatment.Rdata")
+load("../Models/within_between_aggression_control.Rdata")
+load("../Models/within_between_aggression_treatment.Rdata")
+load("../Models/rpt_post_assay_control.Rdata")
+load("../Models/rpt_post_assay_treatment.Rdata")
+load("../Models/within_between_activity_control.Rdata")
+load("../Models/within_between_activity_treatment.Rdata")
+load("../Models/rpt_social_control.Rdata")
+load("../Models/rpt_social_treatment.Rdata")
+load("../Models/within_between_social_control.Rdata")
+load("../Models/within_between_social_treatment.Rdata")
 ```
 
 #Import and subset data
 ```{r}
-Personality <- read.csv("./Data/Personality/ALL.csv")
+Personality <- read.csv("../Data/Personality/ALL.csv")
 
 # making a column with a factor where the four levels correspond to the four phases
 Personality$phase <-  factor(Personality$Time, levels = c("6-9", "13-16", "20-23", "27-30")) 
@@ -58,7 +83,7 @@ Aggression_Treatment <- subset(Aggression_ALL, Aggression_ALL$Group == "Treatmen
 
 # EXPLORATION DATA
 # Acclimation <- read.csv("../Data/Personality/Acclimation.csv")
-Post_assay <- read.csv("./Data/Personality/Post-assay.csv")
+Post_assay <- read.csv("../Data/Personality/Post-assay.csv")
 
 Post_assay_Control <- subset(Post_assay, Post_assay$Group == "Control") 
 Post_assay_Treatment <- subset(Post_assay, Post_assay$Group == "Treatment") 
@@ -84,28 +109,32 @@ Model_post <- lmer(tot_dist_Activity ~ Group*Sex + (1 |Fish_ID), data = Post_ass
 tab_model(Model_post)
 hist(residuals(Model_post)) 
 
-#Custom function just for activity phase
-rpt_tot_dist_Activity <- function(df) {
-  x <- rpt(tot_dist_Activity ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
-}
-
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist_Activity(Post_assay_Control) -> rpt_post_assay_control
-rpt_post_assay_control
-rpt_tot_dist_Activity(Post_assay_Treatment) -> rpt_post_assay_treatment
-rpt_post_assay_treatment
-
-#Custom function for wihin between (for activity)
-rpt_within_tot_dist_Activity <- function(df) {
-  rpt(scale(tot_dist_Activity) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
-}
-
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_tot_dist_Activity(Post_assay_Control) -> within_between_activity_control
-within_between_activity_control
-rpt_within_tot_dist_Activity(Post_assay_Treatment) -> within_between_activity_treatment
-within_between_activity_treatment
+# #Custom function just for activity phase
+# rpt_tot_dist_Activity <- function(df) {
+#   x <- rpt(tot_dist_Activity ~ (1 |  Fish_ID), grname = "Fish_ID", data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000)
+# }
+# 
+# #Calculating repeatabilities using custom made functions
+# rpt_tot_dist_Activity(Post_assay_Control) -> rpt_post_assay_control
+# save(rpt_post_assay_control, file = "../Models/rpt_post_assay_control.Rdata")
+# rpt_post_assay_control
+# rpt_tot_dist_Activity(Post_assay_Treatment) -> rpt_post_assay_treatment
+# save(rpt_post_assay_treatment, file = "../Models/rpt_post_assay_treatment.Rdata")
+# rpt_post_assay_treatment
+# 
+# #Custom function for wihin between (for activity)
+# rpt_within_tot_dist_Activity <- function(df) {
+#   rpt(scale(tot_dist_Activity) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+# }
+# 
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_tot_dist_Activity(Post_assay_Control) -> within_between_activity_control
+# within_between_activity_control
+# save(within_between_activity_control, file = "../Models/within_between_activity_control.Rdata")
+# rpt_within_tot_dist_Activity(Post_assay_Treatment) -> within_between_activity_treatment
+# save(within_between_activity_treatment, file = "../Models/within_between_activity_treatment.Rdata")
+# within_between_activity_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_activity_boot <- unlist_rptr(rpt_post_assay_control)
@@ -146,21 +175,26 @@ tab_model(Model_Social_zone05)
 hist(residuals(Model_Social_zone05)) 
 
 Model_Social_zone052 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Social_ALL) 
+summary(Model_Social_zone052)
 tab_model(Model_Social_zone052)
 hist(residuals(Model_Social_zone052)) 
 
-#Calculating repeatabilities using custom made functions
-rpt_zone05(Social_Control) -> rpt_social_control
-rpt_social_control
-rpt_zone05(Social_Treatment) -> rpt_social_treatment
-rpt_social_treatment
-
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_zone05(Social_Control) -> within_between_social_control
-within_between_social_control
-rpt_within_zone05(Social_Treatment) -> within_between_social_treatment
-within_between_social_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_zone05(Social_Control) -> rpt_social_control
+# save(rpt_social_control, file = "../Models/rpt_social_control.Rdata")
+# rpt_social_control
+# rpt_zone05(Social_Treatment) -> rpt_social_treatment
+# save(rpt_social_treatment, file = "../Models/rpt_social_treatment.Rdata")
+# rpt_social_treatment
+# 
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_zone05(Social_Control) -> within_between_social_control
+# save(within_between_social_control, file = "../Models/within_between_social_control.Rdata")
+# within_between_social_control
+# rpt_within_zone05(Social_Treatment) -> within_between_social_treatment
+# save(within_between_social_treatment, file = "../Models/within_between_social_treatment.Rdata")
+# within_between_social_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_social_boot <- unlist_rptr(rpt_social_control)
@@ -190,107 +224,108 @@ Social_ALL %>%
   facet_grid(~Sex)
 ```
 
-Social Analysis - mean speed
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Social Analysis - mean speed -->
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Model_Social_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Social_ALL) 
-tab_model(Model_Social_speed)
-hist(residuals(Model_Social_speed)) 
+<!-- Model_Social_speed <- lmer(mean_speed ~ Group*Sex + (1 | Fish_ID), data = Social_ALL)  -->
+<!-- tab_model(Model_Social_speed) -->
+<!-- hist(residuals(Model_Social_speed))  -->
 
 
-#Calculating repeatabilities using custom made functions
-rpt_speed(Social_Control) -> rpt_social_control_speed
-rpt_social_control_speed
-rpt_speed(Social_Treatment) -> rpt_social_treatment_speed
-rpt_social_treatment_speed
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_speed(Social_Control) -> rpt_social_control_speed -->
+<!-- # rpt_social_control_speed -->
+<!-- # rpt_speed(Social_Treatment) -> rpt_social_treatment_speed -->
+<!-- # rpt_social_treatment_speed -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_speed(Social_Control) -> within_between_social_control_speed -->
+<!-- # within_between_social_control_speed -->
+<!-- # rpt_within_speed(Social_Treatment) -> within_between_social_treatment_speed -->
+<!-- # within_between_social_treatment_speed -->
 
-#Obtaining within-individual and between-individual variance 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_social_boot_speed <- unlist_rptr(rpt_social_control_speed) -->
+<!-- Treatment_social_boot_speed <- unlist_rptr(rpt_social_treatment_speed)  -->
+<!-- social_diff_speed <- difference_boot(Treatment_social_boot_speed,Control_social_boot_speed)   -->
+<!-- q_social_speed <- quantiles_diff_boot(social_diff_speed) #obtaining 95% CI -->
+<!-- m_social_speed <- mean(social_diff_speed) #Obtaining mean -->
+<!-- m_social_speed -->
+<!-- q_social_speed -->
 
-rpt_within_speed(Social_Control) -> within_between_social_control_speed
-within_between_social_control_speed
-rpt_within_speed(Social_Treatment) -> within_between_social_treatment_speed
-within_between_social_treatment_speed
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Social1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Social1_speed) -->
+<!-- Model_Social2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Social2_speed) -->
+<!-- anova(Model_Social1_speed, Model_Social2_speed) #calculating difference between two models to find difference in variance -->
 
-#Obtaining differences between repeatabilities using custom made functions
-Control_social_boot_speed <- unlist_rptr(rpt_social_control_speed)
-Treatment_social_boot_speed <- unlist_rptr(rpt_social_treatment_speed) 
-social_diff_speed <- difference_boot(Treatment_social_boot_speed,Control_social_boot_speed)  
-q_social_speed <- quantiles_diff_boot(social_diff_speed) #obtaining 95% CI
-m_social_speed <- mean(social_diff_speed) #Obtaining mean
-m_social_speed
-q_social_speed
+<!-- #Quick Visualization -->
+<!-- Social_ALL %>% -->
+<!--   ggplot(aes(Group, mean_speed, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3)+ -->
+<!--   facet_grid(~Sex) -->
+<!-- ``` -->
 
-# Calculating difference in variance between control and treatment groups
-Model_Social1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Social1_speed)
-Model_Social2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Social2_speed)
-anova(Model_Social1_speed, Model_Social2_speed) #calculating difference between two models to find difference in variance
+<!-- Social Analysis - total distance -->
 
-#Quick Visualization
-Social_ALL %>%
-  ggplot(aes(Group, mean_speed, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Social Analysis - total distance
+<!-- Model_Social_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Social_ALL)  -->
+<!-- tab_model(Model_Social_tot_dist) -->
+<!-- hist(residuals(Model_Social_tot_dist))  -->
 
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Model_Social_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Social_ALL)  -->
+<!-- tab_model(Model_Social_tot_dist2) -->
+<!-- hist(residuals(Model_Social_tot_dist2))  -->
 
-Model_Social_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Social_ALL) 
-tab_model(Model_Social_tot_dist)
-hist(residuals(Model_Social_tot_dist)) 
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_tot_dist(Social_Control) -> rpt_social_control_dist -->
+<!-- # rpt_social_control_dist -->
+<!-- # rpt_tot_dist(Social_Treatment) -> rpt_social_treatment_dist -->
+<!-- # rpt_social_treatment_dist -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_tot_dist(Social_Control) -> within_between_social_control_dist -->
+<!-- # within_between_social_control_dist -->
+<!-- # rpt_within_tot_dist(Social_Treatment) -> within_between_social_treatment_dist -->
+<!-- # within_between_social_treatment_dist -->
 
-Model_Social_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Social_ALL) 
-tab_model(Model_Social_tot_dist2)
-hist(residuals(Model_Social_tot_dist2)) 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_social_boot_dist <- unlist_rptr(rpt_social_control_dist) -->
+<!-- Treatment_social_boot_dist <- unlist_rptr(rpt_social_treatment_dist)  -->
+<!-- social_diff_dist <- difference_boot(Treatment_social_boot,Control_social_boot)   -->
+<!-- q_social_dist <- quantiles_diff_boot(social_diff_dist) #obtaining 95% CI -->
+<!-- m_social_dist <- mean(social_diff_dist) #Obtaining mean -->
+<!-- m_social_dist -->
+<!-- q_social_dist -->
 
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist(Social_Control) -> rpt_social_control_dist
-rpt_social_control_dist
-rpt_tot_dist(Social_Treatment) -> rpt_social_treatment_dist
-rpt_social_treatment_dist
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Social1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Social1_dist) -->
+<!-- Model_Social2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Social2_dist) -->
+<!-- anova(Model_Social1_dist, Model_Social2_dist) #calculating difference between two models to find difference in variance -->
 
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_tot_dist(Social_Control) -> within_between_social_control_dist
-within_between_social_control_dist
-rpt_within_tot_dist(Social_Treatment) -> within_between_social_treatment_dist
-within_between_social_treatment_dist
-
-#Obtaining differences between repeatabilities using custom made functions
-Control_social_boot_dist <- unlist_rptr(rpt_social_control_dist)
-Treatment_social_boot_dist <- unlist_rptr(rpt_social_treatment_dist) 
-social_diff_dist <- difference_boot(Treatment_social_boot,Control_social_boot)  
-q_social_dist <- quantiles_diff_boot(social_diff_dist) #obtaining 95% CI
-m_social_dist <- mean(social_diff_dist) #Obtaining mean
-m_social_dist
-q_social_dist
-
-# Calculating difference in variance between control and treatment groups
-Model_Social1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Social1_dist)
-Model_Social2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Social2_dist)
-anova(Model_Social1_dist, Model_Social2_dist) #calculating difference between two models to find difference in variance
-
-#Quick Visualization
-Social_ALL %>%
-  ggplot(aes(Group, tot_dist, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- #Quick Visualization -->
+<!-- Social_ALL %>% -->
+<!--   ggplot(aes(Group, tot_dist, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
 
 Predator Analysis - time spent near stimulus screen 
@@ -301,19 +336,29 @@ Model_Predator_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = 
 tab_model(Model_Predator_zone05)
 hist(residuals(Model_Predator_zone05)) 
 
+Model_Predator_zone05_2 <- lmer(sqrt(zone_05_dur) ~ Group*Sex + (1 | Fish_ID), data = Predator_ALL) 
+tab_model(Model_Predator_zone05_2)
+hist(residuals(Model_Predator_zone05_2)) 
 
-#Calculating repeatabilities using custom made functions
-rpt_zone05(Predator_Control) -> rpt_predator_control
-rpt_predator_control
-rpt_zone05(Predator_Treatment) -> rpt_predator_treatment
-rpt_predator_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_zone05_sqrt(Predator_Control) -> rpt_predator_control_sqrt
+# save(rpt_predator_control_sqrt, file = "../Models/rpt_predator_control_sqrt.Rdata")
+# rpt_predator_control_sqrt
+# 
+# rpt_zone05_sqrt(Predator_Treatment) -> rpt_predator_treatment_sqrt
+# save(rpt_predator_treatment_sqrt, file = "../Models/rpt_predator_treatment_sqrt.Rdata")
+# rpt_predator_treatment_sqrt
+# 
+# #Original rpt
+# rpt_predator_control
+# rpt_predator_treatment
 
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_zone05(Predator_Control) -> within_between_predator_control
-within_between_predator_control
-rpt_within_zone05(Predator_Treatment) -> within_between_predator_treatment
-within_between_predator_treatment
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_zone05(Predator_Control) -> within_between_predator_control
+# within_between_predator_control
+# rpt_within_zone05(Predator_Treatment) -> within_between_predator_treatment
+# within_between_predator_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_predator_boot <- unlist_rptr(rpt_predator_control)
@@ -342,107 +387,107 @@ Predator_ALL %>%
   geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
 
-Predator Analysis - mean speed
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Predator Analysis - mean speed -->
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Model_Predator_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Predator_ALL) 
-tab_model(Model_Predator_speed)
-hist(residuals(Model_Predator_speed)) 
+<!-- Model_Predator_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Predator_ALL)  -->
+<!-- tab_model(Model_Predator_speed) -->
+<!-- hist(residuals(Model_Predator_speed))  -->
 
 
-#Calculating repeatabilities using custom made functions
-rpt_speed(Predator_Control) -> rpt_predator_control_speed
-rpt_predator_control_speed
-rpt_speed(Predator_Treatment) -> rpt_predator_treatment_speed
-rpt_predator_treatment_speed
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_speed(Predator_Control) -> rpt_predator_control_speed -->
+<!-- # rpt_predator_control_speed -->
+<!-- # rpt_speed(Predator_Treatment) -> rpt_predator_treatment_speed -->
+<!-- # rpt_predator_treatment_speed -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_speed(Predator_Control) -> within_between_predator_control_speed -->
+<!-- # within_between_predator_control_speed -->
+<!-- # rpt_within_speed(Predator_Treatment) -> within_between_predator_treatment_speed -->
+<!-- # within_between_predator_treatment_speed -->
 
-#Obtaining within-individual and between-individual variance 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_predator_boot_speed <- unlist_rptr(rpt_predator_control_speed) -->
+<!-- Treatment_predator_boot_speed <- unlist_rptr(rpt_predator_treatment_speed)  -->
+<!-- predator_diff_speed <- difference_boot(Treatment_predator_boot_speed,Control_predator_boot_speed)   -->
+<!-- q_predator_speed <- quantiles_diff_boot(predator_diff_speed) #obtaining 95% CI -->
+<!-- m_predator_speed <- mean(predator_diff_speed) #Obtaining mean -->
+<!-- m_predator_speed -->
+<!-- q_predator_speed -->
 
-rpt_within_speed(Predator_Control) -> within_between_predator_control_speed
-within_between_predator_control_speed
-rpt_within_speed(Predator_Treatment) -> within_between_predator_treatment_speed
-within_between_predator_treatment_speed
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Predator1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Predator1_speed) -->
+<!-- Model_Predator2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Predator2_speed) -->
+<!-- anova(Model_Predator1_speed, Model_Predator2_speed) #calculating difference between two models to find difference in variance -->
 
-#Obtaining differences between repeatabilities using custom made functions
-Control_predator_boot_speed <- unlist_rptr(rpt_predator_control_speed)
-Treatment_predator_boot_speed <- unlist_rptr(rpt_predator_treatment_speed) 
-predator_diff_speed <- difference_boot(Treatment_predator_boot_speed,Control_predator_boot_speed)  
-q_predator_speed <- quantiles_diff_boot(predator_diff_speed) #obtaining 95% CI
-m_predator_speed <- mean(predator_diff_speed) #Obtaining mean
-m_predator_speed
-q_predator_speed
+<!-- #Quick Visualization -->
+<!-- Predator_ALL %>% -->
+<!--   ggplot(aes(Group, mean_speed, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
-# Calculating difference in variance between control and treatment groups
-Model_Predator1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Predator1_speed)
-Model_Predator2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Predator2_speed)
-anova(Model_Predator1_speed, Model_Predator2_speed) #calculating difference between two models to find difference in variance
+<!-- Predator Analysis - total distance -->
 
-#Quick Visualization
-Predator_ALL %>%
-  ggplot(aes(Group, mean_speed, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Predator Analysis - total distance
+<!-- Model_Predator_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Predator_ALL)  -->
+<!-- tab_model(Model_Predator_tot_dist) -->
+<!-- hist(residuals(Model_Predator_tot_dist))  -->
 
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Model_Predator_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Predator_ALL)  -->
+<!-- tab_model(Model_Predator_tot_dist2) -->
+<!-- hist(residuals(Model_Predator_tot_dist2))  -->
 
-Model_Predator_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Predator_ALL) 
-tab_model(Model_Predator_tot_dist)
-hist(residuals(Model_Predator_tot_dist)) 
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_tot_dist(Predator_Control) -> rpt_predator_control_dist -->
+<!-- # rpt_predator_control_dist -->
+<!-- # rpt_tot_dist(Predator_Treatment) -> rpt_predator_treatment_dist -->
+<!-- # rpt_predator_treatment_dist -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_tot_dist(Predator_Control) -> within_between_predator_control_dist -->
+<!-- # within_between_predator_control_dist -->
+<!-- # rpt_within_tot_dist(Predator_Treatment) -> within_between_predator_treatment_dist -->
+<!-- # within_between_predator_treatment_dist -->
 
-Model_Predator_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Predator_ALL) 
-tab_model(Model_Predator_tot_dist2)
-hist(residuals(Model_Predator_tot_dist2)) 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_predator_boot_dist <- unlist_rptr(rpt_predator_control_dist) -->
+<!-- Treatment_predator_boot_dist <- unlist_rptr(rpt_predator_treatment_dist)  -->
+<!-- predator_diff_dist <- difference_boot(Treatment_predator_boot,Control_predator_boot)   -->
+<!-- q_predator_dist <- quantiles_diff_boot(predator_diff_dist) #obtaining 95% CI -->
+<!-- m_predator_dist <- mean(predator_diff_dist) #Obtaining mean -->
+<!-- m_predator_dist -->
+<!-- q_predator_dist -->
 
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist(Predator_Control) -> rpt_predator_control_dist
-rpt_predator_control_dist
-rpt_tot_dist(Predator_Treatment) -> rpt_predator_treatment_dist
-rpt_predator_treatment_dist
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Predator1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Predator1_dist) -->
+<!-- Model_Predator2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Predator2_dist) -->
+<!-- anova(Model_Predator1_dist, Model_Predator2_dist) #calculating difference between two models to find difference in variance -->
 
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_tot_dist(Predator_Control) -> within_between_predator_control_dist
-within_between_predator_control_dist
-rpt_within_tot_dist(Predator_Treatment) -> within_between_predator_treatment_dist
-within_between_predator_treatment_dist
-
-#Obtaining differences between repeatabilities using custom made functions
-Control_predator_boot_dist <- unlist_rptr(rpt_predator_control_dist)
-Treatment_predator_boot_dist <- unlist_rptr(rpt_predator_treatment_dist) 
-predator_diff_dist <- difference_boot(Treatment_predator_boot,Control_predator_boot)  
-q_predator_dist <- quantiles_diff_boot(predator_diff_dist) #obtaining 95% CI
-m_predator_dist <- mean(predator_diff_dist) #Obtaining mean
-m_predator_dist
-q_predator_dist
-
-# Calculating difference in variance between control and treatment groups
-Model_Predator1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Predator1_dist)
-Model_Predator2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Predator2_dist)
-anova(Model_Predator1_dist, Model_Predator2_dist) #calculating difference between two models to find difference in variance
-
-#Quick Visualization
-Predator_ALL %>%
-  ggplot(aes(Group, tot_dist, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- #Quick Visualization -->
+<!-- Predator_ALL %>% -->
+<!--   ggplot(aes(Group, tot_dist, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
 
 Novel Analysis - time spent near stimulus screen 
@@ -453,23 +498,25 @@ Model_Novel_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Nov
 tab_model(Model_Novel_zone05)
 hist(residuals(Model_Novel_zone05)) #data skewed, needs transformation
 
-Model_Novel_zone052 <- lmer(sqrt(zone_05_dur) ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL) 
+Model_Novel_zone052 <- lmer(sqrt(zone_05_dur) ~ Group*Sex + (1 | Fish_ID), data = Novel_ALL) 
 tab_model(Model_Novel_zone052)
 hist(residuals(Model_Novel_zone052))
 
 
-#Calculating repeatabilities using custom made functions
-rpt_zone05(Novel_Control) -> rpt_novel_control
-rpt_novel_control
-rpt_zone05(Novel_Treatment) -> rpt_novel_treatment
-rpt_novel_treatment
-
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_zone05(Novel_Control) -> within_between_novel_control
-within_between_novel_control
-rpt_within_zone05(Novel_Treatment) -> within_between_novel_treatment
-within_between_novel_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_zone05_sqrt(Novel_Control) -> rpt_novel_control_sqrt
+# save(rpt_novel_control_sqrt, file = "../Models/rpt_novel_control_sqrt.Rdata")
+# rpt_novel_control_sqrt
+# rpt_zone05_sqrt(Novel_Treatment) -> rpt_novel_treatment_sqrt
+# save(rpt_novel_treatment_sqrt, file = "../Models/rpt_novel_treatment_sqrt.Rdata")
+# rpt_novel_treatment_sqrt
+# 
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_zone05(Novel_Control) -> within_between_novel_control
+# within_between_novel_control
+# rpt_within_zone05(Novel_Treatment) -> within_between_novel_treatment
+# within_between_novel_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_novel_boot <- unlist_rptr(rpt_novel_control)
@@ -498,129 +545,130 @@ Novel_ALL %>%
   geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
 
-Novel Analysis - mean speed
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Novel Analysis - mean speed -->
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Model_Novel_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL) 
-tab_model(Model_Novel_speed)
-hist(residuals(Model_Novel_speed)) 
+<!-- Model_Novel_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL)  -->
+<!-- tab_model(Model_Novel_speed) -->
+<!-- hist(residuals(Model_Novel_speed))  -->
 
 
-#Calculating repeatabilities using custom made functions
-rpt_speed(Novel_Control) -> rpt_novel_control_speed
-rpt_novel_control_speed
-rpt_speed(Novel_Treatment) -> rpt_novel_treatment_speed
-rpt_novel_treatment_speed
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_speed(Novel_Control) -> rpt_novel_control_speed -->
+<!-- # rpt_novel_control_speed -->
+<!-- # rpt_speed(Novel_Treatment) -> rpt_novel_treatment_speed -->
+<!-- # rpt_novel_treatment_speed -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_speed(Novel_Control) -> within_between_novel_control_speed -->
+<!-- # within_between_novel_control_speed -->
+<!-- # rpt_within_speed(Novel_Treatment) -> within_between_novel_treatment_speed -->
+<!-- # within_between_novel_treatment_speed -->
 
-#Obtaining within-individual and between-individual variance 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_novel_boot_speed <- unlist_rptr(rpt_novel_control_speed) -->
+<!-- Treatment_novel_boot_speed <- unlist_rptr(rpt_novel_treatment_speed)  -->
+<!-- novel_diff_speed <- difference_boot(Control_novel_boot_speed,Treatment_novel_boot_speed)   -->
+<!-- q_novel_speed <- quantiles_diff_boot(novel_diff_speed) #obtaining 95% CI -->
+<!-- m_novel_speed <- mean(novel_diff_speed) #Obtaining mean -->
+<!-- m_novel_speed -->
+<!-- q_novel_speed -->
 
-rpt_within_speed(Novel_Control) -> within_between_novel_control_speed
-within_between_novel_control_speed
-rpt_within_speed(Novel_Treatment) -> within_between_novel_treatment_speed
-within_between_novel_treatment_speed
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Novel1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Novel1_speed) -->
+<!-- Model_Novel2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Novel2_speed) -->
+<!-- anova(Model_Novel1_speed, Model_Novel2_speed) #calculating difference between two models to find difference in variance -->
 
-#Obtaining differences between repeatabilities using custom made functions
-Control_novel_boot_speed <- unlist_rptr(rpt_novel_control_speed)
-Treatment_novel_boot_speed <- unlist_rptr(rpt_novel_treatment_speed) 
-novel_diff_speed <- difference_boot(Control_novel_boot_speed,Treatment_novel_boot_speed)  
-q_novel_speed <- quantiles_diff_boot(novel_diff_speed) #obtaining 95% CI
-m_novel_speed <- mean(novel_diff_speed) #Obtaining mean
-m_novel_speed
-q_novel_speed
+<!-- #Quick Visualization -->
+<!-- Novel_ALL %>% -->
+<!--   ggplot(aes(Group, mean_speed, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
-# Calculating difference in variance between control and treatment groups
-Model_Novel1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Novel1_speed)
-Model_Novel2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Novel2_speed)
-anova(Model_Novel1_speed, Model_Novel2_speed) #calculating difference between two models to find difference in variance
+<!-- Novel Analysis - total distance -->
 
-#Quick Visualization
-Novel_ALL %>%
-  ggplot(aes(Group, mean_speed, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Novel Analysis - total distance
+<!-- Model_Novel_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL)  -->
+<!-- tab_model(Model_Novel_tot_dist) -->
+<!-- hist(residuals(Model_Novel_tot_dist))  -->
 
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Model_Novel_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Novel_ALL)  -->
+<!-- tab_model(Model_Novel_tot_dist2) -->
+<!-- hist(residuals(Model_Novel_tot_dist2))  -->
 
-Model_Novel_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Novel_ALL) 
-tab_model(Model_Novel_tot_dist)
-hist(residuals(Model_Novel_tot_dist)) 
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_tot_dist(Novel_Control) -> rpt_novel_control_dist -->
+<!-- # rpt_novel_control_dist -->
+<!-- # rpt_tot_dist(Novel_Treatment) -> rpt_novel_treatment_dist -->
+<!-- # rpt_novel_treatment_dist -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_tot_dist(Novel_Control) -> within_between_novel_control_dist -->
+<!-- # within_between_novel_control_dist -->
+<!-- # rpt_within_tot_dist(Novel_Treatment) -> within_between_novel_treatment_dist -->
+<!-- # within_between_novel_treatment_dist -->
 
-Model_Novel_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Novel_ALL) 
-tab_model(Model_Novel_tot_dist2)
-hist(residuals(Model_Novel_tot_dist2)) 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_novel_boot_dist <- unlist_rptr(rpt_novel_control_dist) -->
+<!-- Treatment_novel_boot_dist <- unlist_rptr(rpt_novel_treatment_dist)  -->
+<!-- novel_diff_dist <- difference_boot(Treatment_novel_boot,Control_novel_boot)   -->
+<!-- q_novel_dist <- quantiles_diff_boot(novel_diff_dist) #obtaining 95% CI -->
+<!-- m_novel_dist <- mean(novel_diff_dist) #Obtaining mean -->
+<!-- m_novel_dist -->
+<!-- q_novel_dist -->
 
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist(Novel_Control) -> rpt_novel_control_dist
-rpt_novel_control_dist
-rpt_tot_dist(Novel_Treatment) -> rpt_novel_treatment_dist
-rpt_novel_treatment_dist
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Novel1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Novel1_dist) -->
+<!-- Model_Novel2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Novel2_dist) -->
+<!-- anova(Model_Novel1_dist, Model_Novel2_dist) #calculating difference between two models to find difference in variance -->
 
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_tot_dist(Novel_Control) -> within_between_novel_control_dist
-within_between_novel_control_dist
-rpt_within_tot_dist(Novel_Treatment) -> within_between_novel_treatment_dist
-within_between_novel_treatment_dist
-
-#Obtaining differences between repeatabilities using custom made functions
-Control_novel_boot_dist <- unlist_rptr(rpt_novel_control_dist)
-Treatment_novel_boot_dist <- unlist_rptr(rpt_novel_treatment_dist) 
-novel_diff_dist <- difference_boot(Treatment_novel_boot,Control_novel_boot)  
-q_novel_dist <- quantiles_diff_boot(novel_diff_dist) #obtaining 95% CI
-m_novel_dist <- mean(novel_diff_dist) #Obtaining mean
-m_novel_dist
-q_novel_dist
-
-# Calculating difference in variance between control and treatment groups
-Model_Novel1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Novel1_dist)
-Model_Novel2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Novel2_dist)
-anova(Model_Novel1_dist, Model_Novel2_dist) #calculating difference between two models to find difference in variance
-
-#Quick Visualization
-Novel_ALL %>%
-  ggplot(aes(Group, tot_dist, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- #Quick Visualization -->
+<!-- Novel_ALL %>% -->
+<!--   ggplot(aes(Group, tot_dist, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
 Aggression Analysis - time spent near stimulus screen 
 ```{r}
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Aggression_zone05 <- lmer(zone_05_dur ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL) 
+Model_Aggression_zone05 <- lmer(zone_05_dur ~ Group*Sex + (1 | Fish_ID), data = Aggression_ALL) 
+summary(Model_Aggression_zone05)
 tab_model(Model_Aggression_zone05)
 hist(residuals(Model_Aggression_zone05)) 
 
 
-#Calculating repeatabilities using custom made functions
-rpt_zone05(Aggression_Control) -> rpt_aggression_control
-rpt_aggression_control
-rpt_zone05(Aggression_Treatment) -> rpt_aggression_treatment
-rpt_aggression_treatment
-
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_zone05(Aggression_Control) -> within_between_aggression_control
-within_between_aggression_control
-rpt_within_zone05(Aggression_Treatment) -> within_between_aggression_treatment
-within_between_aggression_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_zone05(Aggression_Control) -> rpt_aggression_control
+# rpt_aggression_control
+# rpt_zone05(Aggression_Treatment) -> rpt_aggression_treatment
+# rpt_aggression_treatment
+# 
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_zone05(Aggression_Control) -> within_between_aggression_control
+# within_between_aggression_control
+# rpt_within_zone05(Aggression_Treatment) -> within_between_aggression_treatment
+# within_between_aggression_treatment
 
 #Obtaining differences between repeatabilities using custom made functions
 Control_aggression_boot <- unlist_rptr(rpt_aggression_control)
@@ -649,104 +697,104 @@ Aggression_ALL %>%
   geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
 
-Aggression Analysis - mean speed
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Aggression Analysis - mean speed -->
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Model_Aggression_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL) 
-tab_model(Model_Aggression_speed)
-hist(residuals(Model_Aggression_speed)) 
+<!-- Model_Aggression_speed <- lmer(mean_speed ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL)  -->
+<!-- tab_model(Model_Aggression_speed) -->
+<!-- hist(residuals(Model_Aggression_speed))  -->
 
 
-#Calculating repeatabilities using custom made functions
-rpt_speed(Aggression_Control) -> rpt_aggression_control_speed
-rpt_aggression_control_speed
-rpt_speed(Aggression_Treatment) -> rpt_aggression_treatment_speed
-rpt_aggression_treatment_speed
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_speed(Aggression_Control) -> rpt_aggression_control_speed -->
+<!-- # rpt_aggression_control_speed -->
+<!-- # rpt_speed(Aggression_Treatment) -> rpt_aggression_treatment_speed -->
+<!-- # rpt_aggression_treatment_speed -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_speed(Aggression_Control) -> within_between_aggression_control_speed -->
+<!-- # within_between_aggression_control_speed -->
+<!-- # rpt_within_speed(Aggression_Treatment) -> within_between_aggression_treatment_speed -->
+<!-- # within_between_aggression_treatment_speed -->
 
-#Obtaining within-individual and between-individual variance 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_aggression_boot_speed <- unlist_rptr(rpt_aggression_control_speed) -->
+<!-- Treatment_aggression_boot_speed <- unlist_rptr(rpt_aggression_treatment_speed)  -->
+<!-- aggression_diff_speed <- difference_boot(Control_aggression_boot_speed,Treatment_aggression_boot_speed)   -->
+<!-- q_aggression_speed <- quantiles_diff_boot(aggression_diff_speed) #obtaining 95% CI -->
+<!-- m_aggression_speed <- mean(aggression_diff_speed) #Obtaining mean -->
+<!-- m_aggression_speed -->
+<!-- q_aggression_speed -->
 
-rpt_within_speed(Aggression_Control) -> within_between_aggression_control_speed
-within_between_aggression_control_speed
-rpt_within_speed(Aggression_Treatment) -> within_between_aggression_treatment_speed
-within_between_aggression_treatment_speed
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Aggression1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Aggression1_speed) -->
+<!-- Model_Aggression2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Aggression2_speed) -->
+<!-- anova(Model_Aggression1_speed, Model_Aggression2_speed) #calculating difference between two models to find difference in variance -->
 
-#Obtaining differences between repeatabilities using custom made functions
-Control_aggression_boot_speed <- unlist_rptr(rpt_aggression_control_speed)
-Treatment_aggression_boot_speed <- unlist_rptr(rpt_aggression_treatment_speed) 
-aggression_diff_speed <- difference_boot(Control_aggression_boot_speed,Treatment_aggression_boot_speed)  
-q_aggression_speed <- quantiles_diff_boot(aggression_diff_speed) #obtaining 95% CI
-m_aggression_speed <- mean(aggression_diff_speed) #Obtaining mean
-m_aggression_speed
-q_aggression_speed
+<!-- #Quick Visualization -->
+<!-- Aggression_ALL %>% -->
+<!--   ggplot(aes(Group, mean_speed, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
 
-# Calculating difference in variance between control and treatment groups
-Model_Aggression1_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Aggression1_speed)
-Model_Aggression2_speed <- lme(mean_speed ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Aggression2_speed)
-anova(Model_Aggression1_speed, Model_Aggression2_speed) #calculating difference between two models to find difference in variance
+<!-- Aggression Analysis - total distance -->
 
-#Quick Visualization
-Aggression_ALL %>%
-  ggplot(aes(Group, mean_speed, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- ```{r} -->
+<!-- #Check Normality with mixed model and then histogram of residuals -->
 
-Aggression Analysis - total distance
+<!-- Model_Aggression_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL)  -->
+<!-- tab_model(Model_Aggression_tot_dist) -->
+<!-- hist(residuals(Model_Aggression_tot_dist))  -->
 
-```{r}
-#Check Normality with mixed model and then histogram of residuals
+<!-- Model_Aggression_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Aggression_ALL)  -->
+<!-- tab_model(Model_Aggression_tot_dist2) -->
+<!-- hist(residuals(Model_Aggression_tot_dist2))  -->
 
-Model_Aggression_tot_dist <- lmer(tot_dist ~ Group + Sex + (1 | Fish_ID), data = Aggression_ALL) 
-tab_model(Model_Aggression_tot_dist)
-hist(residuals(Model_Aggression_tot_dist)) 
+<!-- # #Calculating repeatabilities using custom made functions -->
+<!-- # rpt_tot_dist(Aggression_Control) -> rpt_aggression_control_dist -->
+<!-- # rpt_aggression_control_dist -->
+<!-- # rpt_tot_dist(Aggression_Treatment) -> rpt_aggression_treatment_dist -->
+<!-- # rpt_aggression_treatment_dist -->
+<!-- #  -->
+<!-- # #Obtaining within-individual and between-individual variance  -->
+<!-- #  -->
+<!-- # rpt_within_tot_dist(Aggression_Control) -> within_between_aggression_control_dist -->
+<!-- # within_between_aggression_control_dist -->
+<!-- # rpt_within_tot_dist(Aggression_Treatment) -> within_between_aggression_treatment_dist -->
+<!-- # within_between_aggression_treatment_dist -->
 
-Model_Aggression_tot_dist2 <- lmer(tot_dist ~ Group*Sex + (1 | Fish_ID), data = Aggression_ALL) 
-tab_model(Model_Aggression_tot_dist2)
-hist(residuals(Model_Aggression_tot_dist2)) 
+<!-- #Obtaining differences between repeatabilities using custom made functions -->
+<!-- Control_aggression_boot_dist <- unlist_rptr(rpt_aggression_control_dist) -->
+<!-- Treatment_aggression_boot_dist <- unlist_rptr(rpt_aggression_treatment_dist)  -->
+<!-- aggression_diff_dist <- difference_boot(Treatment_aggression_boot,Control_aggression_boot)   -->
+<!-- q_aggression_dist <- quantiles_diff_boot(aggression_diff_dist) #obtaining 95% CI -->
+<!-- m_aggression_dist <- mean(aggression_diff_dist) #Obtaining mean -->
+<!-- m_aggression_dist -->
+<!-- q_aggression_dist -->
 
-#Calculating repeatabilities using custom made functions
-rpt_tot_dist(Aggression_Control) -> rpt_aggression_control_dist
-rpt_aggression_control_dist
-rpt_tot_dist(Aggression_Treatment) -> rpt_aggression_treatment_dist
-rpt_aggression_treatment_dist
+<!-- # Calculating difference in variance between control and treatment groups -->
+<!-- Model_Aggression1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure -->
+<!-- summary(Model_Aggression1_dist) -->
+<!-- Model_Aggression2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent -->
+<!-- summary(Model_Aggression2_dist) -->
+<!-- anova(Model_Aggression1_dist, Model_Aggression2_dist) #calculating difference between two models to find difference in variance -->
 
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_tot_dist(Aggression_Control) -> within_between_aggression_control_dist
-within_between_aggression_control_dist
-rpt_within_tot_dist(Aggression_Treatment) -> within_between_aggression_treatment_dist
-within_between_aggression_treatment_dist
-
-#Obtaining differences between repeatabilities using custom made functions
-Control_aggression_boot_dist <- unlist_rptr(rpt_aggression_control_dist)
-Treatment_aggression_boot_dist <- unlist_rptr(rpt_aggression_treatment_dist) 
-aggression_diff_dist <- difference_boot(Treatment_aggression_boot,Control_aggression_boot)  
-q_aggression_dist <- quantiles_diff_boot(aggression_diff_dist) #obtaining 95% CI
-m_aggression_dist <- mean(aggression_diff_dist) #Obtaining mean
-m_aggression_dist
-q_aggression_dist
-
-# Calculating difference in variance between control and treatment groups
-Model_Aggression1_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
-summary(Model_Aggression1_dist)
-Model_Aggression2_dist <- lme(tot_dist ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
-summary(Model_Aggression2_dist)
-anova(Model_Aggression1_dist, Model_Aggression2_dist) #calculating difference between two models to find difference in variance
-
-#Quick Visualization
-Aggression_ALL %>%
-  ggplot(aes(Group, tot_dist, fill=Group)) +
-  geom_violin(
-    trim = FALSE,
-    draw_quantiles = c(0.25, 0.5, 0.75), 
-    alpha=0.5
-  ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)
-```
+<!-- #Quick Visualization -->
+<!-- Aggression_ALL %>% -->
+<!--   ggplot(aes(Group, tot_dist, fill=Group)) + -->
+<!--   geom_violin( -->
+<!--     trim = FALSE, -->
+<!--     draw_quantiles = c(0.25, 0.5, 0.75),  -->
+<!--     alpha=0.5 -->
+<!--   ) +  -->
+<!--   geom_point(position = "jitter", alpha = 0.7, size = 3) -->
+<!-- ``` -->
