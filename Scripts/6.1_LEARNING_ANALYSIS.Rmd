@@ -3,7 +3,7 @@ title: "analysis"
 output: html_document
 ---
 
-### Load packages
+### Load packages, functions
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -14,6 +14,7 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, plyr, magrittr, lubridat
 
 # Load custom function to extract data 
 source("../Scripts/functions_learning.R")
+source("../Scripts/functions_repeatability.R")
 ```
 
 #Subset data into control and treatment groups and then by sex
@@ -33,6 +34,22 @@ Treatment_Male_Learning <- subset(Learning_Treatment, Learning_Treatment$sex == 
 Treatment_Female_Learning <- subset(Learning_Treatment, Learning_Treatment$sex == "female")
 ```
 
+#Load models
+```{r}
+load("../Models/rpt_learning_control.Rdata")
+load("../Models/rpt_learning_treatment.Rdata")
+load("../Models/within_between_learning_control.Rdata")
+load("../Models/within_between_learning_treatment.Rdata")
+load("../Models/rpt_learning_control_male.Rdata")
+load("../Models/rpt_learning_treatment_male.Rdata")
+load("../Models/rpt_learning_control_female.Rdata")
+load("../Models/rpt_learning_treatment_female.Rdata")
+load("../Models/within_between_learning_control_male.Rdata")
+load("../Models/within_between_learning_treatment_male.Rdata")
+load("../Models/within_between_learning_control_female.Rdata")
+load("../Models/within_between_learning_treatment_female.Rdata")
+```
+
 ### MAIN ANALYSIS 
 1) CHECKING NORMALITY ASSUMPTIONS WITH MIXED MODELS AND A HISTOGRAM OF RESIDUALS
 2) PERFORMING REPEATABILITY ANALYSIS FOR EACH GROUP AND EXTRACTING WITHIN-AND BETWEEN-INDIVIDUAL VARIANCES AFTER A Z TRANSFORMATION
@@ -47,18 +64,22 @@ Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs)
 tab_model(Model_Learning)
 hist(residuals(Model_Learning)) 
 
-#Calculating repeatabilities using custom made functions
-rpt_learning(Learning_Control) -> rpt_learning_control
-rpt_learning_control
-rpt_learning(Learning_Treatment) -> rpt_learning_treatment
-rpt_learning_treatment
-
-#Obtaining within-individual and between-individual variance 
-
-rpt_within_learning(Learning_Control) -> within_between_learning_control
-within_between_learning_control
-rpt_within_learning(Learning_Treatment) -> within_between_learning_treatment
-within_between_learning_treatment
+# #Calculating repeatabilities using custom made functions
+# rpt_learning(Learning_Control) -> rpt_learning_control
+# save(rpt_learning_control, file = "../Models/rpt_learning_control.Rdata")
+# rpt_learning_control
+# rpt_learning(Learning_Treatment) -> rpt_learning_treatment
+# save(rpt_learning_treatment, file = "../Models/rpt_learning_treatment.Rdata")
+# rpt_learning_treatment
+# 
+# #Obtaining within-individual and between-individual variance 
+# 
+# rpt_within_learning(Learning_Control) -> within_between_learning_control
+# save(within_between_learning_control, file = "../Models/within_between_learning_control.Rdata")
+# within_between_learning_control
+# rpt_within_learning(Learning_Treatment) -> within_between_learning_treatment
+# save(within_between_learning_treatment, file = "../Models/within_between_learning_treatment.Rdata")
+# within_between_learning_treatment
 
 
 #Obtaining differences between repeatabilities using custom made functions
@@ -97,32 +118,40 @@ Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs)
 tab_model(Model_Learning)
 hist(residuals(Model_Learning)) 
 
-#Calculating repeatabilities using custom made functions for males (control and treatment)
-rpt_learning(Control_Male_Learning) -> rpt_learning_control_male
-rpt_learning_control_male
-rpt_learning(Treatment_Male_Learning) -> rpt_learning_treatment_male
-rpt_learning_treatment_male
-
-#Calculating repeatabilities using custom made functions for females (control and treatment)
-rpt_learning(Control_Female_Learning) -> rpt_learning_control_female
-rpt_learning_control_female
-rpt_learning(Treatment_Female_Learning) -> rpt_learning_treatment_female
-rpt_learning_treatment_female
-
-
-#Obtaining within-individual and between-individual variance for males (control and treatment)
-
-rpt_within_learning(Control_Male_Learning) -> within_between_learning_control_male
-within_between_learning_control_male
-rpt_within_learning(Treatment_Male_Learning) -> within_between_learning_treatment_male
-within_between_learning_treatment_male
-
-#Obtaining within-individual and between-individual variance for females (control and treatment)
-
-rpt_within_learning(Control_Female_Learning) -> within_between_learning_control_female
-within_between_learning_control_female
-rpt_within_learning(Treatment_Female_Learning) -> within_between_learning_treatment_female
-within_between_learning_treatment_female
+# #Calculating repeatabilities using custom made functions for males (control and treatment)
+# rpt_learning(Control_Male_Learning) -> rpt_learning_control_male
+# save(rpt_learning_control_male, file = "../Models/rpt_learning_control_male.Rdata")
+# rpt_learning_control_male
+# rpt_learning(Treatment_Male_Learning) -> rpt_learning_treatment_male
+# save(rpt_learning_treatment_male, file = "../Models/rpt_learning_treatment_male.Rdata")
+# rpt_learning_treatment_male
+# 
+# #Calculating repeatabilities using custom made functions for females (control and treatment)
+# rpt_learning(Control_Female_Learning) -> rpt_learning_control_female
+# save(rpt_learning_control_female, file = "../Models/rpt_learning_control_female.Rdata")
+# rpt_learning_control_female
+# rpt_learning(Treatment_Female_Learning) -> rpt_learning_treatment_female
+# save(rpt_learning_treatment_female, file = "../Models/rpt_learning_treatment_female.Rdata")
+# rpt_learning_treatment_female
+# 
+# 
+# #Obtaining within-individual and between-individual variance for males (control and treatment)
+# 
+# rpt_within_learning(Control_Male_Learning) -> within_between_learning_control_male
+# save(within_between_learning_control_male, file = "../Models/within_between_learning_control_male.Rdata")
+# within_between_learning_control_male
+# rpt_within_learning(Treatment_Male_Learning) -> within_between_learning_treatment_male
+# save(within_between_learning_treatment_male, file = "../Models/within_between_learning_treatment_male.Rdata")
+# within_between_learning_treatment_male
+# 
+# #Obtaining within-individual and between-individual variance for females (control and treatment)
+# 
+# rpt_within_learning(Control_Female_Learning) -> within_between_learning_control_female
+# save(within_between_learning_control_female, file = "../Models/within_between_learning_control_female.Rdata")
+# within_between_learning_control_female
+# rpt_within_learning(Treatment_Female_Learning) -> within_between_learning_treatment_female
+# save(within_between_learning_treatment_female, file = "../Models/within_between_learning_treatment_female.Rdata")
+# within_between_learning_treatment_female
 
 
 #Obtaining differences between repeatabilities of males and females in the control group
@@ -163,3 +192,61 @@ p2cs %>%
   geom_point(position = "jitter", alpha = 0.7, size = 3)+
   facet_grid(~sex)
 ```
+
+
+<!-- Code to run everything at once -->
+<!-- ```{r} -->
+<!-- #Calculating repeatabilities using custom made functions -->
+<!-- rpt_learning(Learning_Control) -> rpt_learning_control -->
+<!-- save(rpt_learning_control, file = "../Models/rpt_learning_control.Rdata") -->
+<!-- rpt_learning_control -->
+<!-- rpt_learning(Learning_Treatment) -> rpt_learning_treatment -->
+<!-- save(rpt_learning_treatment, file = "../Models/rpt_learning_treatment.Rdata") -->
+<!-- rpt_learning_treatment -->
+
+<!-- #Obtaining within-individual and between-individual variance  -->
+
+<!-- rpt_within_learning(Learning_Control) -> within_between_learning_control -->
+<!-- save(within_between_learning_control, file = "../Models/within_between_learning_control.Rdata") -->
+<!-- within_between_learning_control -->
+<!-- rpt_within_learning(Learning_Treatment) -> within_between_learning_treatment -->
+<!-- save(within_between_learning_treatment, file = "../Models/within_between_learning_treatment.Rdata") -->
+<!-- within_between_learning_treatment -->
+
+
+<!-- #Calculating repeatabilities using custom made functions for males (control and treatment) -->
+<!-- rpt_learning(Control_Male_Learning) -> rpt_learning_control_male -->
+<!-- save(rpt_learning_control_male, file = "../Models/rpt_learning_control_male.Rdata") -->
+<!-- rpt_learning_control_male -->
+<!-- rpt_learning(Treatment_Male_Learning) -> rpt_learning_treatment_male -->
+<!-- save(rpt_learning_treatment_male, file = "../Models/rpt_learning_treatment_male.Rdata") -->
+<!-- rpt_learning_treatment_male -->
+
+<!-- #Calculating repeatabilities using custom made functions for females (control and treatment) -->
+<!-- rpt_learning(Control_Female_Learning) -> rpt_learning_control_female -->
+<!-- save(rpt_learning_control_female, file = "../Models/rpt_learning_control_female.Rdata") -->
+<!-- rpt_learning_control_female -->
+<!-- rpt_learning(Treatment_Female_Learning) -> rpt_learning_treatment_female -->
+<!-- save(rpt_learning_treatment_female, file = "../Models/rpt_learning_treatment_female.Rdata") -->
+<!-- rpt_learning_treatment_female -->
+
+
+<!-- #Obtaining within-individual and between-individual variance for males (control and treatment) -->
+
+<!-- rpt_within_learning(Control_Male_Learning) -> within_between_learning_control_male -->
+<!-- save(within_between_learning_control_male, file = "../Models/within_between_learning_control_male.Rdata") -->
+<!-- within_between_learning_control_male -->
+<!-- rpt_within_learning(Treatment_Male_Learning) -> within_between_learning_treatment_male -->
+<!-- save(within_between_learning_treatment_male, file = "../Models/within_between_learning_treatment_male.Rdata") -->
+<!-- within_between_learning_treatment_male -->
+
+<!-- #Obtaining within-individual and between-individual variance for females (control and treatment) -->
+
+<!-- rpt_within_learning(Control_Female_Learning) -> within_between_learning_control_female -->
+<!-- save(within_between_learning_control_female, file = "../Models/within_between_learning_control_female.Rdata") -->
+<!-- within_between_learning_control_female -->
+<!-- rpt_within_learning(Treatment_Female_Learning) -> within_between_learning_treatment_female -->
+<!-- save(within_between_learning_treatment_female, file = "../Models/within_between_learning_treatment_female.Rdata") -->
+<!-- within_between_learning_treatment_female -->
+<!-- ``` -->
+

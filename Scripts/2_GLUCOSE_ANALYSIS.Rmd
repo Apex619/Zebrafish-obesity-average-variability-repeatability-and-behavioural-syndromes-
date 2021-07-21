@@ -12,14 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 #checks for installation and loads packages
 pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
                sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
-               stargazer)
+               stargazer,here)
 
 #load('myEnvironment.RData')
 ```
 
 ```{r}
 #Import data
-Glucose_Weight <- read.csv("Data/Glucose/Glucose_Weight.csv")
+Glucose_Weight <- read.csv(here("Data/Glucose/Glucose_Weight.csv"))
 
 #Check structure
 Glucose_Weight$Sex <- as.factor(Glucose_Weight$Sex)
@@ -30,23 +30,48 @@ hist(Glucose_Weight$Glucose)
 #Very high reading confirmed to be correct
 
 
+#Boxplot
+glucose_boxplot <- ggplot(Glucose_Weight, aes(x=Group, y=Glucose, color=Group)) +
+  geom_boxplot()+
+  facet_grid(~Sex)
+glucose_boxplot
 
-Boxplot_Glucose <- ggplot(data = Glucose_Weight) +
-  geom_boxplot(mapping = aes(x = Sex, y = Glucose, fill = Group)) +
-  facet_grid(~Group)
+#Scatter
+glucose_plot <- ggplot(Glucose_Weight, aes(x=Weight, y=Glucose, color=Group)) +
+  geom_point() +
+  geom_smooth(method="lm",se=FALSE, fullrange=TRUE)
 
-Boxplot_Glucose
+
+glucose_plot
+
 
 Summary_Glucose <- summarySE(Glucose_Weight, measurevar="Glucose", groupvars=c("Group", "Sex"))
 
 Repeatability_Glucose <- rpt(Glucose ~ Meter + Sex + Group + (1 | Fish_ID), grname = "Fish_ID", data = Glucose_Weight, datatype = "Gaussian", 
-                           nboot = 100, npermut = 100)
+                           nboot = 10000, npermut = 10000)
 
 Repeatability_Glucose
 
-Mixed_Model_Glucose <- lmer(Glucose ~ Sex + Group + (1|Fish_ID), data=Glucose_Weight)
+Mixed_Model_Glucose <- lmer(Glucose ~ Sex + Weight*Group + (1|Fish_ID), data=Glucose_Weight)
 summary(Mixed_Model_Glucose)
 tab_model(Mixed_Model_Glucose)
+hist(residuals(Mixed_Model_Glucose))
+
+
+glucose_violin <-  
+  ggplot(data = Glucose_Weight,aes(x = Group, y = Glucose, fill = Group))+
+    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
+    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
+    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
+    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+ 
+    theme_pubr()+
+    rremove("legend.title")+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
+    theme(legend.position = "none")+
+    theme(axis.title.x=element_blank())+
+labs(title= "Fasting blood glucose mmol/L")+
+  facet_grid(~Sex)
+glucose_violin
 
 ```
 

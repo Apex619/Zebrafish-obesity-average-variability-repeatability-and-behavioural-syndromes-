@@ -36,7 +36,9 @@ rpt_within_zone05 <- function(df) {
   rpt(scale(zone_05_dur) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
 }
 
-
+rpt_within_zone05_sqrt <- function(df) {
+  rpt(scale(sqrt(zone_05_dur)) ~ (1 |  Fish_ID), grname = c("Fish_ID", "Residual"), data = df, datatype = "Gaussian", nboot = 10000, npermut = 10000, ratio = FALSE)
+}
 
 #Calculating repeatability for zone_05_duration (Optimism)
 rpt_optimism_zone05 <- function(df) {
