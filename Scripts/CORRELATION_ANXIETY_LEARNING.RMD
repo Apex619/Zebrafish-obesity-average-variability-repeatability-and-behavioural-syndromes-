@@ -4,7 +4,7 @@ author: "Hamza"
 date: "09/06/2021"
 output: html_document
 ---
-#Load Packages
+#Load Packages and models
 ```{r}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -13,6 +13,9 @@ pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr, purr, sjPlot, emmeans)
 
 # Load custom function to extract data 
 source("../Scripts/functions_learning.R")
+
+load("../Models/anxiety_learning_control.Rdata")
+load("../Models/anxiety_learning_treatment.Rdata")
 ```
 
 #Load data, collapse into single means and join
@@ -143,13 +146,13 @@ return(bivar)
 #Bivar models control and treatment
 ```{r}
 #run and save bivar models
-anxiety_learning_control <- bivar_model_control("mean_low_dur", "mean_diff") 
-save(anxiety_learning_control, file = "../Models/anxiety_learning_control.Rdata")
-
-
-
-anxiety_learning_treatment <- bivar_model_treatment("mean_low_dur", "mean_diff") 
-save(anxiety_learning_treatment, file = "../Models/anxiety_learning_treatment.Rdata")
+# anxiety_learning_control <- bivar_model_control("mean_low_dur", "mean_diff") 
+# save(anxiety_learning_control, file = "../Models/anxiety_learning_control.Rdata")
+# 
+# 
+# 
+# anxiety_learning_treatment <- bivar_model_treatment("mean_low_dur", "mean_diff") 
+# save(anxiety_learning_treatment, file = "../Models/anxiety_learning_treatment.Rdata")
 ```
 
 #Linear model

@@ -103,20 +103,20 @@ return(bivar)
 # low_dur vs. tot_dist_activity
 
 #run and save bivar models
-anxiety_predator <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety") 
-save(anxiety_predator, file = "../Models/anxiety_predator.Rdata")
-
-anxiety_aggression <- bivar_model("zone_05_dur_Aggression", "low_dur_Anxiety") 
-save(anxiety_aggression, file = "../Models/anxiety_aggression.Rdata")
-
-anxiety_social <- bivar_model("zone_05_dur_Social", "low_dur_Anxiety") 
-save(anxiety_social, file = "../Models/anxiety_social.Rdata")
-
-anxiety_novel <- bivar_model("zone_05_dur_Novel", "low_dur_Anxiety") 
-save(anxiety_novel, file = "../Models/anxiety_novel.Rdata")
-
-anxiety_activity <- bivar_model("tot_dist_Activity", "low_dur_Anxiety") 
-save(anxiety_activity, file = "../Models/anxiety_activity.Rdata")
+# anxiety_predator <- bivar_model("zone_05_dur_Predator", "low_dur_Anxiety") 
+# save(anxiety_predator, file = "../Models/anxiety_predator.Rdata")
+# 
+# anxiety_aggression <- bivar_model("zone_05_dur_Aggression", "low_dur_Anxiety") 
+# save(anxiety_aggression, file = "../Models/anxiety_aggression.Rdata")
+# 
+# anxiety_social <- bivar_model("zone_05_dur_Social", "low_dur_Anxiety") 
+# save(anxiety_social, file = "../Models/anxiety_social.Rdata")
+# 
+# anxiety_novel <- bivar_model("zone_05_dur_Novel", "low_dur_Anxiety") 
+# save(anxiety_novel, file = "../Models/anxiety_novel.Rdata")
+# 
+# anxiety_activity <- bivar_model("tot_dist_Activity", "low_dur_Anxiety") 
+# save(anxiety_activity, file = "../Models/anxiety_activity.Rdata")
 
 
 
@@ -172,38 +172,38 @@ return(bivar)
 #NOTE: RESPONSE 1 IS ALWAYS THE FIRST TERM IN THE MODEL NAME EG. "PREDATOR_ANXIETY" RESPONSE 1 IS ANXIETY, RESPONSE 2 IS CONTROL
 
 #run and save bivar models
-predator_anxiety_control <- bivar_model_control("zone_05_dur_Predator", "low_dur_Anxiety") 
-save(predator_anxiety_control, file = "../Models/predator_anxiety_control.Rdata")
-
-aggression_anxiety_control <- bivar_model_control("zone_05_dur_Aggression", "low_dur_Anxiety") 
-save(aggression_anxiety_control, file = "../Models/aggression_anxiety_control.Rdata")
-
-social_anxiety_control <- bivar_model_control("zone_05_dur_Social", "low_dur_Anxiety") 
-save(social_anxiety_control, file = "../Models/social_anxiety_control.Rdata")
-
-novel_anxiety_control <- bivar_model_control("zone_05_dur_Novel", "low_dur_Anxiety") 
-save(novel_anxiety_control, file = "../Models/novel_anxiety_control.Rdata")
-
-activity_anxiety_control <- bivar_model_control("tot_dist_Activity", "low_dur_Anxiety") 
-save(activity_anxiety_control, file = "../Models/activity_anxiety_control.Rdata")
+# predator_anxiety_control <- bivar_model_control("zone_05_dur_Predator", "low_dur_Anxiety") 
+# save(predator_anxiety_control, file = "../Models/predator_anxiety_control.Rdata")
+# 
+# aggression_anxiety_control <- bivar_model_control("zone_05_dur_Aggression", "low_dur_Anxiety") 
+# save(aggression_anxiety_control, file = "../Models/aggression_anxiety_control.Rdata")
+# 
+# social_anxiety_control <- bivar_model_control("zone_05_dur_Social", "low_dur_Anxiety") 
+# save(social_anxiety_control, file = "../Models/social_anxiety_control.Rdata")
+# 
+# novel_anxiety_control <- bivar_model_control("zone_05_dur_Novel", "low_dur_Anxiety") 
+# save(novel_anxiety_control, file = "../Models/novel_anxiety_control.Rdata")
+# 
+# activity_anxiety_control <- bivar_model_control("tot_dist_Activity", "low_dur_Anxiety") 
+# save(activity_anxiety_control, file = "../Models/activity_anxiety_control.Rdata")
 ```
 
 Treatment bivar models
 ```{r}
-predator_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Predator", "low_dur_Anxiety") 
-save(predator_anxiety_treatment, file = "../Models/predator_anxiety_treatment.Rdata")
-
-aggression_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "low_dur_Anxiety") 
-save(aggression_anxiety_treatment, file = "../Models/aggression_anxiety_treatment.Rdata")
-
-social_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Social", "low_dur_Anxiety") 
-save(social_anxiety_treatment, file = "../Models/social_anxiety_treatment.Rdata")
-
-novel_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Novel", "low_dur_Anxiety") 
-save(novel_anxiety_treatment, file = "../Models/novel_anxiety_treatment.Rdata")
-
-activity_anxiety_treatment <- bivar_model_treatment("tot_dist_Activity", "low_dur_Anxiety") 
-save(activity_anxiety_treatment, file = "../Models/activity_anxiety_treatment.Rdata")
+# predator_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Predator", "low_dur_Anxiety") 
+# save(predator_anxiety_treatment, file = "../Models/predator_anxiety_treatment.Rdata")
+# 
+# aggression_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "low_dur_Anxiety") 
+# save(aggression_anxiety_treatment, file = "../Models/aggression_anxiety_treatment.Rdata")
+# 
+# social_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Social", "low_dur_Anxiety") 
+# save(social_anxiety_treatment, file = "../Models/social_anxiety_treatment.Rdata")
+# 
+# novel_anxiety_treatment <- bivar_model_treatment("zone_05_dur_Novel", "low_dur_Anxiety") 
+# save(novel_anxiety_treatment, file = "../Models/novel_anxiety_treatment.Rdata")
+# 
+# activity_anxiety_treatment <- bivar_model_treatment("tot_dist_Activity", "low_dur_Anxiety") 
+# save(activity_anxiety_treatment, file = "../Models/activity_anxiety_treatment.Rdata")
 ```
 
 #load bivar models

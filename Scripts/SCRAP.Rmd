@@ -1772,3 +1772,45 @@ coord_flip()
 #Basically what this plot means, is that repeatabilities between control and treatments differ (or not) between the two behaviors (anxiety response and behavioral trait) ?
 
 ```
+
+Running rpt models overnight
+```{r}
+
+#Calculating repeatabilities using custom made functions
+rpt_zone05_sqrt(Predator_Control) -> rpt_predator_control_sqrt
+rpt_predator_control_sqrt
+
+rpt_zone05_sqrt(Predator_Treatment) -> rpt_predator_treatment_sqrt
+rpt_predator_treatment_sqrt
+
+
+
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05_sqrt(Personality_Control_Male_Novel) -> rpt_novel_control_male_sqrt
+rpt_novel_control_male_sqrt
+rpt_zone05_sqrt(Personality_Treatment_Male_Novel) -> rpt_novel_treatment_male_sqrt
+rpt_novel_treatment_male_sqrt
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05_sqrt(Personality_Control_Female_Novel) -> rpt_novel_control_female_sqrt
+rpt_novel_control_female_sqrt
+rpt_zone05_sqrt(Personality_Treatment_Female_Novel) -> rpt_novel_treatment_female_sqrt
+rpt_novel_treatment_female_sqrt
+
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05_sqrt(Personality_Control_Male_Predator) -> rpt_predator_control_male_sqrt
+rpt_predator_control_male_sqrt
+rpt_zone05_sqrt(Personality_Treatment_Male_Predator) -> rpt_predator_treatment_male_sqrt
+rpt_predator_treatment_male_sqrt
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05_sqrt(Personality_Control_Female_Predator) -> rpt_predator_control_female_sqrt
+rpt_predator_control_female_sqrt
+rpt_zone05_sqrt(Personality_Treatment_Female_Predator) -> rpt_predator_treatment_female_sqrt
+rpt_predator_treatment_female_sqrt
+```
+
