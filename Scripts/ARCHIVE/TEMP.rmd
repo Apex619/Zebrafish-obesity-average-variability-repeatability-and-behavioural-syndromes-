@@ -1,0 +1,176 @@
+---
+title: "TEMP"
+author: "Hamza Anwer"
+date: "17/07/2021"
+output: html_document
+---
+
+```{r}
+#Calculating repeatabilities using custom made functions
+rpt_zone05(Social_Control) -> rpt_social_control
+save(rpt_social_control, file = "../Models/rpt_social_control.Rdata")
+rpt_social_control
+rpt_zone05(Social_Treatment) -> rpt_social_treatment
+save(rpt_social_treatment, file = "../Models/rpt_social_treatment.Rdata")
+rpt_social_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05(Social_Control) -> within_between_social_control
+save(within_between_social_control, file = "../Models/within_between_social_control.Rdata")
+within_between_social_control
+rpt_within_zone05(Social_Treatment) -> within_between_social_treatment
+save(within_between_social_treatment, file = "../Models/within_between_social_treatment.Rdata")
+within_between_social_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05_sqrt(Predator_Control) -> within_between_predator_control
+save(within_between_predator_control, file = "../Models/within_between_predator_control.Rdata")
+within_between_predator_control
+rpt_within_zone05_sqrt(Predator_Treatment) -> within_between_predator_treatment
+save(within_between_predator_treatment, file = "../Models/within_between_predator_treatment.Rdata")
+within_between_predator_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05_sqrt(Novel_Control) -> within_between_novel_control
+save(within_between_novel_control, file = "../Models/within_between_novel_control.Rdata")
+within_between_novel_control
+rpt_within_zone05_sqrt(Novel_Treatment) -> within_between_novel_treatment
+save(within_between_novel_treatment, file = "../Models/within_between_novel_treatment.Rdata")
+within_between_novel_treatment
+
+#Calculating repeatabilities using custom made functions
+rpt_zone05(Aggression_Control) -> rpt_aggression_control
+save(rpt_aggression_control, file = "../Models/rpt_aggression_control.Rdata")
+rpt_aggression_control
+rpt_zone05(Aggression_Treatment) -> rpt_aggression_treatment
+save(rpt_aggression_treatment, file = "../Models/rpt_aggression_treatment.Rdata")
+rpt_aggression_treatment
+
+#Obtaining within-individual and between-individual variance 
+
+rpt_within_zone05(Aggression_Control) -> within_between_aggression_control
+save(within_between_aggression_control, file = "../Models/within_between_aggression_control.Rdata")
+within_between_aggression_control
+rpt_within_zone05(Aggression_Treatment) -> within_between_aggression_treatment
+save(within_between_aggression_treatment, file = "../Models/within_between_aggression_treatment.Rdata")
+within_between_aggression_treatment
+
+
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Social) -> rpt_social_control_male
+save(rpt_social_control_male, file = "../Models/rpt_social_control_male.Rdata")
+rpt_social_control_male
+rpt_zone05(Personality_Treatment_Male_Social) -> rpt_social_treatment_male
+save(rpt_social_treatment_male, file = "../Models/rpt_social_treatment_male.Rdata")
+rpt_social_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Social) -> rpt_social_control_female
+save(rpt_social_control_female, file = "../Models/rpt_social_control_female.Rdata")
+rpt_social_control_female
+rpt_zone05(Personality_Treatment_Female_Social) -> rpt_social_treatment_female
+save(rpt_social_treatment_female, file = "../Models/rpt_social_treatment_female.Rdata")
+rpt_social_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Social) -> within_between_social_control_male
+save(within_between_social_control_male, file = "../Models/within_between_social_control_male.Rdata")
+within_between_social_control_male
+rpt_within_zone05(Personality_Treatment_Male_Social) -> within_between_social_treatment_male
+save(within_between_social_treatment_male, file = "../Models/within_between_social_treatment_male.Rdata")
+within_between_social_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Social) -> within_between_social_control_female
+save(within_between_social_control_female, file = "../Models/within_between_social_control_female.Rdata")
+within_between_social_control_female
+rpt_within_zone05(Personality_Treatment_Female_Social) -> within_between_social_treatment_female
+save(within_between_social_treatment_female, file = "../Models/within_between_social_treatment_female.Rdata")
+within_between_social_treatment_female
+
+
+#Calculating repeatabilities using custom made functions for males (control and treatment)
+rpt_zone05(Personality_Control_Male_Aggression) -> rpt_aggression_control_male
+save(rpt_aggression_control_male, file = "../Models/rpt_aggression_control_male.Rdata")
+rpt_aggression_control_male
+rpt_zone05(Personality_Treatment_Male_Aggression) -> rpt_aggression_treatment_male
+save(rpt_aggression_treatment_male, file = "../Models/rpt_aggression_treatment_male.Rdata")
+rpt_aggression_treatment_male
+
+#Calculating repeatabilities using custom made functions for females (control and treatment)
+rpt_zone05(Personality_Control_Female_Aggression) -> rpt_aggression_control_female
+save(rpt_aggression_control_female, file = "../Models/rpt_aggression_control_female.Rdata")
+rpt_aggression_control_female
+rpt_zone05(Personality_Treatment_Female_Aggression) -> rpt_aggression_treatment_female
+save(rpt_aggression_treatment_female, file = "../Models/rpt_aggression_treatment_female.Rdata")
+
+rpt_aggression_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05(Personality_Control_Male_Aggression) -> within_between_aggression_control_male
+save(within_between_aggression_control_male, file = "../Models/within_between_aggression_control_male.Rdata")
+within_between_aggression_control_male
+rpt_within_zone05(Personality_Treatment_Male_Aggression) -> within_between_aggression_treatment_male
+save(within_between_aggression_treatment_male, file = "../Models/within_between_aggression_treatment_male.Rdata")
+within_between_aggression_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05(Personality_Control_Female_Aggression) -> within_between_aggression_control_female
+save(within_between_aggression_control_female, file = "../Models/within_between_aggression_control_female.Rdata")
+within_between_aggression_control_female
+rpt_within_zone05(Personality_Treatment_Female_Aggression) -> within_between_aggression_treatment_female
+save(within_between_aggression_treatment_female, file = "../Models/within_between_aggression_treatment_female.Rdata")
+within_between_aggression_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05_sqrt(Personality_Control_Male_Novel) -> within_between_novel_control_male
+save(within_between_novel_control_male, file = "../Models/within_between_novel_control_male.Rdata")
+within_between_novel_control_male
+rpt_within_zone05_sqrt(Personality_Treatment_Male_Novel) -> within_between_novel_treatment_male
+save(within_between_novel_treatment_male, file = "../Models/within_between_novel_treatment_male.Rdata")
+within_between_novel_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05_sqrt(Personality_Control_Female_Novel) -> within_between_novel_control_female
+save(within_between_novel_control_female, file = "../Models/within_between_novel_control_female.Rdata")
+within_between_novel_control_female
+rpt_within_zone05_sqrt(Personality_Treatment_Female_Novel) -> within_between_novel_treatment_female
+save(within_between_novel_treatment_female, file = "../Models/within_between_novel_treatment_female.Rdata")
+within_between_novel_treatment_female
+
+
+#Obtaining within-individual and between-individual variance for males (control and treatment)
+
+rpt_within_zone05_sqrt(Personality_Control_Male_Predator) -> within_between_predator_control_male
+save(within_between_predator_control_male, file = "../Models/within_between_predator_control_male.Rdata")
+within_between_predator_control_male
+rpt_within_zone05_sqrt(Personality_Treatment_Male_Predator) -> within_between_predator_treatment_male
+save(within_between_predator_treatment_male, file = "../Models/within_between_predator_treatment_male.Rdata")
+within_between_predator_treatment_male
+
+#Obtaining within-individual and between-individual variance for females (control and treatment)
+
+rpt_within_zone05_sqrt(Personality_Control_Female_Predator) -> within_between_predator_control_female
+save(within_between_predator_control_female, file = "../Models/within_between_predator_control_female.Rdata")
+within_between_predator_control_female
+rpt_within_zone05_sqrt(Personality_Treatment_Female_Predator) -> within_between_predator_treatment_female
+save(within_between_predator_treatment_female, file = "../Models/within_between_predator_treatment_female.Rdata")
+within_between_predator_treatment_female
+
+
+```
+
