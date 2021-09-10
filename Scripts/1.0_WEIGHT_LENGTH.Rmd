@@ -95,8 +95,8 @@ hist(residuals(Model_Body_Weight2))
 
 
 #Obtaining differences between repeatabilities using custom made functions
-Control_weight_boot <- unlist_rptr(rpt_body_weight_control) 
-Treatment_weight_boot <- unlist_rptr(rpt_body_weight_treatment) 
+Control_weight_boot <- unlist_rptr(rpt_body_weight_control2) 
+Treatment_weight_boot <- unlist_rptr(rpt_body_weight_treatment2) 
 body_weight_diff <- difference_boot(Control_weight_boot,Treatment_weight_boot) #calculating the difference
 q_body_weight <- quantiles_diff_boot(body_weight_diff) #obtaining 95% CI
 m_mody_weight <- mean(body_weight_diff) #Obtaining mean
