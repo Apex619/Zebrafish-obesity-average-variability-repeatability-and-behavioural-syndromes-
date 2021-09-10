@@ -146,7 +146,7 @@ m_post_assay
 q_post_assay
 
 # Calculating difference in variance between control and treatment groups
-Model_post1 <- lme(tot_dist_Activity ~ Group*Sex-1, random = ~ 1| Fish_ID, data = Post_assay, na.action=na.exclude) #mixed model without variance structure
+Model_post1 <- lme(tot_dist_Activity ~ Group*Sex, random = ~ 1| Fish_ID, data = Post_assay, na.action=na.exclude) #mixed model without variance structure
 summary(Model_post1)
 Model_post2 <- lme(tot_dist_Activity ~ Group*Sex-1, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Post_assay, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_post2)
@@ -680,9 +680,9 @@ m_aggression
 q_aggression
 
 # Calculating difference in variance between control and treatment groups
-Model_Aggression1 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
+Model_Aggression1 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Aggression1)
-Model_Aggression2 <- lme(zone_05_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Aggression2 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Aggression2)
 anova(Model_Aggression1, Model_Aggression2) #calculating difference between two models to find difference in variance
 

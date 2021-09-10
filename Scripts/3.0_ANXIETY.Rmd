@@ -165,7 +165,7 @@ q2
 m2
 
 # Calculating difference in variance between  and  
-Model_low_dur1 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_low_dur1 <- lme(low_dur ~ Group + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_low_dur1)
 Model_low_dur2 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_low_dur2)
@@ -210,9 +210,9 @@ q3
 m3
 
 # Calculating difference in variance between  and  
-Model_mid_dur1 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_mid_dur1 <- lme(mid_dur ~ Group + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_mid_dur1)
-Model_mid_dur2 <- lme(mid_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_mid_dur2 <- lme(mid_dur ~ Group + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_mid_dur2)
 anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models to find difference in variance
 ```

@@ -20,9 +20,7 @@ pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, 
 source("../Scripts/functions_learning.R")
 source("../Scripts/functions_repeatability.R")
 
-#Run this after all the coding has been run with 10,000 bootstraps
-#save.image(file='myEnvironment.RData') 
-#load('myEnvironment.RData')
+
 ```
 
 #Import and filter data; also load models
@@ -61,7 +59,7 @@ load("../Models/rpt_body_weight_treatment2.Rdata")
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Body_Weight <- lmer(Weight.g. ~ Sex-1 + Treatment_Tank + Week  + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
+Model_Body_Weight <- lmer(Weight.g. ~ Sex + Treatment_Tank + Week  + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
 tab_model(Model_Body_Weight)
 summary(Model_Body_Weight)
 hist(residuals(Model_Body_Weight))#histogram of residuals to check for normal distribution 
@@ -78,11 +76,11 @@ hist(residuals(Model_Body_Weight2))
 # 
 # rpt_weight(Weight_Length_Treatment) -> rpt_body_weight_treatment #without week factored in
 
-rpt_weight2(Weight_Length_Control) -> rpt_body_weight_control2 #adjusted for week
-save(rpt_body_weight_control2, file = "../Models/rpt_body_weight_control2.Rdata")
-
-rpt_weight2(Weight_Length_Treatment) -> rpt_body_weight_treatment2 #adjusted for week
-save(rpt_body_weight_treatment2, file = "../Models/rpt_body_weight_treatment2.Rdata")
+# rpt_weight2(Weight_Length_Control) -> rpt_body_weight_control2 #adjusted for week
+# save(rpt_body_weight_control2, file = "../Models/rpt_body_weight_control2.Rdata")
+# 
+# rpt_weight2(Weight_Length_Treatment) -> rpt_body_weight_treatment2 #adjusted for week
+# save(rpt_body_weight_treatment2, file = "../Models/rpt_body_weight_treatment2.Rdata")
 
 
 #Obtaining within-individual and between-individual variance for body weight
@@ -107,9 +105,10 @@ q_body_weight
 m_mody_weight
 
 # Calculating difference in variance between control and treatment group 
-Model_Weight_1 <- lme(Weight.g. ~ (Treatment_Tank + Sex + Week)^2, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
+Model_Weight_1 <- lme(Weight.g. ~ Treatment_Tank + Sex + Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
 summary(Model_Weight_1)
-Model_Weight_2 <- lme(Weight.g. ~ (Treatment_Tank + Sex + Week)^2, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
+tab_model(Model_Weight_1)
+Model_Weight_2 <- lme(Weight.g. ~ Treatment_Tank + Sex + Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
 summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```

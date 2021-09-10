@@ -29,6 +29,8 @@ Glucose_Weight$Meter <- as.factor(Glucose_Weight$Meter)
 hist(Glucose_Weight$Glucose)
 #Very high reading confirmed to be correct
 
+###Visual Inspection
+
 
 #Boxplot
 glucose_boxplot <- ggplot(Glucose_Weight, aes(x=Group, y=Glucose, color=Group)) +
@@ -39,24 +41,36 @@ glucose_boxplot
 #Scatter
 glucose_plot <- ggplot(Glucose_Weight, aes(x=Weight, y=Glucose, color=Group)) +
   geom_point() +
-  geom_smooth(method="lm",se=FALSE, fullrange=TRUE)
+  geom_smooth(method="lm",se=FALSE, fullrange=TRUE)+
+facet_grid(~Sex)
 
 
 glucose_plot
 
+#Repeatability
 
-Summary_Glucose <- summarySE(Glucose_Weight, measurevar="Glucose", groupvars=c("Group", "Sex"))
+# Summary_Glucose <- summarySE(Glucose_Weight, measurevar="Glucose", groupvars=c("Group", "Sex"))
 
 Repeatability_Glucose <- rpt(Glucose ~ Meter + Sex + Group + (1 | Fish_ID), grname = "Fish_ID", data = Glucose_Weight, datatype = "Gaussian", 
                            nboot = 10000, npermut = 10000)
 
 Repeatability_Glucose
 
+#Mixed model
+
+
 Mixed_Model_Glucose <- lmer(Glucose ~ Sex + Weight*Group + (1|Fish_ID), data=Glucose_Weight)
 summary(Mixed_Model_Glucose)
 tab_model(Mixed_Model_Glucose)
 hist(residuals(Mixed_Model_Glucose))
 
+# Calculating difference in variance between control and treatment group 
+Model_gluc_1 <- lme(Glucose ~ Sex + Weight*Group, random = ~ 1| Fish_ID, data = Glucose_Weight) #Mixed model without variance structure
+summary(Model_gluc_1)
+tab_model(Model_gluc_1)
+Model_gluc_2 <- lme(Glucose ~ Sex + Weight*Group, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Glucose_Weight) #mixed model with variance structure varIdent
+summary(Model_gluc_2)
+anova(Model_gluc_1, Model_gluc_2)
 
 glucose_violin <-  
   ggplot(data = Glucose_Weight,aes(x = Group, y = Glucose, fill = Group))+

@@ -68,7 +68,7 @@ Overall_plot_F0_learning
 
 #Overall forest plot showing differences between males and female repeatabilities for learning
 ```{r}
-Sex_New_plot_personality <-
+Sex_New_plot_learning <-
   ggplot(Learning_rptr_sex,
          aes(x = Endpoint, y = r, colour = Condition)) +
   geom_errorbar(
@@ -100,7 +100,7 @@ Sex_New_plot_personality <-
   theme(legend.position = "bottom") +
   theme(legend.title = element_blank())
 
-Sex_New_plot_personality
+Sex_New_plot_learning
 
 ```
 
