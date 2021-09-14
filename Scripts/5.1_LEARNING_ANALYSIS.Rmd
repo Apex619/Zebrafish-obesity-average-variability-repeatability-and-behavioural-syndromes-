@@ -60,7 +60,7 @@ load("../Models/within_between_learning_treatment_female.Rdata")
 ```{r}
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs) 
+Model_Learning <- lmer(difference ~ set*sex + (1 | fishID), data = p2cs) 
 tab_model(Model_Learning)
 hist(residuals(Model_Learning)) 
 
@@ -92,9 +92,12 @@ m_learning
 q_learning
 
 # Calculating difference in variance between control and treatment groups
-Model_Learning1 <- lme(difference ~ set + sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
+Model_Learning1 <- lme(difference ~ set*sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Learning1)
-Model_Learning2 <- lme(difference ~ set + sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
+tab_model(Model_Learning1)
+contrasts_learning <- emmeans(Model_Learning1, c("set", "sex"))
+pairs(contrasts_learning)
+Model_Learning2 <- lme(difference ~ set*sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Learning2)
 anova(Model_Learning1, Model_Learning2) #calculating difference between two models to find difference in variance
 
@@ -114,7 +117,7 @@ p2cs %>%
 ```{r}
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Learning <- lmer(difference ~ set + sex + (1 | fishID), data = p2cs) 
+Model_Learning <- lmer(difference ~ set*sex + (1 | fishID), data = p2cs) 
 tab_model(Model_Learning)
 hist(residuals(Model_Learning)) 
 
@@ -175,9 +178,9 @@ q_learning_treatment
 
 
 # Calculating difference in variance between control and treatment groups
-Model_Learning1 <- lme(difference ~ set + sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
+Model_Learning1 <- lme(difference ~ set*sex, random = ~ 1| fishID, data = p2cs, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Learning1)
-Model_Learning2 <- lme(difference ~ set + sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_Learning2 <- lme(difference ~ set*sex, random = ~ 1| fishID, weights = varIdent(form=~1|set), data = p2cs, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Learning2)
 anova(Model_Learning1, Model_Learning2) #calculating difference between two models to find difference in variance
 

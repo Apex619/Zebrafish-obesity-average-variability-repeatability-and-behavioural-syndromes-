@@ -295,7 +295,8 @@ Note: For main text, only groups, for supp, add sex
 ```{r}
 
 
-low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone *", "Seconds")
+low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone *", "Seconds")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 
 tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")

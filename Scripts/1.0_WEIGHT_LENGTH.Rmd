@@ -14,7 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 #checks for installation and loads packages
 pacman::p_load(lmerTest,ggThemeAssist,rptR,lme4,readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr,
                sjPlot,ggplot2,lubridate,wesanderson,ggbeeswarm,emmeans,patchwork,viridis,nlme,Rmisc,ggpubr,
-               stargazer)
+               stargazer, effects, interactions)
+```
+
+```{r}
 
 # Load custom functions
 source("../Scripts/functions_learning.R")
@@ -32,13 +35,19 @@ Data <- read.csv("../Data/Weight_Length/Analysis.csv")
 Data_subset = filter(Data, Tank %in% c("HA_C1","HA_C2","HA_C3", "HA_C4", "HA_T1","HA_T2","HA_T3","HA_T4"))
 Weight_Length_Data = filter(Data_subset, !Fish_ID %in% c("a6834","a6923","a7226","a7070","a7250","a7336","a7600","a7573","a7660","a6929","a6990","a7407","a7090","a7286","a7539","a6884","a7206","a7488","a6846","a7560","a7495","a7649","a7604","a7015","a7253","a7610","a7566","a7719","a7682","a7266","a7494","a7548","a7207"))
 
+#Check structure
+Weight_Length_Data$Sex <- as.factor(Weight_Length_Data$Sex)
+Weight_Length_Data$Group <- as.factor(Weight_Length_Data$Group)
+Weight_Length_Data$Week <- as.numeric(Weight_Length_Data$Week)
+Weight_Length_Data$Fish_ID <- as.factor(Weight_Length_Data$Fish_ID)
+
 #Subsetted data for later comparison of week 0 and final week
 Week_0 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "0")
 Week_22 <- subset(Weight_Length_Data, Weight_Length_Data$Week == "22")
 
 #Subseting data by control and treatment
-Weight_Length_Control <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Control") 
-Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Treatment_Tank == "Treatment") 
+Weight_Length_Control <- subset(Weight_Length_Data, Weight_Length_Data$Group == "Control") 
+Weight_Length_Treatment <- subset(Weight_Length_Data, Weight_Length_Data$Group == "Treatment") 
 
 #Load models
 load("../Models/rpt_body_weight_control2.Rdata")
@@ -57,17 +66,6 @@ load("../Models/rpt_body_weight_treatment2.Rdata")
 # Body Weight
 ```{r, echo=FALSE}
 
-#Check Normality with mixed model and then histogram of residuals
-
-Model_Body_Weight <- lmer(Weight.g. ~ Sex + Treatment_Tank + Week  + (1 | Fish_ID), data = Weight_Length_Data) #mixed model 
-tab_model(Model_Body_Weight)
-summary(Model_Body_Weight)
-hist(residuals(Model_Body_Weight))#histogram of residuals to check for normal distribution 
-
-Model_Body_Weight2 <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data) 
-summary(Model_Body_Weight2)
-tab_model(Model_Body_Weight2)
-hist(residuals(Model_Body_Weight2))
 
 
 
@@ -105,10 +103,18 @@ q_body_weight
 m_mody_weight
 
 # Calculating difference in variance between control and treatment group 
-Model_Weight_1 <- lme(Weight.g. ~ Treatment_Tank + Sex + Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
+Model_Weight_1 <- lme(Weight.g. ~ Group*Sex + scale(Week, scale = FALSE), random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
 summary(Model_Weight_1)
 tab_model(Model_Weight_1)
-Model_Weight_2 <- lme(Weight.g. ~ Treatment_Tank + Sex + Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent
+contrasts_weight <- emmeans(Model_Weight_1, c("Group", "Sex"))
+pairs(contrasts_weight)
+
+e <- allEffects(Model_Weight_1)
+print(e)
+plot(e)
+
+
+Model_Weight_2 <- lme(Weight.g. ~  Group*Sex + scale(Week, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Weight_Length_Data) #mixed model with variance structure varIdent
 summary(Model_Weight_2)
 anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models to find difference in variance
 ```
@@ -118,11 +124,11 @@ anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models
 
 <!-- #Check Normality with mixed model and then histogram of residuals -->
 
-<!-- Model_Body_Length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model  -->
+<!-- Model_Body_Length <- lmer(Fish_Length_cm ~ Group + Sex + Week + (1 | Fish_ID), data = Weight_Length_Data) #mixed model  -->
 <!-- tab_model(Model_Body_Length) -->
 <!-- hist(residuals(Model_Body_Length))#histogram of residuals to check for normal distribution  -->
 
-<!-- Model_Body_Length2 <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data)  -->
+<!-- Model_Body_Length2 <- lmer(Fish_Length_cm ~ Group + Sex + Week + (1 | Fish_ID) + (1 + Week|Tank), data = Weight_Length_Data)  -->
 <!-- summary(Model_Body_Length2) -->
 <!-- tab_model(Model_Body_Length2) -->
 <!-- hist(residuals(Model_Body_Length2)) -->
@@ -151,9 +157,9 @@ anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models
 <!-- m_mody_length -->
 
 <!-- # Calculating difference in variance between control and treatment group  -->
-<!-- Model_Length_1 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure -->
+<!-- Model_Length_1 <- lme(Fish_Length_cm ~ Group*Week + Sex*Week, random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure -->
 <!-- summary(Model_Length_1) -->
-<!-- Model_Length_2 <- lme(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Treatment_Tank), data = Weight_Length_Data) #mixed model with variance structure varIdent -->
+<!-- Model_Length_2 <- lme(Fish_Length_cm ~ Group*Week + Sex*Week, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Weight_Length_Data) #mixed model with variance structure varIdent -->
 <!-- summary(Model_Length_2) -->
 <!-- anova(Model_Length_1, Model_Length_2) #calculating difference between two models to find difference in variance -->
 <!-- ``` -->
@@ -163,13 +169,13 @@ anova(Model_Weight_1, Model_Weight_2) #calculating difference between two models
 Boxplot to show distribution at beginning of the experiment and at the end of the experiment
 ```{r, echo = FALSE}
 boxplot_0 <- ggplot(data = Week_0) +
-  geom_boxplot(mapping = aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank)) +
+  geom_boxplot(mapping = aes(x = Group, y = Weight.g., fill = Group)) +
   facet_grid(~Sex)
   
 boxplot_0
 
 boxplot_22 <- ggplot(data = Week_22) +
-  geom_boxplot(mapping = aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank)) +
+  geom_boxplot(mapping = aes(x = Group, y = Weight.g., fill = Group)) +
   facet_grid(~Sex)
   
 boxplot_22
@@ -178,39 +184,39 @@ boxplot_22
 
 # Mixed Models to account for week 0
 ```{r, echo = FALSE}
-Weight_Model <- lmer(Weight.g. ~ Treatment_Tank + Week + Sex + (1|Fish_ID), data=Data)
+Weight_Model <- lmer(Weight.g. ~ Group + Week + Sex + (1|Fish_ID), data=Data)
 tab_model(Weight_Model)
 
-Weight_Model <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex + (1|Fish_ID), data=Data)
+Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex + (1|Fish_ID), data=Data)
 tab_model(Weight_Model)
 
-Weight_Model <- lmer(Weight.g. ~ Treatment_Tank*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
+Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
 tab_model(Weight_Model)
 
 #A significant interaction exists between treatment and week as well as sex and week. What this means is that the treatment and control tanks have a different slope and this is also dependent on the week. This is also the case for the sexes, with the females having a steeper slope, also significantly different by the week. 
 
 
-Weight_Model <- lmer(Fish_Length_cm ~ Treatment_Tank*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
+Weight_Model <- lmer(Fish_Length_cm ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
 tab_model(Weight_Model)
 
-model_week0_weight <- lmer(Weight.g. ~ Treatment_Tank + Sex + Fish_Length_cm + (1|Tank), data = Week_0 )
+model_week0_weight <- lmer(Weight.g. ~ Group + Sex + Fish_Length_cm + (1|Tank), data = Week_0 )
 tab_model(model_week0_weight)
 
-model_week0_length <- lmer(Fish_Length_cm ~ Treatment_Tank + Sex + (1|Tank), data = Week_0 )
+model_week0_length <- lmer(Fish_Length_cm ~ Group + Sex + (1|Tank), data = Week_0 )
 tab_model(model_week0_length)
 
 
-model_week0_bmi <- lmer(scale(BMI) ~ Treatment_Tank + Sex + (1|Tank), data = Week_0 )
+model_week0_bmi <- lmer(scale(BMI) ~ Group + Sex + (1|Tank), data = Week_0 )
 tab_model(model_week0_bmi)
 
-lm_week0 <- glm(scale(BMI) ~ Treatment_Tank + Sex , data = Week_0 )
+lm_week0 <- glm(scale(BMI) ~ Group + Sex , data = Week_0 )
 tab_model(lm_week0)
 
 
-lm_week0 <- glm(Weight.g. ~ Treatment_Tank + Sex , data = Week_0 )
+lm_week0 <- glm(Weight.g. ~ Group + Sex , data = Week_0 )
 tab_model(lm_week0)
 
-lm_week0 <- glm(Fish_Length_cm ~ Treatment_Tank + Sex , data = Week_0 )
+lm_week0 <- glm(Fish_Length_cm ~ Group + Sex , data = Week_0 )
 tab_model(lm_week0)
 
 ```
@@ -219,13 +225,13 @@ tab_model(lm_week0)
 # plots (body weight)
 
 ```{r, echo = FALSE}
-Summary_Weight <- summarySE(Weight_Length_Data, measurevar="Weight.g.", groupvars=c("Week","Treatment_Tank", "Sex"))
+Summary_Weight <- summarySE(Weight_Length_Data, measurevar="Weight.g.", groupvars=c("Week","Group", "Sex"))
 
 # So error bars aren't overlapping, we can use this:
 pd <- position_dodge(0.1) # move them .05 to the left and right
 
 
-line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treatment_Tank)) + 
+line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Group)) + 
     geom_errorbar(aes(ymin=Weight.g.-se, ymax=Weight.g.+se), colour="black", width=.3, position=pd) +
       scale_colour_manual(values = wes_palette("FantasticFox1", n = 2))+
     geom_line(position=pd) +
@@ -237,7 +243,7 @@ line_plot_weight <- ggplot(Summary_Weight, aes(x=Week, y=Weight.g., colour=Treat
 line_plot_weight
 
 body_weight_violin <-  
-  ggplot(data = Week_22,aes(x = Treatment_Tank, y = Weight.g., fill = Treatment_Tank))+
+  ggplot(data = Week_22,aes(x = Group, y = Weight.g., fill = Group))+
     scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
     geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
@@ -248,9 +254,32 @@ body_weight_violin <-
     theme(legend.position = "none")+
   labs(title = "Final week of body weight measurements")+
     theme(axis.title.x=element_blank())+
+   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="red", fill="red") +
   facet_grid(~Sex)
 
 body_weight_violin
+
+
+body_weight_violin_overall <-  
+  ggplot(data = Weight_Length_Data,aes(x = Group, y = Weight.g., fill = Group))+
+    scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+ 
+    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+
+    geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+ 
+    geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+ 
+    theme_pubr()+
+    rremove("legend.title")+
+    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),axis.ticks = element_line(size=2,color="black"),axis.ticks.length=unit(0.2,"cm"),legend.position = c(0.92, 0.85))+      font("xylab",size=15)+font("xy",size=15)+font("xy.text", size = 15) +font("legend.text",size = 15)+
+    theme(legend.position = "none")+
+  labs(title = "Average body weight measurements")+
+    theme(axis.title.x=element_blank())+
+   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="red", fill="red") +
+  facet_grid(~Sex)
+
+body_weight_violin_overall
+
+
+
+
 ```
 
 
@@ -264,12 +293,12 @@ body_weight_violin
 <!-- # plots (fish length) for tanks -->
 
 <!-- ```{r, echo = FALSE} -->
-<!-- Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Treatment_Tank", "Sex")) -->
+<!-- Summary_Length <- summarySE(Weight_Length_Data, measurevar="Fish_Length_cm", groupvars=c("Week","Group", "Sex")) -->
 
 <!-- # So error bars aren't overlapping, we can use this: -->
 <!-- pd <- position_dodge(0.1) # move them .05 to the left and right -->
 
-<!-- plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, colour=Treatment_Tank)) +  -->
+<!-- plot_fish_length_tanks <- ggplot(Summary_Length, aes(x=Week, y=Fish_Length_cm, colour=Group)) +  -->
 <!--   geom_errorbar(aes(ymin=Fish_Length_cm-se, ymax=Fish_Length_cm+se),colour="black", width=.1, position=pd) + -->
 <!--   geom_line(position=pd) + -->
 <!--   geom_point(position=pd)+ -->
@@ -282,7 +311,7 @@ body_weight_violin
 
 
 <!-- body_length_violin <-   -->
-<!--   ggplot(data = Weight_Length_Data,aes(x = Treatment_Tank, y = Fish_Length_cm, fill = Treatment_Tank))+ -->
+<!--   ggplot(data = Weight_Length_Data,aes(x = Group, y = Fish_Length_cm, fill = Group))+ -->
 <!--     scale_fill_manual(values = wes_palette("FantasticFox1", n = 2))+  -->
 <!--     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=1,color="black")+ -->
 <!--     geom_boxplot(notch = TRUE,  outlier.size = -1, color="black",lwd=1.2, alpha = 0.7)+  -->
@@ -300,10 +329,10 @@ body_weight_violin
 
 <!-- ```{r, echo = FALSE} -->
 
-<!-- Summary_BMI <- summarySE(Weight_Length_Data, measurevar="BMI", groupvars=c("Week","Treatment_Tank", "Sex")) -->
+<!-- Summary_BMI <- summarySE(Weight_Length_Data, measurevar="BMI", groupvars=c("Week","Group", "Sex")) -->
 
 
-<!-- plot_bmi <- ggplot(Summary_BMI, aes(x=Week, y=BMI, colour=Treatment_Tank)) +  -->
+<!-- plot_bmi <- ggplot(Summary_BMI, aes(x=Week, y=BMI, colour=Group)) +  -->
 <!--   geom_errorbar(aes(ymin=BMI-se, ymax=BMI+se), width=.1,colour="black", position=pd) + -->
 <!--   geom_line(position=pd) + -->
 <!--   labs(title = "Obesogenic vs. Control Diet", -->
@@ -323,11 +352,11 @@ body_weight_violin
 ```{r}
 #Making scatterplot
 
-Scatterplot <- ggplot(Weight_Length_Data, aes(Week, Weight.g., colour = Treatment_Tank)) +
+Scatterplot <- ggplot(Weight_Length_Data, aes(Week, Weight.g., colour = Group)) +
   geom_jitter() +
   theme_bw() +
   facet_grid(~Sex) +
-  stat_smooth(method = "lm", formula = y ~ x + I(x^2), aes(fill = Treatment_Tank)) #try different formulas and compare against each other
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), aes(fill = Group)) #try different formulas and compare against each other
 Scatterplot
 ```
 

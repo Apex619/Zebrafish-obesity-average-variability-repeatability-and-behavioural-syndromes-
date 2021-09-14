@@ -94,7 +94,7 @@ NEED TO EDIT COMMENTS !
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_Tot_Dist <- lmer(tot_dist ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+Model_Tot_Dist <- lmer(tot_dist ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined)
 tab_model(Model_Tot_Dist)#mixed model 
 hist(residuals(Model_Tot_Dist)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
@@ -123,9 +123,10 @@ q1
 m1
 
 # Calculating difference in variance between 
-Model_Tot_Dist1 <- lme(tot_dist ~ Group-1 + Sex + Water_ID, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_Tot_Dist1 <- lme(tot_dist ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Tot_Dist1) 
-Model_Tot_Dist2 <- lme(tot_dist ~ Group-1 + Sex + Water_ID, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+tab_model(Model_Tot_Dist1)
+Model_Tot_Dist2 <- lme(tot_dist ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Tot_Dist2)
 anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two models to find difference in variance
 ```
@@ -136,7 +137,7 @@ anova(Model_Tot_Dist1, Model_Tot_Dist2) #calculating difference between two mode
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_low_dur <- lmer(low_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+Model_low_dur <- lmer(low_dur ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined)
 summary(Model_low_dur)#mixed model 
 tab_model(Model_low_dur)
 hist(residuals(Model_low_dur)) #histogram of residuals reveals a transformation is needed ?
@@ -165,8 +166,11 @@ q2
 m2
 
 # Calculating difference in variance between  and  
-Model_low_dur1 <- lme(low_dur ~ Group + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_low_dur1 <- lme(low_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_low_dur1)
+contrasts_low_dur <- emmeans(Model_low_dur1, c("Group", "Sex"))
+pairs(contrasts_low_dur)
+tab_model(Model_low_dur1)
 Model_low_dur2 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_low_dur2)
 anova(Model_low_dur1, Model_low_dur2) #calculating difference between two models to find difference in variance
@@ -178,7 +182,7 @@ anova(Model_low_dur1, Model_low_dur2) #calculating difference between two models
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_mid_dur <- lmer(mid_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+Model_mid_dur <- lmer(mid_dur ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined)
 summary(Model_mid_dur)#mixed model 
 tab_model(Model_mid_dur)
 hist(residuals(Model_mid_dur)) #histogram of residuals - transformation ?
@@ -210,9 +214,9 @@ q3
 m3
 
 # Calculating difference in variance between  and  
-Model_mid_dur1 <- lme(mid_dur ~ Group + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_mid_dur1 <- lme(mid_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_mid_dur1)
-Model_mid_dur2 <- lme(mid_dur ~ Group + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_mid_dur2 <- lme(mid_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_mid_dur2)
 anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models to find difference in variance
 ```
@@ -223,11 +227,11 @@ anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_high_dur <- lmer(high_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_high_dur <- lmer(high_dur ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_high_dur)
 hist(residuals(Model_high_dur)) #histogram of residuals reveals transformation required
 
-Model_high_dur0 <- lmer(log(high_dur+1) ~ Group + Sex + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_high_dur0 <- lmer(log(high_dur+1) ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 summary(Model_high_dur0)
 tab_model(Model_high_dur0)
 hist(residuals(Model_high_dur0)) #better normal distribution
@@ -269,11 +273,11 @@ anova(Model_high_dur1, Model_high_dur2) #calculating difference between two mode
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_freezing_dur <- lmer(freezing_dur ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freezing_dur <- lmer(freezing_dur ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_freezing_dur)
 hist(residuals(Model_freezing_dur)) #histogram of residuals reveals a transformation is required
 
-Model_freezing_dur0 <- lmer(log(freezing_dur+1) ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freezing_dur0 <- lmer(log(freezing_dur+1) ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_freezing_dur0)
 hist(residuals(Model_freezing_dur0))
 
@@ -316,7 +320,7 @@ anova(Model_freezing_dur1, Model_freezing_dur2) #calculating difference between 
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_latency_high <- lmer(latency_high ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_latency_high <- lmer(latency_high ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 tab_model(Model_latency_high)
 hist(residuals(Model_latency_high)) #histogram of residuals to check for normal distribution (easiest way to check assumption of normality)
 
@@ -360,10 +364,10 @@ anova(Model_latency_high1, Model_latency_high2) #calculating difference between 
 
 #Check Normality with mixed model and then histogram of residuals
 
-Model_freq_high <- lmer(freq_high ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
+Model_freq_high <- lmer(freq_high ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined) #mixed model 
 hist(residuals(Model_freq_high)) #histogram of residuals reveals a transformation is required
 
-Model_freq_high0 <- lmer(sqrt(freq_high) ~ Group + Sex + Water_ID + (1 | Fish_ID), data = Anxiety_Joined)
+Model_freq_high0 <- lmer(sqrt(freq_high) ~ Group*Sex + scale(Water_ID, scale = FALSE) + (1 | Fish_ID), data = Anxiety_Joined)
 summary(Model_freq_high0)
 tab_model(Model_freq_high0)#mixed model 
 hist(residuals(Model_freq_high0))
