@@ -71,6 +71,12 @@ summary(Model_gluc_1)
 tab_model(Model_gluc_1)
 emmeans_gluc <- emmeans(Model_gluc_1, c("Group","Sex"))
 pairs(emmeans_gluc)
+
+e_gluc <- allEffects(Model_gluc_1)
+print(e_gluc)
+plot(e_gluc)
+
+
 Model_gluc_2 <- lme(Glucose ~ Sex*Group, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Glucose_Weight) #mixed model with variance structure varIdent
 summary(Model_gluc_2)
 anova(Model_gluc_1, Model_gluc_2)

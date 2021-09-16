@@ -168,9 +168,14 @@ m2
 # Calculating difference in variance between  and  
 Model_low_dur1 <- lme(low_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_low_dur1)
+tab_model(Model_low_dur1)
 contrasts_low_dur <- emmeans(Model_low_dur1, c("Group", "Sex"))
 pairs(contrasts_low_dur)
-tab_model(Model_low_dur1)
+
+e_low <- allEffects(Model_low_dur1)
+print(e_low)
+plot(e_low)
+
 Model_low_dur2 <- lme(low_dur ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_low_dur2)
 anova(Model_low_dur1, Model_low_dur2) #calculating difference between two models to find difference in variance
@@ -214,8 +219,19 @@ q3
 m3
 
 # Calculating difference in variance between  and  
+
 Model_mid_dur1 <- lme(mid_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_mid_dur1)
+tab_model(Model_mid_dur1)
+
+contrasts_mid_dur <- emmeans(Model_mid_dur1, c("Group", "Sex"))
+pairs(contrasts_mid_dur)
+
+e_mid <- allEffects(Model_mid_dur1)
+print(e_mid)
+plot(e_mid)
+
+
 Model_mid_dur2 <- lme(mid_dur ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_mid_dur2)
 anova(Model_mid_dur1, Model_mid_dur2) #calculating difference between two models to find difference in variance
@@ -261,9 +277,18 @@ q4
 m4
 
 # Calculating difference in variance between  and  
-Model_high_dur1 <- lme(log(high_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_high_dur1 <- lme(log(high_dur+1) ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_high_dur1)
-Model_high_dur2 <- lme(log(high_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+tab_model(Model_high_dur1)
+
+contrasts_high_dur <- emmeans(Model_mid_dur1, c("Group", "Sex"))
+pairs(contrasts_high_dur)
+
+e_high <- allEffects(Model_high_dur1)
+print(e_high)
+plot(e_high)
+
+Model_high_dur2 <- lme(log(high_dur+1) ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_high_dur2)
 anova(Model_high_dur1, Model_high_dur2) #calculating difference between two models to find difference in variance
 ```
@@ -308,9 +333,9 @@ q5
 m5
 
 # Calculating difference in variance between  and  
-Model_freezing_dur1 <- lme(log(freezing_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_freezing_dur1 <- lme(log(freezing_dur+1) ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_freezing_dur1)
-Model_freezing_dur2 <- lme(log(freezing_dur+1) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+Model_freezing_dur2 <- lme(log(freezing_dur+1) ~Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_freezing_dur2)
 anova(Model_freezing_dur1, Model_freezing_dur2) #calculating difference between two models to find difference in variance
 ```
@@ -351,9 +376,10 @@ q6
 m6
 
 # Calculating difference in variance between  and  
-Model_latency_high1 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_latency_high1 <- lme(latency_high ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_latency_high1)
-Model_latency_high2 <- lme(latency_high ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+tab_model(Model_latency_high1)
+Model_latency_high2 <- lme(latency_high ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_latency_high2)
 anova(Model_latency_high1, Model_latency_high2) #calculating difference between two models to find difference in variance
 ```
@@ -397,9 +423,10 @@ q7
 m7
 
 # Calculating difference in variance between  and  
-Model_freq_high1 <- lme(sqrt(freq_high) ~ Group-1 + Sex, random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
+Model_freq_high1 <- lme(sqrt(freq_high) ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, data = Anxiety_Joined, na.action=na.exclude) #mixed model without variance structure
 summary(Model_freq_high1)
-Model_freq_high2 <- lme(sqrt(freq_high) ~ Group-1 + Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
+tab_model(Model_freq_high1)
+Model_freq_high2 <- lme(sqrt(freq_high) ~ Group*Sex + scale(Water_ID, scale = FALSE), random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Anxiety_Joined, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_freq_high2)
 anova(Model_freq_high1, Model_freq_high2) #calculating difference between two models to find difference in variance
 ```

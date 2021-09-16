@@ -82,7 +82,7 @@ Endpoint = c("Time spent in mid zone", "Time spent in mid zone", "Time spent in 
 mid_dur_rptr$r <- as.numeric(mid_dur_rptr$r)  
 mid_dur_rptr
 
-mid_dur_rptr$r <- as.numeric(mid_dur_rptr$r)
+
 
 mid_dur_rptr_sex <- tibble(
   Tank = c("Control","Control", "Treatment", "Treatment", "Control", "Treatment"),
@@ -295,25 +295,31 @@ Note: For main text, only groups, for supp, add sex
 ```{r}
 
 
-low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone *", "Seconds")+
+low_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined,Anxiety_Joined$low_dur,"Time spent in low zone", "Seconds")+
   facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 
-tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")
+tot_dist_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$tot_dist, "Total distance travelled", "Distance (cm)")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 
 
-mid_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$mid_dur, "Time spent in mid zone *", "Seconds")
+mid_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$mid_dur, "Time spent in mid zone", "Seconds")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 
-high_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$high_dur+1), "Time spent in high zone *", "Seconds")
+high_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$high_dur+1), "Time spent in high zone", "Seconds")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 
-freezing_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$freezing_dur+1), "Time spent freezing", "Seconds")
+freezing_dur_violin <- violin_plot_custom_hamza2(Anxiety_Joined, log(Anxiety_Joined$freezing_dur+1), "Time spent freezing", "Seconds")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
-freq_violin <- violin_plot_custom_hamza2(Anxiety_Joined, sqrt(Anxiety_Joined$freq_high), "Frequency of visits to high zone", "Visits")
+freq_violin <- violin_plot_custom_hamza2(Anxiety_Joined, sqrt(Anxiety_Joined$freq_high), "Frequency of visits to high zone", "Visits")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
-latency_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$latency_high, "Latency to the high zone", "Seconds")
+latency_violin <- violin_plot_custom_hamza2(Anxiety_Joined, Anxiety_Joined$latency_high, "Latency to the high zone", "Seconds")+
+  facet_grid(~Sex)+stat_summary(fun.y=mean, geom="point", shape=20, size=8, color="red", fill="red") 
 
 #Joining plots together using patchwork to create one main plot
 

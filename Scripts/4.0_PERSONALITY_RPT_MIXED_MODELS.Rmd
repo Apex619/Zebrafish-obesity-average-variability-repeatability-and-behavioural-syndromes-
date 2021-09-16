@@ -148,6 +148,7 @@ q_post_assay
 # Calculating difference in variance between control and treatment groups
 Model_post1 <- lme(tot_dist_Activity ~ Group*Sex, random = ~ 1| Fish_ID, data = Post_assay, na.action=na.exclude) #mixed model without variance structure
 summary(Model_post1)
+tab_model(Model_post1)
 Model_post2 <- lme(tot_dist_Activity ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Post_assay, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_post2)
 anova(Model_post1, Model_post2) #calculating difference between two models to find difference in variance
@@ -208,6 +209,16 @@ q_social
 # Calculating difference in variance between control and treatment groups
 Model_Social1 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, data = Social_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Social1)
+tab_model(Model_Social1)
+
+contrasts_social <- emmeans(Model_Social1, c("Group", "Sex"))
+pairs(contrasts_social)
+
+e_social <- allEffects(Model_Social1)
+print(e_social)
+plot(e_social)
+
+
 Model_Social2 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Social_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Social2)
 anova(Model_Social1, Model_Social2) #calculating difference between two models to find difference in variance
@@ -220,8 +231,7 @@ Social_ALL %>%
     draw_quantiles = c(0.25, 0.5, 0.75), 
     alpha=0.5
   ) + 
-  geom_point(position = "jitter", alpha = 0.7, size = 3)+
-  facet_grid(~Sex)
+  geom_point(position = "jitter", alpha = 0.7, size = 3)
 ```
 
 <!-- Social Analysis - mean speed -->
@@ -372,6 +382,7 @@ q_predator
 # Calculating difference in variance between control and treatment groups
 Model_Predator1 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, data = Predator_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Predator1)
+tab_model(Model_Predator1)
 Model_Predator2 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Predator_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Predator2)
 anova(Model_Predator1, Model_Predator2) #calculating difference between two models to find difference in variance
@@ -530,6 +541,7 @@ q_novel
 # Calculating difference in variance between control and treatment groups
 Model_Novel1 <- lme(sqrt(zone_05_dur) ~ Group*Sex, random = ~ 1| Fish_ID, data = Novel_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Novel1)
+tab_model(Model_Novel1)
 Model_Novel2 <- lme(sqrt(zone_05_dur) ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Novel_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Novel2)
 anova(Model_Novel1, Model_Novel2) #calculating difference between two models to find difference in variance
@@ -682,6 +694,7 @@ q_aggression
 # Calculating difference in variance between control and treatment groups
 Model_Aggression1 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, data = Aggression_ALL, na.action=na.exclude) #mixed model without variance structure
 summary(Model_Aggression1)
+tab_model(Model_Aggression1)
 Model_Aggression2 <- lme(zone_05_dur ~ Group*Sex, random = ~ 1| Fish_ID, weights = varIdent(form=~1|Group), data = Aggression_ALL, na.action=na.exclude) #mixed model with variance structure varIdent
 summary(Model_Aggression2)
 anova(Model_Aggression1, Model_Aggression2) #calculating difference between two models to find difference in variance

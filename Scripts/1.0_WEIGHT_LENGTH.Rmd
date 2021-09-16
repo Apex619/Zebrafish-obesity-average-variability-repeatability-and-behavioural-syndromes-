@@ -54,6 +54,13 @@ load("../Models/rpt_body_weight_control2.Rdata")
 load("../Models/rpt_body_weight_treatment2.Rdata")
 
 
+#Basic summary
+
+Weight_Length_Data %>%                             
+  dplyr::group_by(Group, Sex) %>%
+  dplyr::summarise(count = n_distinct(Fish_ID))
+
+
 ```
 
 ### REPEATABILITY ANALYSIS FOR BODY WEIGHT AND LENGTH 
@@ -103,6 +110,9 @@ q_body_weight
 m_mody_weight
 
 # Calculating difference in variance between control and treatment group 
+#Weight_Length_Data$Group <- relevel(Weight_Length_Data$Group, ref="Treatment")
+
+
 Model_Weight_1 <- lme(Weight.g. ~ Group*Sex + scale(Week, scale = FALSE), random = ~ 1| Fish_ID, data = Weight_Length_Data) #Mixed model without variance structure
 summary(Model_Weight_1)
 tab_model(Model_Weight_1)
@@ -182,44 +192,44 @@ boxplot_22
 
 ```  
 
-# Mixed Models to account for week 0
-```{r, echo = FALSE}
-Weight_Model <- lmer(Weight.g. ~ Group + Week + Sex + (1|Fish_ID), data=Data)
-tab_model(Weight_Model)
+<!-- # Mixed Models to account for week 0 -->
+<!-- ```{r, echo = FALSE} -->
+<!-- Weight_Model <- lmer(Weight.g. ~ Group + Week + Sex + (1|Fish_ID), data=Data) -->
+<!-- tab_model(Weight_Model) -->
 
-Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex + (1|Fish_ID), data=Data)
-tab_model(Weight_Model)
+<!-- Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex + (1|Fish_ID), data=Data) -->
+<!-- tab_model(Weight_Model) -->
 
-Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
-tab_model(Weight_Model)
+<!-- Weight_Model <- lmer(Weight.g. ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data) -->
+<!-- tab_model(Weight_Model) -->
 
-#A significant interaction exists between treatment and week as well as sex and week. What this means is that the treatment and control tanks have a different slope and this is also dependent on the week. This is also the case for the sexes, with the females having a steeper slope, also significantly different by the week. 
-
-
-Weight_Model <- lmer(Fish_Length_cm ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data)
-tab_model(Weight_Model)
-
-model_week0_weight <- lmer(Weight.g. ~ Group + Sex + Fish_Length_cm + (1|Tank), data = Week_0 )
-tab_model(model_week0_weight)
-
-model_week0_length <- lmer(Fish_Length_cm ~ Group + Sex + (1|Tank), data = Week_0 )
-tab_model(model_week0_length)
+<!-- #A significant interaction exists between treatment and week as well as sex and week. What this means is that the treatment and control tanks have a different slope and this is also dependent on the week. This is also the case for the sexes, with the females having a steeper slope, also significantly different by the week.  -->
 
 
-model_week0_bmi <- lmer(scale(BMI) ~ Group + Sex + (1|Tank), data = Week_0 )
-tab_model(model_week0_bmi)
+<!-- Weight_Model <- lmer(Fish_Length_cm ~ Group*Week + Sex*Week  + (1|Fish_ID) + (1 + Week|Tank), data=Data) -->
+<!-- tab_model(Weight_Model) -->
 
-lm_week0 <- glm(scale(BMI) ~ Group + Sex , data = Week_0 )
-tab_model(lm_week0)
+<!-- model_week0_weight <- lmer(Weight.g. ~ Group + Sex + Fish_Length_cm + (1|Tank), data = Week_0 ) -->
+<!-- tab_model(model_week0_weight) -->
+
+<!-- model_week0_length <- lmer(Fish_Length_cm ~ Group + Sex + (1|Tank), data = Week_0 ) -->
+<!-- tab_model(model_week0_length) -->
 
 
-lm_week0 <- glm(Weight.g. ~ Group + Sex , data = Week_0 )
-tab_model(lm_week0)
+<!-- model_week0_bmi <- lmer(scale(BMI) ~ Group + Sex + (1|Tank), data = Week_0 ) -->
+<!-- tab_model(model_week0_bmi) -->
 
-lm_week0 <- glm(Fish_Length_cm ~ Group + Sex , data = Week_0 )
-tab_model(lm_week0)
+<!-- lm_week0 <- glm(scale(BMI) ~ Group + Sex , data = Week_0 ) -->
+<!-- tab_model(lm_week0) -->
 
-```
+
+<!-- lm_week0 <- glm(Weight.g. ~ Group + Sex , data = Week_0 ) -->
+<!-- tab_model(lm_week0) -->
+
+<!-- lm_week0 <- glm(Fish_Length_cm ~ Group + Sex , data = Week_0 ) -->
+<!-- tab_model(lm_week0) -->
+
+<!-- ``` -->
 
 
 # plots (body weight)
