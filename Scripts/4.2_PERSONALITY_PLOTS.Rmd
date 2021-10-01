@@ -273,7 +273,8 @@ Sex_New_plot_personality
 ```{r}
 
 
-social_violin <- violin_plot_custom_hamza2(Social_ALL,Social_ALL$zone_05_dur,"Time spent near social stimulus", "Seconds")%>% +facet_grid(~Sex)
+social_violin <- violin_plot_custom_hamza2(Social_ALL,Social_ALL$zone_05_dur,"Time spent near social stimulus", "Seconds")%>% +facet_grid(~Sex)+
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
 social_violin
 
@@ -281,15 +282,19 @@ social_violin
 
 
 
-aggression_violin <- violin_plot_custom_hamza2(Aggression_ALL, Aggression_ALL$zone_05_dur, "Time spent near aggressive stimulus", "Seconds")%>% +facet_grid(~Sex)
+aggression_violin <- violin_plot_custom_hamza2(Aggression_ALL, Aggression_ALL$zone_05_dur, "Time spent near aggressive stimulus", "Seconds")%>% +facet_grid(~Sex)+
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
 
 
-novel_violin <- violin_plot_custom_hamza2(Novel_ALL, Novel_ALL$zone_05_dur, "Time spent near novel stimulus", "Seconds")%>% +facet_grid(~Sex)
+novel_violin <- violin_plot_custom_hamza2(Novel_ALL, Novel_ALL$zone_05_dur, "Time spent near novel stimulus", "Seconds")%>% +facet_grid(~Sex)+
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
-predator_violin <- violin_plot_custom_hamza2(Predator_ALL, Predator_ALL$zone_05_dur, "Time spent near predatory stimulus", "Seconds")%>% +facet_grid(~Sex)
+predator_violin <- violin_plot_custom_hamza2(Predator_ALL, Predator_ALL$zone_05_dur, "Time spent near predatory stimulus", "Seconds")%>% +facet_grid(~Sex)+
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
-activity_violin <- violin_plot_custom_hamza2(Post_assay, Post_assay$tot_dist_Activity, "Total distance travelled post-assay", "Seconds")%>% +facet_grid(~Sex)
+activity_violin <- violin_plot_custom_hamza2(Post_assay, Post_assay$tot_dist_Activity, "Total distance travelled post-assay", "Seconds")%>% +facet_grid(~Sex)+
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
 activity_violin
 

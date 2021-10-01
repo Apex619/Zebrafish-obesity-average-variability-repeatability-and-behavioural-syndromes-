@@ -108,7 +108,8 @@ Sex_New_plot_learning
 ```{r}
 
 
-learning_violin <- violin_plot_custom_hamza3(p2cs,p2cs$difference,"Difference between baseline and probe period for CS+", "Seconds") 
+learning_violin <- violin_plot_custom_hamza3(p2cs,p2cs$difference,"Difference between baseline and probe period for CS+", "Seconds") +
+stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 
 learning_violin
 ```

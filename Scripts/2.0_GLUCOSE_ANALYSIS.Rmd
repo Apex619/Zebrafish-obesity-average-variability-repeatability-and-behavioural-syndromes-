@@ -93,7 +93,8 @@ glucose_violin <-
     theme(legend.position = "none")+
     theme(axis.title.x=element_blank())+
 labs(title= "Fasting blood glucose mmol/L")+
-  facet_grid(~Sex)
+  facet_grid(~Sex)+
+  stat_summary(fun=mean, geom="point", shape=18, size=3, color="red", fill="red")
 glucose_violin
 
 ```
