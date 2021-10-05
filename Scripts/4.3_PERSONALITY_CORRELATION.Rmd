@@ -15,7 +15,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 
 #checks for installation and loads packages
-pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr)
+pacman::p_load(dplyr, brms, stringr, ggplot2, ggpubr, coda, patchwork)
 
 ```
 
@@ -85,185 +85,185 @@ behavs <- c("Aggression", "Novel", "Predator", "Social", "Activity")
 
 
 
-#Function for Bivar Models and Dataframe
+<!-- #Function for Bivar Models and Dataframe -->
+
+<!-- ```{r} -->
+<!-- #Function for running the bivar model  -->
+
+
+
+<!-- bivar_model <- function(var1,var2, df = Personality_wide){ -->
+<!--   df$response1 <- df[,var1] -->
+<!--   df$response2 <- df[,var2] -->
+<!-- formula1 <- bf(response1 ~ Group*Sex + (1 | 2 |Fish_ID)) -->
+<!-- formula2 <- bf(response2 ~ Group*Sex + (1 | 2 |Fish_ID)) -->
+<!-- bivar_formula <- mvbrmsformula(formula1, formula2) -->
+<!-- bivar <- brm(formula = bivar_formula, -->
+<!--                      data = df, -->
+<!--                      family = gaussian(), -->
+<!--                      chains = 4, -->
+<!--                      iter = 6000, warmup = 2000) -->
+<!-- return(bivar) -->
+<!-- } -->
+
+
+
+
+
+<!-- # formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID)) -->
+<!-- # formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID)) -->
+<!-- # bivar_formula <- mvbrmsformula(formula1, formula2) -->
+<!-- # example_Social_Predator <- brm(formula = bivar_formula, -->
+<!-- #                      data = Personality_wide, -->
+<!-- #                      family = gaussian(), -->
+<!-- #                      chains = 1,#note this is just a test model that we need to run fast, real should have more chains -->
+<!-- #                      iter = 2000, warmup = 1000)#and more iterations and more warmup -->
+<!-- # save(example_Social_Predator, file = "./Models/example_bivar.Rdata") -->
+
+<!-- load("./Models/example_bivar.Rdata") -->
+
+
+
+
+<!-- Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models -->
+
+
+<!-- # Combinations required for bivar models -->
+
+<!-- # Social Predator -->
+<!-- # Social Novel -->
+<!-- # Social Aggression -->
+<!-- # Social Activity -->
+<!-- # Aggression Novel -->
+<!-- # Aggression Predator -->
+<!-- # Aggression Activity -->
+<!-- # Novel Predator -->
+<!-- # Novel Activity -->
+<!-- # Predator Activity -->
+<!-- ``` -->
+<!-- #Bivariate models and dataframes -->
+
+<!-- ```{r} -->
+
+<!-- #Social Predator Bivariate Model -->
+
+<!-- example_Social_Predator <- bivar_model("zone_05_dur_Social", "zone_05_dur_Predator") -->
+<!-- save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata") -->
+
+
+<!-- social_predator_bivar <- bivar_brm_func("example_Social_Predator") -->
+
+<!-- #Social_Novel Bivariate model -->
+
+<!-- example_Social_Novel <- bivar_model("zone_05_dur_Social", "zone_05_dur_Novel") -->
+<!-- save(example_Social_Novel, file = "./Models/social_novel_bivar.Rdata") -->
+
+
+<!-- social_novel_bivar <- bivar_brm_func("example_Social_Novel") -->
+
+
+<!-- #Social_Aggression Bivariate model -->
+
+<!-- example_Social_Aggression <- bivar_model("zone_05_dur_Social", "zone_05_dur_Aggression") -->
+<!-- save(example_Social_Aggression, file = "./Models/social_aggression_bivar.Rdata") -->
+
+
+<!-- social_aggression_bivar <- bivar_brm_func("example_Social_Aggression") -->
+
+
+
+
+<!-- #Social_Activity Bivariate Model -->
+
+<!-- example_Social_Activity <- bivar_model("zone_05_dur_Social", "tot_dist_Activity") -->
+<!-- save(example_Social_Activity, file = "./Models/social_activity_bivar.Rdata") -->
+
+
+<!-- social_activity_bivar <- bivar_brm_func("example_Social_Activity") -->
+
+
+<!-- #Agression Novel Bivariate Model -->
+
+<!-- example_Aggression_Novel <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Novel") -->
+<!-- save(example_Aggression_Novel, file = "./Models/aggression_novel_bivar.Rdata") -->
+
+
+<!-- aggression_novel_bivar <- bivar_brm_func("example_Aggression_Novel") -->
+
+<!-- #Agression Predator Bivariate Model -->
+
+<!-- example_Aggression_Predator <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Predator") -->
+<!-- save(example_Aggression_Predator, file = "./Models/aggression_predator_bivar.Rdata") -->
+
+
+<!-- aggression_predator_bivar <- bivar_brm_func("example_Aggression_Predator") -->
+
+
+<!-- #Aggression Activity Bivariate Model -->
+
+<!-- example_Aggression_Activity <- bivar_model("zone_05_dur_Aggression", "tot_dist_Activity") -->
+<!-- save(example_Aggression_Activity, file = "./Models/aggression_activity_bivar.Rdata") -->
+
+<!-- aggression_activity_bivar <- bivar_brm_func("example_Aggression_Activity") -->
+
+
+<!-- #Novel Predator Bivariate Model -->
+
+<!-- example_Novel_Predator <- bivar_model("zone_05_dur_Novel", "zone_05_dur_Predator") -->
+<!-- save(example_Novel_Predator, file = "./Models/novel_predator_bivar.Rdata") -->
+
+
+<!-- novel_predator_bivar <- bivar_brm_func("example_Novel_Predator") -->
+
+
+
+<!-- #Novel Activity Bivariate Model -->
+
+<!-- example_Novel_Activity <- bivar_model("zone_05_dur_Novel", "tot_dist_Activity") -->
+<!-- save(example_Novel_Activity, file = "./Models/novel_activity_bivar.Rdata") -->
+
+<!-- novel_activity_bivar <- bivar_brm_func("example_Novel_Activity") -->
+
+
+<!-- #Predator Activity Bivariate Model -->
+
+<!-- example_Predator_Activity <- bivar_model("zone_05_dur_Predator", "tot_dist_Activity") -->
+<!-- save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata") -->
+
+<!-- predator_activity_bivar <- bivar_brm_func("example_Predator_Activity") -->
+
+
+<!-- ``` -->
+
+
+
+
+#Bivar function
 
 ```{r}
-#Function for running the bivar model 
-
-
-
-bivar_model <- function(var1,var2, df = Personality_wide){
-  df$response1 <- df[,var1]
-  df$response2 <- df[,var2]
-formula1 <- bf(response1 ~ Group*Sex + (1 | 2 |Fish_ID))
-formula2 <- bf(response2 ~ Group*Sex + (1 | 2 |Fish_ID))
-bivar_formula <- mvbrmsformula(formula1, formula2)
-bivar <- brm(formula = bivar_formula,
-                     data = df,
-                     family = gaussian(),
-                     chains = 4,
-                     iter = 6000, warmup = 2000)
-return(bivar)
-}
-
-
-
-
-
-# formula1 <- bf(zone_05_dur_Social ~ Group*Sex + (1 | 2 |Fish_ID))
-# formula2 <- bf(zone_05_dur_Predator ~ Group*Sex + (1 | 2 |Fish_ID))
-# bivar_formula <- mvbrmsformula(formula1, formula2)
-# example_Social_Predator <- brm(formula = bivar_formula,
-#                      data = Personality_wide,
-#                      family = gaussian(),
-#                      chains = 1,#note this is just a test model that we need to run fast, real should have more chains
-#                      iter = 2000, warmup = 1000)#and more iterations and more warmup
-# save(example_Social_Predator, file = "./Models/example_bivar.Rdata")
-
-load("./Models/example_bivar.Rdata")
-
-
-
-
-Combinations <- combn(behav_vars,2) # To see the combinations required for the bivariate models
-
-
-# Combinations required for bivar models
-
-# Social Predator
-# Social Novel
-# Social Aggression
-# Social Activity
-# Aggression Novel
-# Aggression Predator
-# Aggression Activity
-# Novel Predator
-# Novel Activity
-# Predator Activity
-```
-#Bivariate models and dataframes
-
-```{r}
-
-#Social Predator Bivariate Model
-
-example_Social_Predator <- bivar_model("zone_05_dur_Social", "zone_05_dur_Predator")
-save(example_Social_Predator, file = "./Models/social_predator_bivar.Rdata")
-
-
-social_predator_bivar <- bivar_brm_func("example_Social_Predator")
-
-#Social_Novel Bivariate model
-
-example_Social_Novel <- bivar_model("zone_05_dur_Social", "zone_05_dur_Novel")
-save(example_Social_Novel, file = "./Models/social_novel_bivar.Rdata")
-
-
-social_novel_bivar <- bivar_brm_func("example_Social_Novel")
-
-
-#Social_Aggression Bivariate model
-
-example_Social_Aggression <- bivar_model("zone_05_dur_Social", "zone_05_dur_Aggression")
-save(example_Social_Aggression, file = "./Models/social_aggression_bivar.Rdata")
-
-
-social_aggression_bivar <- bivar_brm_func("example_Social_Aggression")
-
-
-
-
-#Social_Activity Bivariate Model
-
-example_Social_Activity <- bivar_model("zone_05_dur_Social", "tot_dist_Activity")
-save(example_Social_Activity, file = "./Models/social_activity_bivar.Rdata")
-
-
-social_activity_bivar <- bivar_brm_func("example_Social_Activity")
-
-
-#Agression Novel Bivariate Model
-
-example_Aggression_Novel <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Novel")
-save(example_Aggression_Novel, file = "./Models/aggression_novel_bivar.Rdata")
-
-
-aggression_novel_bivar <- bivar_brm_func("example_Aggression_Novel")
-
-#Agression Predator Bivariate Model
-
-example_Aggression_Predator <- bivar_model("zone_05_dur_Aggression", "zone_05_dur_Predator")
-save(example_Aggression_Predator, file = "./Models/aggression_predator_bivar.Rdata")
-
-
-aggression_predator_bivar <- bivar_brm_func("example_Aggression_Predator")
-
-
-#Aggression Activity Bivariate Model
-
-example_Aggression_Activity <- bivar_model("zone_05_dur_Aggression", "tot_dist_Activity")
-save(example_Aggression_Activity, file = "./Models/aggression_activity_bivar.Rdata")
-
-aggression_activity_bivar <- bivar_brm_func("example_Aggression_Activity")
-
-
-#Novel Predator Bivariate Model
-
-example_Novel_Predator <- bivar_model("zone_05_dur_Novel", "zone_05_dur_Predator")
-save(example_Novel_Predator, file = "./Models/novel_predator_bivar.Rdata")
-
-
-novel_predator_bivar <- bivar_brm_func("example_Novel_Predator")
-
-
-
-#Novel Activity Bivariate Model
-
-example_Novel_Activity <- bivar_model("zone_05_dur_Novel", "tot_dist_Activity")
-save(example_Novel_Activity, file = "./Models/novel_activity_bivar.Rdata")
-
-novel_activity_bivar <- bivar_brm_func("example_Novel_Activity")
-
-
-#Predator Activity Bivariate Model
-
-example_Predator_Activity <- bivar_model("zone_05_dur_Predator", "tot_dist_Activity")
-save(example_Predator_Activity, file = "./Models/predator_activity_bivar.Rdata")
-
-predator_activity_bivar <- bivar_brm_func("example_Predator_Activity")
-
-
-```
-
-
-
-
-#Loading bivar models
-
-```{r}
-load("./Models/aggression_activity_bivar.Rdata")
-load("./Models/aggression_novel_bivar.Rdata")
-load("./Models/aggression_predator_bivar.Rdata")
-load("./Models/novel_activity_bivar.Rdata")
-load("./Models/novel_predator_bivar.Rdata")
-load("./Models/predator_activity_bivar.Rdata")
-load("./Models/social_activity_bivar.Rdata")
-load("./Models/social_aggression_bivar.Rdata")
-load("./Models/social_novel_bivar.Rdata")
-load("./Models/social_predator_bivar.Rdata")
-
-
-
-bivar_models_names <- c("example_Aggression_Activity",
-"example_Aggression_Novel",
-"example_Aggression_Predator",
-"example_Novel_Activity",
-"example_Novel_Predator",
-"example_Predator_Activity",
-"example_Social_Activity",
-"example_Social_Aggression",
-"example_Social_Novel",
-"example_Social_Predator")
+# load("./Models/aggression_activity_bivar.Rdata")
+# load("./Models/aggression_novel_bivar.Rdata")
+# load("./Models/aggression_predator_bivar.Rdata")
+# load("./Models/novel_activity_bivar.Rdata")
+# load("./Models/novel_predator_bivar.Rdata")
+# load("./Models/predator_activity_bivar.Rdata")
+# load("./Models/social_activity_bivar.Rdata")
+# load("./Models/social_aggression_bivar.Rdata")
+# load("./Models/social_novel_bivar.Rdata")
+# load("./Models/social_predator_bivar.Rdata")
+# 
+# 
+# 
+# bivar_models_names <- c("example_Aggression_Activity",
+# "example_Aggression_Novel",
+# "example_Aggression_Predator",
+# "example_Novel_Activity",
+# "example_Novel_Predator",
+# "example_Predator_Activity",
+# "example_Social_Activity",
+# "example_Social_Aggression",
+# "example_Social_Novel",
+# "example_Social_Predator")
 
 bivar_brm_func <- function(mod_char){
 mod <- get(mod_char)
@@ -312,9 +312,9 @@ df <- data.frame(behaviour1,behaviour2, B0_1, B1_1, B2_1, B3_1, B0_2,B1_2,B2_2,B
 return(df)
 }
 
-bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
-
-bivar_combined <- dplyr::bind_rows(bivar_processed)
+# bivar_processed <- lapply(bivar_models_names, function(x) bivar_brm_func(x))
+# 
+# bivar_combined <- dplyr::bind_rows(bivar_processed)
 ```
 
 #Function for population parameters
@@ -372,9 +372,9 @@ data$coef <- factor(data$coef, levels = c("control_female", "treatment_female", 
    return(data)
 }
 
-behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
-
-bivar_behavs_results <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar(x)))
+# behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
+# 
+# bivar_behavs_results <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar(x)))
 
 ```
 
@@ -390,6 +390,8 @@ we looked for a treatment effect in BETWEEN-INDIVIDUAL CORRELATION  (between tra
 
 and we looked for a treatment effect in repeatability (within traits)
 
+NOTE: Novel HAS ALREADY BEEN sqrt transformed IN SAVED MODELS
+
 $$y_{ij} = \beta_0 + \text{ID}_j + \beta_1(\text{male})+ e_i$$
 
 
@@ -403,6 +405,8 @@ Personality_wide_treatment <- subset(Personality_wide, Personality_wide$Group ==
 
 
 #Functions for control and treatment bivariate models
+#NOVEL WAS SQRT TRANSFORMED USING SEPARATE FUNCTION
+
 bivar_model_control <- function(var1,var2, df = Personality_wide_control){
   df$response1 <- df[,var1]
   df$response2 <- df[,var2]
@@ -445,65 +449,65 @@ bivar_combined <- dplyr::bind_rows(bivar_processed)
 
 ```{r}
 
-#Social Predator Bivariate Model
-
-example_Social_Predator_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Predator")
-save(example_Social_Predator_control, file = "./Models/social_predator_bivar_control.Rdata")
-
-
-#Social_Novel Bivariate model
-
-example_Social_Novel_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Novel")
-save(example_Social_Novel_control, file = "./Models/social_novel_bivar_control.Rdata")
-
-
-
-#Social_Aggression Bivariate model
-
-example_Social_Aggression_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Aggression")
-save(example_Social_Aggression_control, file = "./Models/social_aggression_bivar_control.Rdata")
-
-
-#Social_Activity Bivariate Model
-
-example_Social_Activity_control <- bivar_model_control("zone_05_dur_Social", "tot_dist_Activity")
-save(example_Social_Activity_control, file = "./Models/social_activity_bivar_control.Rdata")
-
-
-#Agression Novel Bivariate Model
-
-example_Aggression_Novel_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Novel")
-save(example_Aggression_Novel_control, file = "./Models/aggression_novel_bivar_control.Rdata")
-
-
-#Agression Predator Bivariate Model
-
-example_Aggression_Predator_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Predator")
-save(example_Aggression_Predator_control, file = "./Models/aggression_predator_bivar_control.Rdata")
-
-
-#Aggression Activity Bivariate Model
-
-example_Aggression_Activity_control <- bivar_model_control("zone_05_dur_Aggression", "tot_dist_Activity")
-save(example_Aggression_Activity_control, file = "./Models/aggression_activity_bivar_control.Rdata")
-
-
-
-#Novel Predator Bivariate Model
-
-example_Novel_Predator_control <- bivar_model_control("zone_05_dur_Novel", "zone_05_dur_Predator")
-save(example_Novel_Predator_control, file = "../Models/novel_predator_bivar_control.Rdata")
-
-#Novel Activity Bivariate Model
-
-example_Novel_Activity_control <- bivar_model_control("zone_05_dur_Novel", "tot_dist_Activity")
-save(example_Novel_Activity_control, file = "./Models/novel_activity_bivar_control.Rdata")
-
-
-#Predator Activity Bivariate Model
-
-example_Predator_Activity_control <- bivar_model_control("zone_05_dur_Predator", "tot_dist_Activity")
-save(example_Predator_Activity_control, file = "./Models/predator_activity_bivar_control.Rdata")
+# #Social Predator Bivariate Model
+# 
+# example_Social_Predator_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Predator")
+# save(example_Social_Predator_control, file = "./Models/social_predator_bivar_control.Rdata")
+# 
+# 
+# #Social_Novel Bivariate model
+# 
+# example_Social_Novel_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Novel")
+# save(example_Social_Novel_control, file = "./Models/social_novel_bivar_control.Rdata")
+# 
+# 
+# 
+# #Social_Aggression Bivariate model
+# 
+# example_Social_Aggression_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Aggression")
+# save(example_Social_Aggression_control, file = "./Models/social_aggression_bivar_control.Rdata")
+# 
+# 
+# #Social_Activity Bivariate Model
+# 
+# example_Social_Activity_control <- bivar_model_control("zone_05_dur_Social", "tot_dist_Activity")
+# save(example_Social_Activity_control, file = "./Models/social_activity_bivar_control.Rdata")
+# 
+# 
+# #Agression Novel Bivariate Model
+# 
+# example_Aggression_Novel_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Novel")
+# save(example_Aggression_Novel_control, file = "./Models/aggression_novel_bivar_control.Rdata")
+# 
+# 
+# #Agression Predator Bivariate Model
+# 
+# example_Aggression_Predator_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Predator")
+# save(example_Aggression_Predator_control, file = "./Models/aggression_predator_bivar_control.Rdata")
+# 
+# 
+# #Aggression Activity Bivariate Model
+# 
+# example_Aggression_Activity_control <- bivar_model_control("zone_05_dur_Aggression", "tot_dist_Activity")
+# save(example_Aggression_Activity_control, file = "./Models/aggression_activity_bivar_control.Rdata")
+# 
+# 
+# 
+# #Novel Predator Bivariate Model
+# 
+# example_Novel_Predator_control <- bivar_model_control("zone_05_dur_Novel", "zone_05_dur_Predator")
+# save(example_Novel_Predator_control, file = "../Models/novel_predator_bivar_control.Rdata")
+# 
+# #Novel Activity Bivariate Model
+# 
+# example_Novel_Activity_control <- bivar_model_control("zone_05_dur_Novel", "tot_dist_Activity")
+# save(example_Novel_Activity_control, file = "./Models/novel_activity_bivar_control.Rdata")
+# 
+# 
+# #Predator Activity Bivariate Model
+# 
+# example_Predator_Activity_control <- bivar_model_control("zone_05_dur_Predator", "tot_dist_Activity")
+# save(example_Predator_Activity_control, file = "./Models/predator_activity_bivar_control.Rdata")
 ```
 
 #Loading models and creating new functions CONTROL
@@ -589,15 +593,82 @@ behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 
 bivar_behavs_results_control <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar_control(x)))
 
+#Summary of models
+summary(example_Novel_Predator_control)
+summary(example_Social_Aggression_control)
+summary(example_Aggression_Activity_control)
+summary(example_Aggression_Novel_control)
+summary(example_Aggression_Predator_control)
+summary(example_Novel_Activity_control)
+summary(example_Predator_Activity_control)
+summary(example_Social_Activity_control)
+summary(example_Social_Novel_control)
+summary(example_Social_Predator_control)
+
+#Summary Plots
+
+bivar_combined_control$behav_syndrome <- paste0(bivar_combined_control$behaviour1, " vs. ", bivar_combined_control$behaviour2)#Add a new column to name he behavioral syndrome
 
 
-#Plots
-
-bivar_combined_control$behav_syndrome <- paste0(bivar_combined_control$behaviour1, " vs. ", bivar_combined_control$behaviour2)
 ggplot(bivar_combined_control) + theme_classic() +
   geom_density(aes(cor_ID1_ID2)) +
   geom_vline(xintercept = 0) +
   facet_wrap(~behav_syndrome)
+
+#Density plots with CI for signif syndromes
+#Step 1: Subset data
+Aggression_Activity_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Aggression vs. Activity")
+Aggression_Novel_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Aggression vs. Novel")
+Aggression_Predator_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Aggression vs. Predator")
+Novel_Activity_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Novel vs. Activity")
+Novel_Predator_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Novel vs. Predator")
+Predator_Activity_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Predator vs. Activity")
+Social_Activity_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Social vs. Activity")
+Social_Aggression_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Social vs. Aggression")
+Social_Novel_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Social vs. Novel")
+Social_Predator_control <- subset(bivar_combined_control, bivar_combined_control$behav_syndrome == "Social vs. Predator")
+
+#Step 2: Function for plot
+density_plot_bivar <- function(df){
+  heading = df$behav_syndrome
+plot <- ggplot(df) + 
+  theme_classic() +
+  geom_density(aes(cor_ID1_ID2)) +
+  geom_vline(xintercept = 0, color = "red") +
+  geom_vline(xintercept = mean(df$cor_ID1_ID2),col="black",lwd=2) +
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[1],col="black",lty=2)+
+  geom_vline(xintercept = HPDinterval(as.mcmc(df$cor_ID1_ID2))[2],col="black",lty=2)+
+  labs(title = heading)+
+  theme(axis.title.x = element_blank())
+  return(plot)
+}  
+
+#Density plots
+
+p1 <- density_plot_bivar(Aggression_Activity_control)+
+  labs(title = "Aggression vs. Exploration")
+p2 <- density_plot_bivar(Aggression_Novel_control)+
+  labs(title = "Aggression vs. Neophobia")
+p3 <- density_plot_bivar(Aggression_Predator_control)+
+  labs(title = "Aggression vs. Boldness")
+p4 <- density_plot_bivar(Novel_Activity_control)+
+  labs(title = "Neophobia vs. Exploration")
+p5 <- density_plot_bivar(Novel_Predator_control)+
+  labs(title = "Neophobia vs. Boldness")
+p6 <- density_plot_bivar(Predator_Activity_control)+
+  labs(title = "Boldness vs. Exploration")
+p7 <- density_plot_bivar(Social_Activity_control)+
+  labs(title = "Socialbility vs. Exploration")
+p8 <- density_plot_bivar(Social_Aggression_control)+
+  labs(title = "Sociability vs. Aggression")
+p9 <- density_plot_bivar(Social_Novel_control)+
+  labs(title = "Sociability vs. Neophobia")
+p10 <- density_plot_bivar(Social_Predator_control)+
+  labs(title = "Sociability vs. Boldness")
+
+#Joining plots
+
+p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + plot_layout(ncol = 4, nrow = 4)
 
 ```
 
@@ -606,63 +677,63 @@ ggplot(bivar_combined_control) + theme_classic() +
 ```{r}
 #Social Predator Bivariate Model
 
-example_Social_Predator_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Predator")
-save(example_Social_Predator_treatment, file = "./Models/social_predator_bivar_treatment.Rdata")
-
-
-#Social_Novel Bivariate model
-
-example_Social_Novel_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Novel")
-save(example_Social_Novel_treatment, file = "./Models/social_novel_bivar_treatment.Rdata")
-
-
-
-#Social_Aggression Bivariate model
-
-example_Social_Aggression_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Aggression")
-save(example_Social_Aggression_treatment, file = "./Models/social_aggression_bivar_treatment.Rdata")
-
-
-#Social_Activity Bivariate Model
-
-example_Social_Activity_treatment <- bivar_model_treatment("zone_05_dur_Social", "tot_dist_Activity")
-save(example_Social_Activity_treatment, file = "./Models/social_activity_bivar_treatment.Rdata")
-
-
-#Agression Novel Bivariate Model
-
-example_Aggression_Novel_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Novel")
-save(example_Aggression_Novel_treatment, file = "./Models/aggression_novel_bivar_treatment.Rdata")
-
-
-#Agression Predator Bivariate Model
-
-example_Aggression_Predator_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Predator")
-save(example_Aggression_Predator_treatment, file = "./Models/aggression_predator_bivar_treatment.Rdata")
-
-
-#Aggression Activity Bivariate Model
-
-example_Aggression_Activity_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "tot_dist_Activity")
-save(example_Aggression_Activity_treatment, file = "./Models/aggression_activity_bivar_treatment.Rdata")
-
-
-
-#Novel Predator Bivariate Model
-
-example_Novel_Predator_treatment <- bivar_model_treatment("zone_05_dur_Novel", "zone_05_dur_Predator")
-save(example_Novel_Predator_treatment, file = "./Models/novel_predator_bivar_treatment.Rdata")
-
-#Novel Activity Bivariate Model
-
-example_Novel_Activity_treatment <- bivar_model_treatment("zone_05_dur_Novel", "tot_dist_Activity")
-save(example_Novel_Activity_treatment, file = "./Models/novel_activity_bivar_treatment.Rdata")
-
-
-#Predator Activity Bivariate Model
-
-example_Predator_Activity_treatment <- bivar_model_treatment("zone_05_dur_Predator", "tot_dist_Activity")
-save(example_Predator_Activity_treatment, file = "./Models/predator_activity_bivar_treatment.Rdata")
+# example_Social_Predator_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Predator")
+# save(example_Social_Predator_treatment, file = "./Models/social_predator_bivar_treatment.Rdata")
+# 
+# 
+# #Social_Novel Bivariate model
+# 
+# example_Social_Novel_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Novel")
+# save(example_Social_Novel_treatment, file = "./Models/social_novel_bivar_treatment.Rdata")
+# 
+# 
+# 
+# #Social_Aggression Bivariate model
+# 
+# example_Social_Aggression_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Aggression")
+# save(example_Social_Aggression_treatment, file = "./Models/social_aggression_bivar_treatment.Rdata")
+# 
+# 
+# #Social_Activity Bivariate Model
+# 
+# example_Social_Activity_treatment <- bivar_model_treatment("zone_05_dur_Social", "tot_dist_Activity")
+# save(example_Social_Activity_treatment, file = "./Models/social_activity_bivar_treatment.Rdata")
+# 
+# 
+# #Agression Novel Bivariate Model
+# 
+# example_Aggression_Novel_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Novel")
+# save(example_Aggression_Novel_treatment, file = "./Models/aggression_novel_bivar_treatment.Rdata")
+# 
+# 
+# #Agression Predator Bivariate Model
+# 
+# example_Aggression_Predator_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Predator")
+# save(example_Aggression_Predator_treatment, file = "./Models/aggression_predator_bivar_treatment.Rdata")
+# 
+# 
+# #Aggression Activity Bivariate Model
+# 
+# example_Aggression_Activity_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "tot_dist_Activity")
+# save(example_Aggression_Activity_treatment, file = "./Models/aggression_activity_bivar_treatment.Rdata")
+# 
+# 
+# 
+# #Novel Predator Bivariate Model
+# 
+# example_Novel_Predator_treatment <- bivar_model_treatment("zone_05_dur_Novel", "zone_05_dur_Predator")
+# save(example_Novel_Predator_treatment, file = "./Models/novel_predator_bivar_treatment.Rdata")
+# 
+# #Novel Activity Bivariate Model
+# 
+# example_Novel_Activity_treatment <- bivar_model_treatment("zone_05_dur_Novel", "tot_dist_Activity")
+# save(example_Novel_Activity_treatment, file = "./Models/novel_activity_bivar_treatment.Rdata")
+# 
+# 
+# #Predator Activity Bivariate Model
+# 
+# example_Predator_Activity_treatment <- bivar_model_treatment("zone_05_dur_Predator", "tot_dist_Activity")
+# save(example_Predator_Activity_treatment, file = "./Models/predator_activity_bivar_treatment.Rdata")
 ```
 
 #Loading models and creating new functions TREATMENT
@@ -747,13 +818,67 @@ behaviors <- c("Activity", "Novel", "Social", "Predator", "Aggression")
 bivar_behavs_results_treatment <- dplyr::bind_rows(lapply(behaviors, function(x) func_pop_bivar_treatment(x)))
 #It seemed to work although am not sure this is correct, please double check!
 
-#Density plots
+#Summary density plot
 
 bivar_combined_treatment$behav_syndrome <- paste0(bivar_combined_treatment$behaviour1, " vs. ", bivar_combined_treatment$behaviour2)
 ggplot(bivar_combined_treatment) + theme_classic() +
   geom_density(aes(cor_ID1_ID2)) +
   geom_vline(xintercept = 0) +
   facet_wrap(~behav_syndrome)
+
+#Summary models
+
+summary(example_Aggression_Activity_treatment)
+summary(example_Aggression_Novel_treatment)
+summary(example_Aggression_Predator_treatment)
+summary(example_Novel_Activity_treatment)
+summary(example_Novel_Predator_treatment)
+summary(example_Predator_Activity_treatment)
+summary(example_Social_Activity_treatment)
+summary(example_Social_Aggression_treatment)
+summary(example_Social_Novel_treatment)
+summary(example_Social_Predator_treatment)
+
+#Subsetting and plotting 
+
+Aggression_Activity_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Aggression vs. Activity")
+Aggression_Novel_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Aggression vs. Novel")
+Aggression_Predator_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Aggression vs. Predator")
+Novel_Activity_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Novel vs. Activity")
+Novel_Predator_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Novel vs. Predator")
+Predator_Activity_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Predator vs. Activity")
+Social_Activity_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Social vs. Activity")
+Social_Aggression_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Social vs. Aggression")
+Social_Novel_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Social vs. Novel")
+Social_Predator_treatment <- subset(bivar_combined_treatment, bivar_combined_treatment$behav_syndrome == "Social vs. Predator")
+
+#Density plots
+
+p11 <- density_plot_bivar(Aggression_Activity_treatment)+
+  labs(title = "Aggression vs. Exploration")
+p12 <- density_plot_bivar(Aggression_Novel_treatment)+
+  labs(title = "Aggression vs. Neophobia")
+p13 <- density_plot_bivar(Aggression_Predator_treatment)+
+  labs(title = "Aggression vs. Boldness")
+p14 <- density_plot_bivar(Novel_Activity_treatment)+
+  labs(title = "Neophobia vs. Exploration")
+p15 <- density_plot_bivar(Novel_Predator_treatment)+
+  labs(title = "Neophobia vs. Boldness")
+p16 <- density_plot_bivar(Predator_Activity_treatment)+
+  labs(title = "Boldness vs. Exploration")
+p17 <- density_plot_bivar(Social_Activity_treatment)+
+  labs(title = "Socialbility vs. Exploration")
+p18 <- density_plot_bivar(Social_Aggression_treatment)+
+  labs(title = "Sociability vs. Aggression")
+p19 <- density_plot_bivar(Social_Novel_treatment)+
+  labs(title = "Sociability vs. Neophobia")
+p20 <- density_plot_bivar(Social_Predator_treatment)+
+  labs(title = "Sociability vs. Boldness")
+
+#Joining plots
+
+p11 + p12 + p13 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + plot_layout(ncol = 4, nrow = 4)
+
 ```
 
 
@@ -927,132 +1052,132 @@ rpt_behavs_plot
 
 
 ```
-#Code for running everything at once
-```{r}
-#CONTROL
+<!-- #Code for running everything at once -->
+<!-- ```{r} -->
+<!-- #CONTROL -->
 
-#Social Predator Bivariate Model
+<!-- #Social Predator Bivariate Model -->
 
-example_Social_Predator_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Predator")
-save(example_Social_Predator_control, file = "./Models/social_predator_bivar_control.Rdata")
-
-
-#Social_Novel Bivariate model
-
-example_Social_Novel_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Novel")
-save(example_Social_Novel_control, file = "./Models/social_novel_bivar_control.Rdata")
+<!-- example_Social_Predator_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Predator") -->
+<!-- save(example_Social_Predator_control, file = "./Models/social_predator_bivar_control.Rdata") -->
 
 
+<!-- #Social_Novel Bivariate model -->
 
-#Social_Aggression Bivariate model
-
-example_Social_Aggression_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Aggression")
-save(example_Social_Aggression_control, file = "./Models/social_aggression_bivar_control.Rdata")
-
-
-#Social_Activity Bivariate Model
-
-example_Social_Activity_control <- bivar_model_control("zone_05_dur_Social", "tot_dist_Activity")
-save(example_Social_Activity_control, file = "./Models/social_activity_bivar_control.Rdata")
-
-
-#Agression Novel Bivariate Model
-
-example_Aggression_Novel_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Novel")
-save(example_Aggression_Novel_control, file = "./Models/aggression_novel_bivar_control.Rdata")
-
-
-#Agression Predator Bivariate Model
-
-example_Aggression_Predator_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Predator")
-save(example_Aggression_Predator_control, file = "./Models/aggression_predator_bivar_control.Rdata")
-
-
-#Aggression Activity Bivariate Model
-
-example_Aggression_Activity_control <- bivar_model_control("zone_05_dur_Aggression", "tot_dist_Activity")
-save(example_Aggression_Activity_control, file = "./Models/aggression_activity_bivar_control.Rdata")
+<!-- example_Social_Novel_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Novel") -->
+<!-- save(example_Social_Novel_control, file = "./Models/social_novel_bivar_control.Rdata") -->
 
 
 
-#Novel Predator Bivariate Model
+<!-- #Social_Aggression Bivariate model -->
 
-example_Novel_Predator_control <- bivar_model_control("zone_05_dur_Novel", "zone_05_dur_Predator")
-save(example_Novel_Predator_control, file = "./Models/novel_predator_bivar_control.Rdata")
-
-#Novel Activity Bivariate Model
-
-example_Novel_Activity_control <- bivar_model_control("zone_05_dur_Novel", "tot_dist_Activity")
-save(example_Novel_Activity_control, file = "./Models/novel_activity_bivar_control.Rdata")
+<!-- example_Social_Aggression_control <- bivar_model_control("zone_05_dur_Social", "zone_05_dur_Aggression") -->
+<!-- save(example_Social_Aggression_control, file = "./Models/social_aggression_bivar_control.Rdata") -->
 
 
-#Predator Activity Bivariate Model
+<!-- #Social_Activity Bivariate Model -->
 
-example_Predator_Activity_control <- bivar_model_control("zone_05_dur_Predator", "tot_dist_Activity")
-save(example_Predator_Activity_control, file = "./Models/predator_activity_bivar_control.Rdata")
-
-#TREATMENT
-
-#Social Predator Bivariate Model
-
-example_Social_Predator_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Predator")
-save(example_Social_Predator_treatment, file = "./Models/social_predator_bivar_treatment.Rdata")
+<!-- example_Social_Activity_control <- bivar_model_control("zone_05_dur_Social", "tot_dist_Activity") -->
+<!-- save(example_Social_Activity_control, file = "./Models/social_activity_bivar_control.Rdata") -->
 
 
-#Social_Novel Bivariate model
+<!-- #Agression Novel Bivariate Model -->
 
-example_Social_Novel_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Novel")
-save(example_Social_Novel_treatment, file = "./Models/social_novel_bivar_treatment.Rdata")
-
-
-
-#Social_Aggression Bivariate model
-
-example_Social_Aggression_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Aggression")
-save(example_Social_Aggression_treatment, file = "./Models/social_aggression_bivar_treatment.Rdata")
+<!-- example_Aggression_Novel_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Novel") -->
+<!-- save(example_Aggression_Novel_control, file = "./Models/aggression_novel_bivar_control.Rdata") -->
 
 
-#Social_Activity Bivariate Model
+<!-- #Agression Predator Bivariate Model -->
 
-example_Social_Activity_treatment <- bivar_model_treatment("zone_05_dur_Social", "tot_dist_Activity")
-save(example_Social_Activity_treatment, file = "./Models/social_activity_bivar_treatment.Rdata")
-
-
-#Agression Novel Bivariate Model
-
-example_Aggression_Novel_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Novel")
-save(example_Aggression_Novel_treatment, file = "./Models/aggression_novel_bivar_treatment.Rdata")
+<!-- example_Aggression_Predator_control <- bivar_model_control("zone_05_dur_Aggression", "zone_05_dur_Predator") -->
+<!-- save(example_Aggression_Predator_control, file = "./Models/aggression_predator_bivar_control.Rdata") -->
 
 
-#Agression Predator Bivariate Model
+<!-- #Aggression Activity Bivariate Model -->
 
-example_Aggression_Predator_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Predator")
-save(example_Aggression_Predator_treatment, file = "./Models/aggression_predator_bivar_treatment.Rdata")
-
-
-#Aggression Activity Bivariate Model
-
-example_Aggression_Activity_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "tot_dist_Activity")
-save(example_Aggression_Activity_treatment, file = "./Models/aggression_activity_bivar_treatment.Rdata")
+<!-- example_Aggression_Activity_control <- bivar_model_control("zone_05_dur_Aggression", "tot_dist_Activity") -->
+<!-- save(example_Aggression_Activity_control, file = "./Models/aggression_activity_bivar_control.Rdata") -->
 
 
 
-#Novel Predator Bivariate Model
+<!-- #Novel Predator Bivariate Model -->
 
-example_Novel_Predator_treatment <- bivar_model_treatment("zone_05_dur_Novel", "zone_05_dur_Predator")
-save(example_Novel_Predator_treatment, file = "./Models/novel_predator_bivar_treatment.Rdata")
+<!-- example_Novel_Predator_control <- bivar_model_control("zone_05_dur_Novel", "zone_05_dur_Predator") -->
+<!-- save(example_Novel_Predator_control, file = "./Models/novel_predator_bivar_control.Rdata") -->
 
-#Novel Activity Bivariate Model
+<!-- #Novel Activity Bivariate Model -->
 
-example_Novel_Activity_treatment <- bivar_model_treatment("zone_05_dur_Novel", "tot_dist_Activity")
-save(example_Novel_Activity_treatment, file = "./Models/novel_activity_bivar_treatment.Rdata")
+<!-- example_Novel_Activity_control <- bivar_model_control("zone_05_dur_Novel", "tot_dist_Activity") -->
+<!-- save(example_Novel_Activity_control, file = "./Models/novel_activity_bivar_control.Rdata") -->
 
 
-#Predator Activity Bivariate Model
+<!-- #Predator Activity Bivariate Model -->
 
-example_Predator_Activity_treatment <- bivar_model_treatment("zone_05_dur_Predator", "tot_dist_Activity")
-save(example_Predator_Activity_treatment, file = "./Models/predator_activity_bivar_treatment.Rdata")
-```
+<!-- example_Predator_Activity_control <- bivar_model_control("zone_05_dur_Predator", "tot_dist_Activity") -->
+<!-- save(example_Predator_Activity_control, file = "./Models/predator_activity_bivar_control.Rdata") -->
+
+<!-- #TREATMENT -->
+
+<!-- #Social Predator Bivariate Model -->
+
+<!-- example_Social_Predator_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Predator") -->
+<!-- save(example_Social_Predator_treatment, file = "./Models/social_predator_bivar_treatment.Rdata") -->
+
+
+<!-- #Social_Novel Bivariate model -->
+
+<!-- example_Social_Novel_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Novel") -->
+<!-- save(example_Social_Novel_treatment, file = "./Models/social_novel_bivar_treatment.Rdata") -->
+
+
+
+<!-- #Social_Aggression Bivariate model -->
+
+<!-- example_Social_Aggression_treatment <- bivar_model_treatment("zone_05_dur_Social", "zone_05_dur_Aggression") -->
+<!-- save(example_Social_Aggression_treatment, file = "./Models/social_aggression_bivar_treatment.Rdata") -->
+
+
+<!-- #Social_Activity Bivariate Model -->
+
+<!-- example_Social_Activity_treatment <- bivar_model_treatment("zone_05_dur_Social", "tot_dist_Activity") -->
+<!-- save(example_Social_Activity_treatment, file = "./Models/social_activity_bivar_treatment.Rdata") -->
+
+
+<!-- #Agression Novel Bivariate Model -->
+
+<!-- example_Aggression_Novel_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Novel") -->
+<!-- save(example_Aggression_Novel_treatment, file = "./Models/aggression_novel_bivar_treatment.Rdata") -->
+
+
+<!-- #Agression Predator Bivariate Model -->
+
+<!-- example_Aggression_Predator_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "zone_05_dur_Predator") -->
+<!-- save(example_Aggression_Predator_treatment, file = "./Models/aggression_predator_bivar_treatment.Rdata") -->
+
+
+<!-- #Aggression Activity Bivariate Model -->
+
+<!-- example_Aggression_Activity_treatment <- bivar_model_treatment("zone_05_dur_Aggression", "tot_dist_Activity") -->
+<!-- save(example_Aggression_Activity_treatment, file = "./Models/aggression_activity_bivar_treatment.Rdata") -->
+
+
+
+<!-- #Novel Predator Bivariate Model -->
+
+<!-- example_Novel_Predator_treatment <- bivar_model_treatment("zone_05_dur_Novel", "zone_05_dur_Predator") -->
+<!-- save(example_Novel_Predator_treatment, file = "./Models/novel_predator_bivar_treatment.Rdata") -->
+
+<!-- #Novel Activity Bivariate Model -->
+
+<!-- example_Novel_Activity_treatment <- bivar_model_treatment("zone_05_dur_Novel", "tot_dist_Activity") -->
+<!-- save(example_Novel_Activity_treatment, file = "./Models/novel_activity_bivar_treatment.Rdata") -->
+
+
+<!-- #Predator Activity Bivariate Model -->
+
+<!-- example_Predator_Activity_treatment <- bivar_model_treatment("zone_05_dur_Predator", "tot_dist_Activity") -->
+<!-- save(example_Predator_Activity_treatment, file = "./Models/predator_activity_bivar_treatment.Rdata") -->
+<!-- ``` -->
 
 
 
